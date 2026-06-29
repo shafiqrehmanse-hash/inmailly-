@@ -91,17 +91,19 @@ export type InviteCode = {
 
 export type Client = {
   id: string;
+  user_id: string | null;
   name: string;
   company_name: string | null;
   email: string | null;
   logo_url: string | null;
   notes: string | null;
+  signup_source: "admin" | "self";
   is_active: boolean;
   created_at: string;
   updated_at: string;
 };
 
-export type ProjectStatus = "draft" | "active" | "paused" | "completed";
+export type ProjectStatus = "draft" | "preview" | "active" | "paused" | "completed";
 
 export type Project = {
   id: string;

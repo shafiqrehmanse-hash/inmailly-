@@ -78,8 +78,8 @@ export default function LuxPricing({ content }: { content?: PricingContent }) {
         </div>
 
         <div className="mt-16 text-center">
-          <MagneticButton href="/client" variant="ghost">
-            Preview client dashboard →
+          <MagneticButton href="/client/register" variant="ghost">
+            Create account · preview dashboard →
           </MagneticButton>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ProjectProofUploader from "@/components/campaign/ProjectProofUploader";
+import { getSiteUrl } from "@/lib/site-url";
 import ProjectClientWorkspace from "@/components/team/ProjectClientWorkspace";
 import { getCurrentMember } from "@/lib/team";
 import { getMemberProject } from "@/lib/team-projects";
@@ -14,7 +15,7 @@ export default async function CampaignProjectPage({ params }: { params: { id: st
 
   const clientName = project.clients?.company_name || project.clients?.name || "Client";
   const portalUrl = project.portal_token
-    ? `${process.env.NEXT_PUBLIC_SITE_URL || "https://inmailly.vercel.app"}/client/p/${project.portal_token}`
+    ? `${getSiteUrl()}/client/p/${project.portal_token}`
     : null;
 
   const scripts = [

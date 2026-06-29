@@ -21,7 +21,7 @@ const INMAILLY = {
   title: "InMailly",
   subtitle: "Verified Sales Nav · Human-operated infrastructure",
   rows: [
-    { label: "Free trial", value: "200 InMails", bad: false },
+    { label: "Get started", value: "Create account", bad: false },
     { label: "You provide", value: "Audience + script", bad: false },
     { label: "We deliver via", value: "Verified Sales Nav profiles", bad: false },
     { label: "Paid from", value: "$0.27 / InMail", bad: false },
@@ -129,7 +129,7 @@ export default function ProblemStory() {
                   className="mt-8 pt-6 border-t border-lux-cyan/20 text-center"
                 >
                   <span className="text-sm font-semibold text-lux-cyan">
-                    Start free — 200 InMails. Pay only when you love the results.
+                    Create your dashboard account — book a call to go live.
                   </span>
                 </motion.div>
               )}

@@ -86,9 +86,9 @@ export default function ResponseShowcase() {
             </div>
 
             <div className="mt-10 flex flex-wrap gap-4">
-              <MagneticButton href="/client">Open full dashboard</MagneticButton>
-              <MagneticButton href="/contact" variant="ghost">
-                Start free trial
+              <MagneticButton href="/client/demo">See sample dashboard</MagneticButton>
+              <MagneticButton href="/client/register" variant="ghost">
+                Create account
               </MagneticButton>
             </div>
           </motion.div>

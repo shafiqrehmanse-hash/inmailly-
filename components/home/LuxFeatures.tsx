@@ -22,14 +22,14 @@ const FEATURES = [
     icon: HiChatBubbleLeftRight,
     tag: "Dashboard",
     title: "Client command center",
-    desc: "Same dashboard on the homepage and at /client. Live replies, pipeline, analytics — built for founders who demand clarity.",
+    desc: "Same dashboard on the homepage and at /client/demo. Live replies, pipeline, analytics — built for founders who demand clarity.",
     align: "left" as const,
   },
   {
     icon: HiLink,
-    tag: "Trial",
-    title: "200 InMails free",
-    desc: "Full campaign with real results before you pay. Love the reply rate? Scale to thousands at $0.27 per message.",
+    tag: "Onboarding",
+    title: "Preview your dashboard",
+    desc: "Create a client account to see the real dashboard layout. Book a call when you're ready to launch with your audience and scripts.",
     align: "right" as const,
   },
 ];

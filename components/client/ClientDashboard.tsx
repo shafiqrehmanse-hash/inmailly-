@@ -46,6 +46,7 @@ export default function ClientDashboard({
   const [proofLightbox, setProofLightbox] = useState<string | null>(null);
   const isHero = mode === "hero";
   const isLive = Boolean(live);
+  const isPreviewLive = isLive && live!.status === "preview";
 
   useEffect(() => {
     if (isLive) return;
@@ -60,9 +61,6 @@ export default function ClientDashboard({
   const activity = isLive
     ? live!.latestActivity || { name: "—", action: "Waiting for first response", time: "—" }
     : DEMO_ACTIVITY[activityIdx];
-
-  const trialRemaining = DEMO_CAMPAIGN.trialRemaining;
-  const trialTotal = DEMO_CAMPAIGN.trialTotal;
 
   return (
     <div
@@ -112,11 +110,9 @@ export default function ClientDashboard({
                 </>
               ) : (
                 <>
-                  <div className="text-[0.55rem] uppercase tracking-wider text-lux-muted">Free trial</div>
-                  <div className="font-bricolage font-bold text-lux-cyan text-lg mt-0.5">
-                    {trialRemaining}/{trialTotal}
-                  </div>
-                  <div className="text-[0.6rem] text-lux-muted">InMails remaining</div>
+                  <div className="text-[0.55rem] uppercase tracking-wider text-lux-muted">Sample data</div>
+                  <div className="font-bricolage font-bold text-lux-cyan text-sm mt-0.5">Demo preview</div>
+                  <div className="text-[0.6rem] text-lux-muted">Create account for yours</div>
                 </>
               )}
             </div>
@@ -125,9 +121,19 @@ export default function ClientDashboard({
 
         <div className="flex-1 p-4 lg:p-5 space-y-4 min-w-0">
           {isLive ? (
-            <div className="flex flex-wrap items-center justify-between gap-2 border border-emerald-500/25 bg-emerald-500/5 px-3 py-2">
-              <span className="text-[0.65rem] text-emerald-400 font-semibold uppercase tracking-wider">
-                Live campaign · {live!.projectName}
+            <div
+              className={`flex flex-wrap items-center justify-between gap-2 border px-3 py-2 ${
+                isPreviewLive
+                  ? "border-lux-cyan/25 bg-lux-cyan/5"
+                  : "border-emerald-500/25 bg-emerald-500/5"
+              }`}
+            >
+              <span
+                className={`text-[0.65rem] font-semibold uppercase tracking-wider ${
+                  isPreviewLive ? "text-lux-cyan" : "text-emerald-400"
+                }`}
+              >
+                {isPreviewLive ? "Preview dashboard" : "Live campaign"} · {live!.projectName}
               </span>
               <span className="text-[0.65rem] text-lux-muted">
                 {live!.stats.total} response{live!.stats.total !== 1 ? "s" : ""} · {live!.stats.sends}{" "}
@@ -137,19 +143,11 @@ export default function ClientDashboard({
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-2 border border-lux-cyan/20 bg-lux-cyan/5 px-3 py-2">
               <span className="text-[0.65rem] text-lux-cyan font-semibold uppercase tracking-wider">
-                Free trial · 200 InMails
+                Sample dashboard · demo data
               </span>
-              <div className="flex items-center gap-2">
-                <div className="w-24 h-1 bg-white/[0.08] overflow-hidden">
-                  <motion.div
-                    className="h-full bg-lux-cyan"
-                    animate={{
-                      width: `${((trialTotal - trialRemaining) / trialTotal) * 100}%`,
-                    }}
-                  />
-                </div>
-                <span className="text-[0.65rem] text-lux-muted tabular-nums">{trialRemaining} left</span>
-              </div>
+              <a href="/client/register" className="text-[0.65rem] text-lux-cyan hover:underline">
+                Create your account →
+              </a>
             </div>
           )}
 

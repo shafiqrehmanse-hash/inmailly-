@@ -28,7 +28,11 @@ export default function ClientPortalPage() {
         <div className="mb-8">
           <h1 className="font-bricolage font-extrabold text-3xl text-lux-text">Campaign dashboard</h1>
           <p className="text-lux-muted mt-2 text-sm">
-            Preview with sample data — your live dashboard uses the same layout at your private project link.
+            Sample data preview — create a free account at{" "}
+            <a href="/client/register" className="text-lux-cyan hover:underline">
+              /client/register
+            </a>{" "}
+            to see your own dashboard.
           </p>
         </div>
         <ClientDashboard mode="full" />

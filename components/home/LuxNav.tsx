@@ -8,7 +8,7 @@ import MagneticButton from "./MagneticButton";
 const LINKS = [
   { href: "#story", label: "Story" },
   { href: "#responses", label: "Responses" },
-  { href: "/client", label: "Dashboard" },
+  { href: "/client/register", label: "Dashboard" },
   { href: "#pricing", label: "Pricing" },
   { href: "/contact", label: "Contact" },
 ];
@@ -51,7 +51,7 @@ export default function LuxNav() {
           ))}
         </nav>
 
-        <MagneticButton href="/contact">Start campaign</MagneticButton>
+        <MagneticButton href="/client/register">Create account</MagneticButton>
       </div>
     </motion.header>
   );

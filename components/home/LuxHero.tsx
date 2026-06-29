@@ -62,8 +62,8 @@ export default function LuxHero({ content }: { content?: HeroContent }) {
               custom={3}
               className="mt-10 flex flex-wrap items-center gap-4"
             >
-              <MagneticButton href="/contact">{c.ctaPrimary}</MagneticButton>
-              <MagneticButton href="/client" variant="ghost">
+              <MagneticButton href="/client/register">{c.ctaPrimary}</MagneticButton>
+              <MagneticButton href="/contact" variant="ghost">
                 {c.ctaSecondary}
               </MagneticButton>
             </motion.div>
@@ -94,9 +94,9 @@ export default function LuxHero({ content }: { content?: HeroContent }) {
               className="mt-14 flex items-center gap-8 border-t border-white/[0.06] pt-8"
             >
               <div>
-                <div className="font-bricolage font-extrabold text-3xl text-lux-text">200</div>
+                <div className="font-bricolage font-extrabold text-3xl text-lux-text">48h</div>
                 <div className="text-[0.65rem] uppercase tracking-wider text-lux-muted mt-1">
-                  Free trial InMails
+                  Avg launch time
                 </div>
               </div>
               <div className="w-px h-10 bg-white/[0.08]" />
@@ -110,7 +110,7 @@ export default function LuxHero({ content }: { content?: HeroContent }) {
               <div className="hidden sm:block">
                 <div className="font-bricolage font-extrabold text-3xl text-lux-cyan">$0.27</div>
                 <div className="text-[0.65rem] uppercase tracking-wider text-lux-muted mt-1">
-                  InMailly after trial
+                  InMailly per message
                 </div>
               </div>
             </motion.div>

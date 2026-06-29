@@ -7,8 +7,6 @@ export const DEMO_CAMPAIGN = {
   meetings: 34,
   replyRate: 11.4,
   costPerMsg: 0.27,
-  trialRemaining: 153,
-  trialTotal: 200,
 };
 
 export const DEMO_ACTIVITY = [

@@ -45,7 +45,7 @@ export default function LuxFinalCTA({ content }: { content?: FinalCtaContent }) 
           transition={{ delay: 0.2, duration: 0.8 }}
           className="mt-12"
         >
-          <MagneticButton href="/contact" className="!px-12 !py-4 !text-base">
+          <MagneticButton href="/client/register" className="!px-12 !py-4 !text-base">
             {c.cta}
           </MagneticButton>
         </motion.div>

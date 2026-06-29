@@ -184,6 +184,11 @@ export default function AdminClientsSection({
                         {c.email && <div className="text-xs text-lux-muted mt-1">{c.email}</div>}
                       </div>
                       <div className="flex items-center gap-2">
+                        {c.signup_source === "self" && (
+                          <span className="text-[0.6rem] uppercase font-bold px-2 py-0.5 rounded-full border text-lux-cyan border-lux-cyan/30">
+                            Self signup
+                          </span>
+                        )}
                         <span
                           className={`text-[0.6rem] uppercase font-bold px-2 py-0.5 rounded-full border ${
                             c.is_active

@@ -5,6 +5,7 @@ import Button from "@/components/ui/Button";
 import StatCard from "@/components/team/StatCard";
 import { createClient } from "@/lib/supabase/client";
 import type { MemberFund, Referral, TeamMember } from "@/lib/types";
+import { getSiteUrl } from "@/lib/site-url";
 import { formatDate, getReferralCode } from "@/lib/utils";
 
 export default function ReferralsPage() {
@@ -51,7 +52,7 @@ export default function ReferralsPage() {
   if (!member) return null;
 
   const code = getReferralCode(member.id);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getSiteUrl();
   const shareLink = `${appUrl}/register?ref=${code}`;
   const joined = referrals.filter((r) => r.status === "joined" || r.status === "converted").length;
   const converted = referrals.filter((r) => r.status === "converted").length;

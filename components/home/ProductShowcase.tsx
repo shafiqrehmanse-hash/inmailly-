@@ -21,7 +21,7 @@ const PANELS = [
   {
     tag: "What you see",
     title: "The same dashboard on this page.",
-    desc: "Live replies, pipeline, analytics — identical to /client. Every response tracked in real time.",
+    desc: "Live replies, pipeline, analytics — identical to your client dashboard. Every response tracked in real time.",
     metric: "Live",
     metricLabel: "Client portal",
   },

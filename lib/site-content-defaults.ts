@@ -83,7 +83,7 @@ export type SiteContent = {
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
   hero: {
-    badge: "200 InMails free · No card required",
+    badge: "Managed LinkedIn outreach · Real dashboards",
     titleLine1: "Outreach",
     titleLine2: "infrastructure",
     titleAccent: "at scale.",
@@ -92,11 +92,11 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     trustItems: [
       "Verified LinkedIn accounts",
       "Sales Nav activated",
-      "200 InMails free trial",
+      "Live client dashboard",
       "You provide audience + script",
     ],
-    ctaPrimary: "Start free trial",
-    ctaSecondary: "See client dashboard",
+    ctaPrimary: "Create account",
+    ctaSecondary: "Book a call",
   },
   stats: {
     sectionLabel: "By the numbers",
@@ -116,24 +116,16 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   },
   pricing: {
     sectionLabel: "Pricing",
-    title: "Try 200 InMails free. Pay when it works.",
+    title: "Simple pricing. Serious outreach.",
     subtitle:
       "Verified Sales Nav profiles. You provide audience + script. We handle delivery and your dashboard tracks every reply.",
     plans: [
       {
-        name: "Free trial",
-        price: "0",
-        unit: "200 InMails",
-        per: "No credit card · Full dashboard",
-        featured: true,
-        trial: true,
-      },
-      {
         name: "Starter",
         price: "275",
         unit: "1,000 messages",
-        per: "$0.27/msg after trial",
-        featured: false,
+        per: "$0.27/msg",
+        featured: true,
       },
       {
         name: "Growth",
@@ -149,6 +141,13 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         per: "$0.19/msg",
         featured: false,
       },
+      {
+        name: "Enterprise",
+        price: "Custom",
+        unit: "Volume pricing",
+        per: "Dedicated ops + SLA",
+        featured: false,
+      },
     ],
   },
   faq: {
@@ -156,8 +155,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     title: "Questions, answered.",
     items: [
       {
-        q: "How does the free trial work?",
-        a: "You get 200 InMails free with full dashboard access. Send us your target audience and InMail script. If the results impress you, we move to a paid plan. No credit card to start.",
+        q: "How do I get started?",
+        a: "Create a client account to preview your dashboard, then book a call. Share your target audience and InMail script — we launch your campaign on verified LinkedIn profiles with Sales Navigator.",
       },
       {
         q: "What LinkedIn accounts do you use?",
@@ -173,7 +172,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       },
       {
         q: "Can I see replies in real time?",
-        a: "Yes. Your client dashboard shows live responses, pipeline stages, and campaign analytics — the same interface previewed on our homepage.",
+        a: "Yes. Your client dashboard shows live responses, pipeline stages, and campaign analytics — the same interface you preview when you create an account.",
       },
     ],
   },
@@ -208,8 +207,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   },
   finalCta: {
     title: "Your next thousand conversations start here.",
-    subtitle: "",
-    cta: "Claim 200 free InMails",
+    subtitle: "Create your dashboard account or book a launch call.",
+    cta: "Create account",
   },
   contact: {
     headline: "Start your campaign",

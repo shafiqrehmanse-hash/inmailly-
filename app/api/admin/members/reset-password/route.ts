@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSiteUrl } from "@/lib/site-url";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
 
 function checkKey(request: NextRequest) {
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
   }
   const { email } = await request.json();
   const admin = createAdminClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getSiteUrl();
   const { error } = await admin.auth.resetPasswordForEmail(email, {
     redirectTo: `${appUrl}/login`,
   });

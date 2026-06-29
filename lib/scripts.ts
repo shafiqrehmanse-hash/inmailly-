@@ -1,3 +1,5 @@
+import { getSiteUrl } from "@/lib/site-url";
+
 export const SCRIPT_LIMITS = {
   add_note: 350,
   inmail: 1900,
@@ -29,7 +31,7 @@ export type ScriptPayload = {
   tone: "note" | "inmail" | "followup";
 };
 
-const APP = process.env.NEXT_PUBLIC_APP_URL || "https://inmailly.vercel.app";
+const APP = getSiteUrl();
 
 export function parseScriptParts(text: string) {
   const trimmed = text.trim();
