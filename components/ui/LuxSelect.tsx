@@ -1,7 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 export type LuxSelectOption = {
@@ -20,6 +21,14 @@ type LuxSelectProps = {
   size?: "sm" | "md";
 };
 
+type MenuPos = {
+  top?: number;
+  bottom?: number;
+  left: number;
+  width: number;
+  maxHeight: number;
+};
+
 export default function LuxSelect({
   value,
   onChange,
@@ -31,15 +40,67 @@ export default function LuxSelect({
 }: LuxSelectProps) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(-1);
+  const [menuPos, setMenuPos] = useState<MenuPos | null>(null);
+  const [mounted, setMounted] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const listId = useId();
 
   const selected = options.find((o) => o.value === value);
   const label = selected?.label ?? placeholder;
 
+  useEffect(() => setMounted(true), []);
+
+  function updateMenuPos() {
+    const btn = buttonRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const gap = 6;
+    const preferredHeight = Math.min(240, options.length * 40 + 12);
+    const spaceBelow = window.innerHeight - rect.bottom - gap;
+    const spaceAbove = rect.top - gap;
+    const openUp = spaceBelow < 160 && spaceAbove > spaceBelow;
+
+    if (openUp) {
+      setMenuPos({
+        bottom: window.innerHeight - rect.top + gap,
+        left: rect.left,
+        width: rect.width,
+        maxHeight: Math.min(preferredHeight, spaceAbove),
+      });
+    } else {
+      setMenuPos({
+        top: rect.bottom + gap,
+        left: rect.left,
+        width: rect.width,
+        maxHeight: Math.min(preferredHeight, spaceBelow),
+      });
+    }
+  }
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuPos(null);
+      return;
+    }
+    updateMenuPos();
+    const onScroll = () => setOpen(false);
+    const onResize = () => updateMenuPos();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, options.length]);
+
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!rootRef.current?.contains(e.target as Node)) {
+        const target = e.target as HTMLElement;
+        if (!target.closest?.("[data-lux-select-menu]")) setOpen(false);
+      }
     }
     function onEsc(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -96,9 +157,62 @@ export default function LuxSelect({
     }
   }
 
+  const menu =
+    open && menuPos && mounted
+      ? createPortal(
+          <AnimatePresence>
+            <motion.ul
+              id={listId}
+              data-lux-select-menu
+              role="listbox"
+              initial={{ opacity: 0, y: menuPos.top != null ? -4 : 4, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: menuPos.top != null ? -4 : 4, scale: 0.98 }}
+              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                position: "fixed",
+                top: menuPos.top,
+                bottom: menuPos.bottom,
+                left: menuPos.left,
+                width: menuPos.width,
+                maxHeight: menuPos.maxHeight,
+                zIndex: 9999,
+              }}
+              className="overflow-auto rounded-xl border border-white/[0.12] bg-lux-bg2 shadow-[0_20px_60px_rgba(0,0,0,0.55)] py-1 backdrop-blur-xl"
+            >
+              {options.map((opt, i) => {
+                const active = opt.value === value;
+                const hot = i === highlight;
+                return (
+                  <li key={opt.value} role="option" aria-selected={active}>
+                    <button
+                      type="button"
+                      disabled={opt.disabled}
+                      onMouseEnter={() => setHighlight(i)}
+                      onClick={() => !opt.disabled && pick(opt.value)}
+                      className={cn(
+                        "w-full text-left px-3 py-2.5 text-sm transition-colors",
+                        active && "text-lux-cyan bg-lux-cyan/10",
+                        hot && !active && "bg-white/[0.06] text-lux-text",
+                        !active && !hot && "text-lux-muted hover:text-lux-text hover:bg-white/[0.04]",
+                        opt.disabled && "opacity-40 cursor-not-allowed"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  </li>
+                );
+              })}
+            </motion.ul>
+          </AnimatePresence>,
+          document.body
+        )
+      : null;
+
   return (
     <div ref={rootRef} className={cn("relative", className)}>
       <button
+        ref={buttonRef}
         type="button"
         disabled={disabled}
         aria-haspopup="listbox"
@@ -124,44 +238,7 @@ export default function LuxSelect({
           ▾
         </motion.span>
       </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.ul
-            id={listId}
-            role="listbox"
-            initial={{ opacity: 0, y: -6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute z-50 mt-1.5 w-full max-h-60 overflow-auto rounded-xl border border-white/[0.1] bg-lux-bg2/95 backdrop-blur-xl shadow-[0_16px_48px_rgba(0,0,0,0.45)] py-1"
-          >
-            {options.map((opt, i) => {
-              const active = opt.value === value;
-              const hot = i === highlight;
-              return (
-                <li key={opt.value} role="option" aria-selected={active}>
-                  <button
-                    type="button"
-                    disabled={opt.disabled}
-                    onMouseEnter={() => setHighlight(i)}
-                    onClick={() => !opt.disabled && pick(opt.value)}
-                    className={cn(
-                      "w-full text-left px-3 py-2 text-sm transition-colors",
-                      active && "text-lux-cyan bg-lux-cyan/10",
-                      hot && !active && "bg-white/[0.05] text-lux-text",
-                      !active && !hot && "text-lux-muted hover:text-lux-text hover:bg-white/[0.04]",
-                      opt.disabled && "opacity-40 cursor-not-allowed"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                </li>
-              );
-            })}
-          </motion.ul>
-        )}
-      </AnimatePresence>
+      {menu}
     </div>
   );
 }

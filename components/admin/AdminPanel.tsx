@@ -457,7 +457,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               <p className="admin-section-title">Team members</p>
               <span className="text-xs text-lux-muted">{members.length} total</span>
             </div>
-            <div className="lux-card overflow-hidden">
+            <div className="lux-card overflow-x-auto overflow-y-visible">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-lux-muted text-xs uppercase bg-lux-bg2 border-b border-white/[0.06]">

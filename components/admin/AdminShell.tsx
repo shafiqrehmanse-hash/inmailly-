@@ -30,7 +30,7 @@ export default function AdminShell({
   onLogout: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-lux-bg flex">
+    <div className="min-h-screen h-screen bg-lux-bg flex overflow-hidden">
       <aside className="hidden lg:flex w-[220px] flex-col border-r border-white/[0.06] bg-lux-bg2/80 shrink-0">
         <div className="px-5 py-6 border-b border-white/[0.06]">
           <div className="flex items-center gap-2.5">
@@ -68,7 +68,7 @@ export default function AdminShell({
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col">
         <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-lux-card/80">
           <span className="font-bricolage font-bold text-lux-text">Admin</span>
           <LuxSelect
@@ -79,7 +79,7 @@ export default function AdminShell({
             options={NAV.map((n) => ({ value: n.id, label: n.label }))}
           />
         </header>
-        <main className="flex-1 p-5 sm:p-8 overflow-auto">{children}</main>
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-5 sm:p-8 pb-16">{children}</main>
       </div>
     </div>
   );
