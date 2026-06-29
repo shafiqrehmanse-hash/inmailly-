@@ -174,17 +174,17 @@ export default function ClientDashboard({
               </span>
               <span className="text-[0.65rem] text-lux-muted flex flex-wrap gap-x-3 gap-y-1">
                 <TeamVisibleCount
+                  visible={live!.stats.sends}
+                  team={live!.stats.teamSends}
+                  singular="InMail sent"
+                  plural="InMails sent"
+                />
+                <span>·</span>
+                <TeamVisibleCount
                   visible={live!.stats.total}
                   team={live!.stats.teamResponses}
                   singular="response"
                   plural="responses"
-                />
-                <span>·</span>
-                <TeamVisibleCount
-                  visible={live!.stats.sends}
-                  team={live!.stats.teamSends}
-                  singular="send proof"
-                  plural="send proofs"
                 />
               </span>
             </div>
@@ -202,14 +202,16 @@ export default function ClientDashboard({
 
           {(isHero || tab === "overview") && (
             <OverviewPanel
-              sent={isLive ? live!.stats.total : sent}
-              teamSent={isLive ? live!.stats.teamResponses : undefined}
+              sent={isLive ? live!.stats.sends : sent}
+              teamSent={isLive ? live!.stats.teamSends : undefined}
+              responseCount={isLive ? live!.stats.total : undefined}
               replyRate={isLive ? live!.stats.replyRate : DEMO_CAMPAIGN.replyRate}
               costPerMsg={DEMO_CAMPAIGN.costPerMsg}
-              sentLabel={isLive ? "Responses" : "Sent"}
+              sentLabel={isLive ? "InMails sent" : "Sent"}
               activity={activity}
               pipeline={isLive ? live!.pipeline : PIPELINE_STAGES}
               velocity={isLive ? live!.velocity : undefined}
+              isLive={isLive}
             />
           )}
           {!isHero && tab === "responses" && (
@@ -238,10 +240,10 @@ export default function ClientDashboard({
               stats={
                 isLive
                   ? [
+                      { l: "InMails", v: live!.stats.sends, team: live!.stats.teamSends },
                       { l: "Responses", v: live!.stats.total, team: live!.stats.teamResponses },
-                      { l: "Sends", v: live!.stats.sends, team: live!.stats.teamSends },
                       { l: "Hot", v: live!.stats.interested },
-                      { l: "Rate", v: `${live!.stats.replyRate}%` },
+                      { l: "Reply rate", v: `${live!.stats.replyRate}%` },
                     ]
                   : [
                       { l: "Sent", v: sent },
@@ -267,21 +269,25 @@ export default function ClientDashboard({
 function OverviewPanel({
   sent,
   teamSent,
+  responseCount,
   replyRate,
   costPerMsg,
   sentLabel,
   activity,
   pipeline,
   velocity,
+  isLive = false,
 }: {
   sent: number;
   teamSent?: number;
+  responseCount?: number;
   replyRate: number;
   costPerMsg: number;
   sentLabel: string;
   activity: { name: string; action: string; time: string };
   pipeline: { label: string; count: number; value: number }[];
   velocity?: number[];
+  isLive?: boolean;
 }) {
   const teamTotal = teamSent ?? sent;
   const sentDiffers = teamTotal > sent;
@@ -303,10 +309,25 @@ function OverviewPanel({
             label: sentLabel,
             value: typeof sent === "number" ? sent.toLocaleString() : sent,
             teamValue: sentDiffers ? teamTotal : undefined,
-            icon: HiEnvelope,
+            icon: HiPaperAirplane,
           },
-          { label: "Reply rate", value: `${replyRate}%`, icon: HiArrowTrendingUp },
-          { label: "Cost / msg", value: `$${costPerMsg}`, icon: HiBolt },
+          {
+            label: "Reply rate",
+            value: `${replyRate}%`,
+            sub: isLive && responseCount !== undefined ? `${responseCount} responses` : undefined,
+            icon: HiArrowTrendingUp,
+          },
+          isLive && responseCount !== undefined
+            ? {
+                label: "Responses",
+                value: responseCount.toLocaleString(),
+                icon: HiInbox,
+              }
+            : {
+                label: "Cost / msg",
+                value: `$${costPerMsg}`,
+                icon: HiBolt,
+              },
         ].map((m) => (
           <div key={m.label} className="border border-white/[0.06] bg-lux-bg2/60 p-2.5 lg:p-3">
             <m.icon className="w-3.5 h-3.5 text-lux-cyan mb-1.5 opacity-70" />
@@ -320,6 +341,9 @@ function OverviewPanel({
             </div>
             {m.teamValue !== undefined && (
               <div className="text-[0.5rem] text-lux-muted/70 tabular-nums">{m.teamValue} logged</div>
+            )}
+            {"sub" in m && m.sub && (
+              <div className="text-[0.5rem] text-lux-muted/70">{m.sub}</div>
             )}
             <div className="text-[0.55rem] uppercase tracking-wider text-lux-muted">{m.label}</div>
           </div>
@@ -591,6 +615,14 @@ function AnalyticsPanel({ live }: { live?: ClientDashboardLiveData }) {
   const items = live
     ? [
         {
+          label: "InMails sent",
+          value: String(live.stats.sends),
+          sub:
+            live.stats.teamSends && live.stats.teamSends > live.stats.sends
+              ? `${live.stats.teamSends} logged by team`
+              : "1 screenshot = 1 InMail",
+        },
+        {
           label: "Total responses",
           value: String(live.stats.total),
           sub: "Logged by your team",
@@ -603,7 +635,7 @@ function AnalyticsPanel({ live }: { live?: ClientDashboardLiveData }) {
         {
           label: "Reply rate",
           value: `${live.stats.replyRate}%`,
-          sub: "Of all responses",
+          sub: "Responses ÷ InMails sent",
         },
         {
           label: "Target",

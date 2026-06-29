@@ -78,8 +78,8 @@ export default function ClientProjectPortal({ token }: { token: string }) {
           </p>
           <h1 className="font-bricolage font-extrabold text-3xl text-lux-text">{live.projectName}</h1>
           <p className="text-lux-muted mt-2 text-sm capitalize">
-            Status: {live.status} · {live.stats.total} response{live.stats.total !== 1 ? "s" : ""} ·{" "}
-            {live.stats.sends} send proof{live.stats.sends !== 1 ? "s" : ""}
+            Status: {live.status} · {live.stats.sends} InMail{live.stats.sends !== 1 ? "s" : ""} sent ·{" "}
+            {live.stats.total} response{live.stats.total !== 1 ? "s" : ""}
           </p>
         </div>
         <ClientDashboard mode="full" live={live} />

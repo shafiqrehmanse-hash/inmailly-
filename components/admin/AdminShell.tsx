@@ -3,18 +3,21 @@
 import LuxSelect from "@/components/ui/LuxSelect";
 import { cn } from "@/lib/utils";
 
-const NAV = [
+const MAIN_NAV = [
   { id: "overview", label: "Overview", icon: "◫" },
   { id: "links", label: "Links", icon: "⛓" },
   { id: "clients", label: "Clients", icon: "◇" },
   { id: "projects", label: "Projects", icon: "◎" },
-  { id: "website", label: "Website", icon: "🌐" },
   { id: "team", label: "Team", icon: "👥" },
   { id: "leads", label: "Leads", icon: "📋" },
   { id: "scripts", label: "Scripts", icon: "📝" },
   { id: "referrals", label: "Referrals", icon: "✦" },
   { id: "funds", label: "Funds", icon: "💰" },
 ] as const;
+
+const BOTTOM_NAV = [{ id: "website", label: "Website", icon: "🌐" }] as const;
+
+const NAV = [...MAIN_NAV, ...BOTTOM_NAV];
 
 export type AdminTab = (typeof NAV)[number]["id"];
 
@@ -43,23 +46,43 @@ export default function AdminShell({
             </div>
           </div>
         </div>
-        <nav className="flex-1 p-3 space-y-0.5">
-          {NAV.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onTab(item.id)}
-              className={cn(
-                "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors border-l-2",
-                tab === item.id
-                  ? "border-lux-cyan bg-lux-blue/15 text-lux-cyan"
-                  : "border-transparent text-lux-muted hover:text-lux-text hover:bg-white/[0.03]"
-              )}
-            >
-              <span className="w-5 text-center">{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          ))}
+        <nav className="flex-1 p-3 flex flex-col min-h-0">
+          <div className="space-y-0.5 flex-1">
+            {MAIN_NAV.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onTab(item.id)}
+                className={cn(
+                  "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors border-l-2",
+                  tab === item.id
+                    ? "border-lux-cyan bg-lux-blue/15 text-lux-cyan"
+                    : "border-transparent text-lux-muted hover:text-lux-text hover:bg-white/[0.03]"
+                )}
+              >
+                <span className="w-5 text-center">{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="space-y-0.5 pt-3 mt-3 border-t border-white/[0.06]">
+            {BOTTOM_NAV.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onTab(item.id)}
+                className={cn(
+                  "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors border-l-2",
+                  tab === item.id
+                    ? "border-lux-cyan bg-lux-blue/15 text-lux-cyan"
+                    : "border-transparent text-lux-muted hover:text-lux-text hover:bg-white/[0.03]"
+                )}
+              >
+                <span className="w-5 text-center">{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
         </nav>
         <div className="p-4 border-t border-white/[0.06]">
           <button type="button" onClick={onLogout} className="text-sm text-lux-muted hover:text-lux-cyan">

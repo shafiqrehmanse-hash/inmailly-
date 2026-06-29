@@ -13,7 +13,7 @@ export default function LuxBackground() {
           `,
         }}
       />
-      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full blur-[120px] bg-lux-blue/15 animate-[pulse_18s_ease-in-out_infinite]" />
+      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full blur-[120px] bg-lux-blue/15 animate-[pulse_18s_ease-in-out_infinite] motion-reduce:animate-none" />
       <div
         className="absolute inset-0 opacity-[0.04]"
         style={{

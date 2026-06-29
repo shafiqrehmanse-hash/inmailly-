@@ -85,25 +85,29 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
   const interested = responses.filter((r) => r.status === "interested").length;
   const replied = responses.filter((r) => r.status === "replied").length;
   const hot = interested + replied;
-  const total = data.stats.total || responses.length;
-  const replyRate = total > 0 ? Math.round((hot / total) * 1000) / 10 : 0;
+  const responseTotal = data.stats.total || responses.length;
+  const proofList = (data.proofs || []).filter((p) => p.image_url);
+  const inmailsSent = data.stats.sends ?? proofList.length;
+  const teamInmails = data.stats.teamSends ?? inmailsSent;
+  const replyRate =
+    inmailsSent > 0 ? Math.round((hot / inmailsSent) * 1000) / 10 : responseTotal > 0 ? 100 : 0;
 
   const pipeline = [
-    { label: "Logged", count: total, value: 100 },
+    { label: "InMails", count: inmailsSent, value: 100 },
     {
       label: "Replied",
       count: replied,
-      value: total ? Math.round((replied / total) * 100) : 0,
+      value: inmailsSent ? Math.round((replied / inmailsSent) * 100) : 0,
     },
     {
       label: "Hot",
       count: hot,
-      value: total ? Math.round((hot / total) * 100) : 0,
+      value: inmailsSent ? Math.round((hot / inmailsSent) * 100) : 0,
     },
     {
-      label: "Interested",
-      count: interested,
-      value: total ? Math.round((interested / total) * 100) : 0,
+      label: "Responses",
+      count: responseTotal,
+      value: inmailsSent ? Math.round((responseTotal / inmailsSent) * 100) : 0,
     },
   ];
 
@@ -118,7 +122,6 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
   }));
 
   const latest = responses[0];
-  const proofList = (data.proofs || []).filter((p) => p.image_url);
 
   return {
     projectName: data.project.name,
@@ -127,13 +130,13 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
     audienceBrief: data.project.audience_brief,
     targetTitles: data.project.target_titles,
     stats: {
-      total,
-      teamResponses: data.stats.teamResponses ?? total,
+      total: responseTotal,
+      teamResponses: data.stats.teamResponses ?? responseTotal,
       interested: hot,
       replied,
       replyRate,
-      sends: data.stats.sends ?? proofList.length,
-      teamSends: data.stats.teamSends ?? data.stats.sends ?? proofList.length,
+      sends: inmailsSent,
+      teamSends: teamInmails,
     },
     responses: mappedResponses,
     pipeline,
