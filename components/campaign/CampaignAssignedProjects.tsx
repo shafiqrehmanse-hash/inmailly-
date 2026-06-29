@@ -3,6 +3,7 @@ import type { AssignedProject } from "@/lib/types";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",
+  preview: "text-amber-300 border-amber-500/30 bg-amber-500/10",
   draft: "text-lux-muted border-white/[0.12] bg-white/[0.03]",
   paused: "text-amber-400 border-amber-500/30 bg-amber-500/10",
   completed: "text-lux-cyan border-lux-cyan/30 bg-lux-cyan/10",

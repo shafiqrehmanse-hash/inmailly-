@@ -8,6 +8,63 @@ function checkKey(request: NextRequest) {
   return verifyAdminKey(key);
 }
 
+async function validateCampaignManagerIds(
+  admin: ReturnType<typeof createAdminClient>,
+  memberIds: string[]
+) {
+  if (memberIds.length === 0) return null;
+
+  const { data, error } = await admin
+    .from("team_members")
+    .select("id, name, role, is_active")
+    .in("id", memberIds);
+
+  if (error) return error.message;
+  if ((data?.length || 0) !== memberIds.length) {
+    return "One or more assignees were not found";
+  }
+
+  const invalid = (data || []).filter((m) => m.role !== "campaign_manager");
+  if (invalid.length > 0) {
+    return `${invalid.map((m) => m.name).join(", ")} must have role Campaign manager`;
+  }
+
+  const inactive = (data || []).filter((m) => !m.is_active);
+  if (inactive.length > 0) {
+    return `${inactive.map((m) => m.name).join(", ")} is inactive — activate them in Team tab first`;
+  }
+
+  return null;
+}
+
+async function syncProjectAssignments(
+  admin: ReturnType<typeof createAdminClient>,
+  projectId: string,
+  memberIds: string[]
+) {
+  const validationError = await validateCampaignManagerIds(admin, memberIds);
+  if (validationError) return validationError;
+
+  const { error: deleteError } = await admin
+    .from("project_assignments")
+    .delete()
+    .eq("project_id", projectId);
+  if (deleteError) return deleteError.message;
+
+  if (memberIds.length === 0) return null;
+
+  const { error: insertError } = await admin.from("project_assignments").insert(
+    memberIds.map((member_id) => ({
+      project_id: projectId,
+      member_id,
+      assigned_by: "Admin",
+    }))
+  );
+  if (insertError) return insertError.message;
+
+  return null;
+}
+
 type AssignmentRow = {
   id: string;
   member_id: string;
@@ -115,14 +172,10 @@ export async function POST(request: NextRequest) {
   }
 
   const ids: string[] = Array.isArray(member_ids) ? member_ids : [];
-  if (ids.length > 0) {
-    await admin.from("project_assignments").insert(
-      ids.map((member_id: string) => ({
-        project_id: project.id,
-        member_id,
-        assigned_by: "Admin",
-      }))
-    );
+  const assignError = await syncProjectAssignments(admin, project.id, ids);
+  if (assignError) {
+    await admin.from("projects").delete().eq("id", project.id);
+    return NextResponse.json({ error: assignError }, { status: 400 });
   }
 
   return NextResponse.json({ project });
@@ -187,15 +240,9 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (Array.isArray(member_ids)) {
-    await admin.from("project_assignments").delete().eq("project_id", project_id);
-    if (member_ids.length > 0) {
-      await admin.from("project_assignments").insert(
-        member_ids.map((member_id: string) => ({
-          project_id,
-          member_id,
-          assigned_by: "Admin",
-        }))
-      );
+    const assignError = await syncProjectAssignments(admin, project_id, member_ids);
+    if (assignError) {
+      return NextResponse.json({ error: assignError }, { status: 400 });
     }
   }
 

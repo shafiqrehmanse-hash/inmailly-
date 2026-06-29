@@ -81,6 +81,10 @@ export default function AdminProjectsSection({
       onToast("Select a client and enter a project name", "error");
       return;
     }
+    if (projectForm.member_ids.length === 0) {
+      onToast("Select at least one campaign manager — they won't see the project otherwise", "error");
+      return;
+    }
 
     const payload = {
       client_id: projectForm.client_id,
@@ -119,7 +123,7 @@ export default function AdminProjectsSection({
         onToast(data.error, "error");
         return;
       }
-      onToast("Project created — team sees it on their hub");
+      onToast("Project created — campaign manager will see it at /campaign/hub");
     }
 
     setProjectForm({ ...EMPTY_PROJECT });
