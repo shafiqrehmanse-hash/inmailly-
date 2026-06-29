@@ -35,10 +35,13 @@ export default function ClientDashboard({
   mode = "full",
   className = "",
   live,
+  usingDemoFill = false,
 }: {
   mode?: "hero" | "full";
   className?: string;
   live?: ClientDashboardLiveData;
+  /** Sample campaign metrics until real responses/proofs exist (client login only). */
+  usingDemoFill?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [activityIdx, setActivityIdx] = useState(0);
@@ -46,7 +49,7 @@ export default function ClientDashboard({
   const [proofLightbox, setProofLightbox] = useState<string | null>(null);
   const isHero = mode === "hero";
   const isLive = Boolean(live);
-  const isPreviewLive = isLive && live!.status === "preview";
+  const isPreviewLive = isLive && live!.status === "preview" && !usingDemoFill;
 
   useEffect(() => {
     if (isLive) return;
@@ -121,6 +124,16 @@ export default function ClientDashboard({
 
         <div className="flex-1 p-4 lg:p-5 space-y-4 min-w-0">
           {isLive ? (
+            usingDemoFill ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 border border-violet-500/25 bg-violet-500/5 px-3 py-2">
+                <span className="text-[0.65rem] text-violet-300 font-semibold uppercase tracking-wider">
+                  Sample campaign view · {live!.projectName}
+                </span>
+                <span className="text-[0.65rem] text-lux-muted">
+                  Real stats replace this when your team logs responses &amp; send proofs
+                </span>
+              </div>
+            ) : (
             <div
               className={`flex flex-wrap items-center justify-between gap-2 border px-3 py-2 ${
                 isPreviewLive
@@ -140,6 +153,7 @@ export default function ClientDashboard({
                 send proof{live!.stats.sends !== 1 ? "s" : ""}
               </span>
             </div>
+            )
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-2 border border-lux-cyan/20 bg-lux-cyan/5 px-3 py-2">
               <span className="text-[0.65rem] text-lux-cyan font-semibold uppercase tracking-wider">
@@ -170,6 +184,7 @@ export default function ClientDashboard({
               proofs={isLive ? live!.proofs : []}
               onView={setProofLightbox}
               isLive={isLive}
+              usingDemoFill={usingDemoFill}
             />
           )}
           {!isHero && tab === "campaigns" && (
@@ -320,22 +335,29 @@ function SendsProofPanel({
   proofs,
   onView,
   isLive,
+  usingDemoFill = false,
 }: {
   proofs: { id: string; image_url: string; time: string }[];
   onView: (url: string) => void;
   isLive: boolean;
+  usingDemoFill?: boolean;
 }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="text-[0.65rem] uppercase tracking-wider text-lux-muted">
-          Verified InMail sends · {proofs.length}
+          Verified InMail sends · {usingDemoFill ? "—" : proofs.length}
         </div>
         <span className="text-[0.6rem] text-lux-cyan border border-lux-cyan/25 px-2 py-0.5">
           HD proof
         </span>
       </div>
-      {!isLive ? (
+      {usingDemoFill ? (
+        <div className="border border-violet-500/20 bg-violet-500/5 p-6 text-center text-sm text-lux-muted leading-relaxed">
+          Send proof screenshots appear here once your campaign manager uploads them.
+          Overview and responses above show sample data until then.
+        </div>
+      ) : !isLive ? (
         <div className="border border-white/[0.06] bg-lux-bg2/30 p-6 text-center text-sm text-lux-muted">
           Send proofs appear on live client campaigns after your team uploads screenshots.
         </div>

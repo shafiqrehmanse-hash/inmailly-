@@ -93,7 +93,7 @@ export default function AdminClientsSection({
   async function copyPortalLink(token: string) {
     const url = `${window.location.origin}/client/p/${token}`;
     await navigator.clipboard.writeText(url);
-    onToast("Token portal link copied (no login required)");
+    onToast("Team portal link copied (internal — real data only)");
   }
 
   async function copyLoginHint() {
@@ -254,7 +254,7 @@ export default function AdminClientsSection({
                             className="text-lux-cyan hover:underline"
                             onClick={() => copyPortalLink(c.latest_project!.portal_token!)}
                           >
-                            Copy portal link
+                            Copy team portal link
                           </button>
                           <button
                             type="button"
@@ -278,8 +278,9 @@ export default function AdminClientsSection({
                         <strong className="text-lux-cyan">Self signup</strong> — client sees an empty preview until you
                         open <strong className="text-lux-text">Projects</strong>, edit their campaign (scripts,
                         audience), assign a campaign manager, and set status to{" "}
-                        <strong className="text-lux-text">Active</strong>. Same project powers{" "}
-                        <code className="text-lux-cyan/80">/client/dashboard</code> and the token portal link.
+                        <strong className="text-lux-text">Active</strong>. Clients use{" "}
+                        <code className="text-lux-cyan/80">/client/login</code> for their dashboard. Token links
+                        are for team/internal access only.
                       </p>
                     )}
                     {c.notes && (

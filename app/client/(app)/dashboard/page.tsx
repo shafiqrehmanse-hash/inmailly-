@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ClientDashboard from "@/components/client/ClientDashboard";
 import LuxBackground from "@/components/home/LuxBackground";
+import { buildClientDisplayDashboard } from "@/lib/client-dashboard-display";
 import { mapPortalToDashboard } from "@/lib/map-portal-to-dashboard";
 import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 export default function ClientDashboardPage() {
   const router = useRouter();
   const [live, setLive] = useState<ClientDashboardLiveData | null>(null);
+  const [usingDemoFill, setUsingDemoFill] = useState(false);
   const [isPreview, setIsPreview] = useState(true);
   const [clientName, setClientName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -34,14 +36,15 @@ export default function ClientDashboardPage() {
         }
         setIsPreview(Boolean(data.isPreview));
         setClientName(data.client?.name || "");
-        setLive(
-          mapPortalToDashboard({
-            project: data.project,
-            stats: data.stats,
-            responses: data.responses,
-            proofs: data.proofs,
-          })
-        );
+        const mapped = mapPortalToDashboard({
+          project: data.project,
+          stats: data.stats,
+          responses: data.responses,
+          proofs: data.proofs,
+        });
+        const { display, usingDemoFill: demo } = buildClientDisplayDashboard(mapped);
+        setLive(display);
+        setUsingDemoFill(demo);
         setLoading(false);
       })
       .catch(() => {
@@ -88,9 +91,11 @@ export default function ClientDashboardPage() {
           </Link>
           <div className="flex items-center gap-3">
             <span className="text-sm text-lux-muted hidden sm:inline">{clientName}</span>
-            <Link href="/contact" className="lux-btn-primary text-[0.75rem] py-2.5 px-5">
-              Launch campaign
-            </Link>
+            {!usingDemoFill && isPreview && (
+              <Link href="/contact" className="lux-btn-primary text-[0.75rem] py-2.5 px-5">
+                Launch campaign
+              </Link>
+            )}
             <button type="button" onClick={logout} className="text-sm text-lux-muted hover:text-lux-text">
               Sign out
             </button>
@@ -98,55 +103,32 @@ export default function ClientDashboardPage() {
         </div>
       </header>
       <main className="max-w-[1400px] mx-auto px-6 lg:px-10 py-8">
-        {isPreview && (
-          <div className="mb-6 space-y-4">
-            <div className="lux-card p-4 border-lux-cyan/25 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-[0.65rem] uppercase tracking-widest text-lux-cyan font-semibold mb-1">
-                  Preview dashboard
-                </p>
-                <p className="text-sm text-lux-muted">
-                  You&apos;re seeing the real layout. Data fills in once InMailly launches your campaign.
-                </p>
-              </div>
-              <Link href="/contact" className="lux-btn-primary text-sm px-4 py-2.5 shrink-0">
-                Book launch call →
-              </Link>
-            </div>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {[
-                {
-                  step: "1",
-                  title: "Book a call",
-                  desc: "Share your target audience and InMail script with our team.",
-                },
-                {
-                  step: "2",
-                  title: "We configure",
-                  desc: "Campaign managers get assigned and outreach starts on verified Sales Nav profiles.",
-                },
-                {
-                  step: "3",
-                  title: "Live data here",
-                  desc: "Responses, send proofs, and pipeline stats appear in this dashboard automatically.",
-                },
-              ].map((s) => (
-                <div key={s.step} className="lux-card p-4 border-white/[0.06]">
-                  <span className="text-[0.6rem] font-bold text-lux-cyan uppercase tracking-widest">
-                    Step {s.step}
-                  </span>
-                  <p className="font-bricolage font-bold text-lux-text mt-2">{s.title}</p>
-                  <p className="text-xs text-lux-muted mt-1 leading-relaxed">{s.desc}</p>
-                </div>
-              ))}
-            </div>
+        {isPreview && !usingDemoFill && (
+          <div className="mb-6 lux-card p-4 border-lux-cyan/25">
+            <p className="text-[0.65rem] uppercase tracking-widest text-lux-cyan font-semibold mb-1">
+              Preview mode
+            </p>
+            <p className="text-sm text-lux-muted">
+              Book a call to go live — your team will populate this dashboard with real campaign data.
+            </p>
+          </div>
+        )}
+        {usingDemoFill && (
+          <div className="mb-6 lux-card p-4 border-violet-500/25 bg-violet-500/5">
+            <p className="text-[0.65rem] uppercase tracking-widest text-violet-300 font-semibold mb-1">
+              Your command center
+            </p>
+            <p className="text-sm text-lux-muted leading-relaxed">
+              This is how your dashboard looks during a campaign. Sample metrics and responses are shown until
+              your outreach team logs the first real activity — then everything updates automatically.
+            </p>
           </div>
         )}
         <div className="mb-6">
           <h1 className="font-bricolage font-extrabold text-3xl text-lux-text">{live.projectName}</h1>
           <p className="text-lux-muted mt-2 text-sm capitalize">Status: {live.status}</p>
         </div>
-        <ClientDashboard mode="full" live={live} />
+        <ClientDashboard mode="full" live={live} usingDemoFill={usingDemoFill} />
       </main>
     </div>
   );

@@ -108,7 +108,7 @@ export default function ProjectClientWorkspace({
     if (!portalUrl) return;
     try {
       await navigator.clipboard.writeText(portalUrl);
-      setMsg({ text: "Client dashboard link copied!", type: "success" });
+      setMsg({ text: "Team portal link copied (internal view)", type: "success" });
     } catch {
       setMsg({ text: "Could not copy link", type: "error" });
     }
@@ -133,10 +133,10 @@ export default function ProjectClientWorkspace({
           {portalUrl && (
             <div className="flex flex-wrap gap-2">
               <Link href={portalUrl} target="_blank" className="lux-btn-primary text-sm px-4 py-2.5">
-                Preview client view ↗
+                Open team portal ↗
               </Link>
               <button type="button" onClick={copyPortalLink} className="lux-btn-ghost text-sm px-4 py-2.5">
-                Copy client link
+                Copy team link
               </button>
             </div>
           )}

@@ -158,7 +158,7 @@ export default function AdminProjectsSection({
     if (!token) return;
     const url = `${window.location.origin}/client/p/${token}`;
     await navigator.clipboard.writeText(url);
-    onToast("Token link copied — /client/p/… (share without login)");
+    onToast("Team portal link copied — internal real-data view");
   }
 
   async function copyLoginLink() {
@@ -348,7 +348,7 @@ export default function AdminProjectsSection({
                     {p.portal_token && (
                       <>
                         <Button variant="lux-ghost" size="sm" onClick={() => copyClientLink(p.portal_token)}>
-                          Copy portal link
+                          Copy team link
                         </Button>
                         <Button variant="lux-ghost" size="sm" onClick={copyLoginLink}>
                           Copy login URL
