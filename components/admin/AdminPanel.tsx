@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import LeadModal from "@/components/team/LeadModal";
+import AdminClientsSection from "@/components/admin/AdminClientsSection";
 import AdminProjectsSection from "@/components/admin/AdminProjectsSection";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import Toast, { ToastType } from "@/components/team/Toast";
@@ -121,6 +122,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
     if (tab === "links") loadLinks();
     if (tab === "team") loadMembers();
     if (tab === "projects") loadMembers();
+    if (tab === "clients") loadMembers();
     if (tab === "leads") { loadLeads(); loadMembers(); }
     if (tab === "scripts") loadScript();
     if (tab === "referrals") loadReferrals();
@@ -353,6 +355,13 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
             </table>
           </div>
         </div>
+      )}
+
+      {tab === "clients" && (
+        <AdminClientsSection
+          adminKey={adminKey}
+          onToast={(message, type) => showToast(message, type)}
+        />
       )}
 
       {tab === "projects" && (

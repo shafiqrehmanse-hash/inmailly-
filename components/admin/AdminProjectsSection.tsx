@@ -17,6 +17,7 @@ type ProjectRow = {
   inmail_script: string | null;
   followup_script: string | null;
   status: ProjectStatus;
+  portal_token: string | null;
   created_at: string;
   clients: { id: string; name: string; company_name: string | null } | null;
   assignments: { id: string; member_id: string; member: { id: string; name: string; email: string } | null }[];
@@ -49,47 +50,30 @@ export default function AdminProjectsSection({
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
+  const [clientFilter, setClientFilter] = useState("all");
   const [loading, setLoading] = useState(true);
-  const [newClient, setNewClient] = useState({ name: "", company_name: "", email: "", notes: "" });
   const [projectForm, setProjectForm] = useState({ ...EMPTY_PROJECT });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [clientsRes, projectsRes] = await Promise.all([
-      fetch(`/api/admin/clients?key=${adminKey}`),
-      fetch(`/api/admin/projects?key=${adminKey}`),
-    ]);
+    const clientsRes = await fetch(`/api/admin/clients?key=${adminKey}`);
     const clientsData = await clientsRes.json();
-    const projectsData = await projectsRes.json();
     setClients(clientsData.clients || []);
+
+    const projectsUrl =
+      clientFilter === "all"
+        ? `/api/admin/projects?key=${adminKey}`
+        : `/api/admin/projects?key=${adminKey}&clientId=${clientFilter}`;
+    const projectsRes = await fetch(projectsUrl);
+    const projectsData = await projectsRes.json();
     setProjects(projectsData.projects || []);
     setLoading(false);
-  }, [adminKey]);
+  }, [adminKey, clientFilter]);
 
   useEffect(() => {
     load();
   }, [load]);
-
-  async function createClient() {
-    if (!newClient.name.trim()) {
-      onToast("Client name is required", "error");
-      return;
-    }
-    const res = await fetch(`/api/admin/clients?key=${adminKey}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(newClient),
-    });
-    const data = await res.json();
-    if (data.error) {
-      onToast(data.error, "error");
-      return;
-    }
-    onToast("Client created");
-    setNewClient({ name: "", company_name: "", email: "", notes: "" });
-    load();
-  }
 
   async function saveProject() {
     if (!projectForm.client_id || !projectForm.name.trim()) {
@@ -122,7 +106,7 @@ export default function AdminProjectsSection({
         onToast(data.error, "error");
         return;
       }
-      onToast("Project updated — team will see changes on their hub");
+      onToast("Project updated");
     } else {
       const res = await fetch(`/api/admin/projects?key=${adminKey}`, {
         method: "POST",
@@ -134,7 +118,7 @@ export default function AdminProjectsSection({
         onToast(data.error, "error");
         return;
       }
-      onToast("Project created and assigned");
+      onToast("Project created — team sees it on their hub");
     }
 
     setProjectForm({ ...EMPTY_PROJECT });
@@ -169,45 +153,24 @@ export default function AdminProjectsSection({
     }));
   }
 
+  async function copyClientLink(token: string | null) {
+    if (!token) return;
+    const url = `${window.location.origin}/client/p/${token}`;
+    await navigator.clipboard.writeText(url);
+    onToast("Client dashboard link copied");
+  }
+
   if (loading) {
-    return <p className="text-lux-muted">Loading clients & projects…</p>;
+    return <p className="text-lux-muted">Loading projects…</p>;
   }
 
   return (
     <div className="space-y-8">
-      <section>
-        <p className="admin-section-title mb-4">New client</p>
-        <div className="lux-card p-5 grid sm:grid-cols-2 gap-3">
-          <input
-            className="lux-input"
-            placeholder="Client contact name *"
-            value={newClient.name}
-            onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-          />
-          <input
-            className="lux-input"
-            placeholder="Company name"
-            value={newClient.company_name}
-            onChange={(e) => setNewClient({ ...newClient, company_name: e.target.value })}
-          />
-          <input
-            className="lux-input"
-            placeholder="Email"
-            type="email"
-            value={newClient.email}
-            onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-          />
-          <input
-            className="lux-input"
-            placeholder="Internal notes"
-            value={newClient.notes}
-            onChange={(e) => setNewClient({ ...newClient, notes: e.target.value })}
-          />
-          <Button variant="lux" onClick={createClient} className="sm:col-span-2 w-full sm:w-auto">
-            Add client
-          </Button>
+      {clients.length === 0 && (
+        <div className="lux-card p-4 text-sm text-amber-300 border-amber-500/25">
+          Add clients first in the <strong>Clients</strong> sidebar tab, then create projects here.
         </div>
-      </section>
+      )}
 
       <section>
         <div className="flex items-center justify-between mb-4">
@@ -237,7 +200,7 @@ export default function AdminProjectsSection({
               <option value="" className="bg-lux-bg">
                 Select client *
               </option>
-              {clients.map((c) => (
+              {clients.filter((c) => c.is_active).map((c) => (
                 <option key={c.id} value={c.id} className="bg-lux-bg">
                   {c.company_name || c.name}
                 </option>
@@ -245,7 +208,7 @@ export default function AdminProjectsSection({
             </select>
             <input
               className="lux-input"
-              placeholder="Project name * (e.g. Q2 Enterprise Outreach)"
+              placeholder="Project name *"
               value={projectForm.name}
               onChange={(e) => setProjectForm({ ...projectForm, name: e.target.value })}
             />
@@ -266,7 +229,7 @@ export default function AdminProjectsSection({
 
           <textarea
             className="lux-input min-h-[90px]"
-            placeholder="Audience brief — who to target, messaging angle, do's and don'ts…"
+            placeholder="Audience brief…"
             value={projectForm.audience_brief}
             onChange={(e) => setProjectForm({ ...projectForm, audience_brief: e.target.value })}
           />
@@ -274,19 +237,19 @@ export default function AdminProjectsSection({
           <div className="grid sm:grid-cols-3 gap-3">
             <input
               className="lux-input"
-              placeholder="Target titles (VP Sales, Founder…)"
+              placeholder="Target titles"
               value={projectForm.target_titles}
               onChange={(e) => setProjectForm({ ...projectForm, target_titles: e.target.value })}
             />
             <input
               className="lux-input"
-              placeholder="Industries (SaaS, Fintech…)"
+              placeholder="Industries"
               value={projectForm.target_industries}
               onChange={(e) => setProjectForm({ ...projectForm, target_industries: e.target.value })}
             />
             <input
               className="lux-input"
-              placeholder="Regions (US, UK, EU…)"
+              placeholder="Regions"
               value={projectForm.target_regions}
               onChange={(e) => setProjectForm({ ...projectForm, target_regions: e.target.value })}
             />
@@ -295,7 +258,7 @@ export default function AdminProjectsSection({
           <div className="grid lg:grid-cols-3 gap-3">
             <textarea
               className="lux-input min-h-[100px] text-sm"
-              placeholder="Connection request script"
+              placeholder="Connection script"
               value={projectForm.connection_script}
               onChange={(e) => setProjectForm({ ...projectForm, connection_script: e.target.value })}
             />
@@ -315,7 +278,7 @@ export default function AdminProjectsSection({
 
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-lux-muted mb-2">
-              Assign team members *
+              Assign team members
             </p>
             <div className="flex flex-wrap gap-2">
               {members.filter((m) => m.is_active).map((m) => {
@@ -339,21 +302,32 @@ export default function AdminProjectsSection({
           </div>
 
           <Button variant="lux" onClick={saveProject} className="w-full sm:w-auto">
-            {editingId ? "Save project & assignments" : "Create project & notify team"}
+            {editingId ? "Save project" : "Create project"}
           </Button>
         </div>
       </section>
 
       <section>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <p className="admin-section-title">All projects</p>
-          <span className="text-xs text-lux-muted">{projects.length} total</span>
+          <select
+            className="lux-input w-auto text-sm py-2"
+            value={clientFilter}
+            onChange={(e) => setClientFilter(e.target.value)}
+          >
+            <option value="all" className="bg-lux-bg">
+              All clients
+            </option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id} className="bg-lux-bg">
+                {c.company_name || c.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="space-y-3">
           {projects.length === 0 ? (
-            <div className="lux-card p-8 text-center text-lux-muted text-sm">
-              No projects yet. Add a client above, then create your first campaign.
-            </div>
+            <div className="lux-card p-8 text-center text-lux-muted text-sm">No projects found.</div>
           ) : (
             projects.map((p) => (
               <div key={p.id} className="lux-card p-5">
@@ -364,10 +338,15 @@ export default function AdminProjectsSection({
                       {p.clients?.company_name || p.clients?.name || "Unknown client"}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[0.65rem] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-lux-cyan/30 bg-lux-cyan/10 text-lux-cyan capitalize">
                       {p.status}
                     </span>
+                    {p.portal_token && (
+                      <Button variant="lux-ghost" size="sm" onClick={() => copyClientLink(p.portal_token)}>
+                        Copy client link
+                      </Button>
+                    )}
                     <Button variant="lux-ghost" size="sm" onClick={() => startEdit(p)}>
                       Edit
                     </Button>
@@ -379,7 +358,6 @@ export default function AdminProjectsSection({
                 <div className="flex flex-wrap gap-4 text-xs text-lux-muted/80">
                   <span>{p.assignee_count} assigned</span>
                   <span>Created {formatDate(p.created_at)}</span>
-                  {p.target_titles && <span>Titles: {p.target_titles}</span>}
                 </div>
                 {p.assignments.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-3">

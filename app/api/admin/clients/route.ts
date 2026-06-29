@@ -14,14 +14,20 @@ export async function GET(request: NextRequest) {
   const admin = createAdminClient();
   const { data: clients, error } = await admin
     .from("clients")
-    .select("*, projects(count)")
+    .select("*, projects(id)")
     .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ clients: clients || [] });
+  const enriched = (clients || []).map((c) => ({
+    ...c,
+    project_count: Array.isArray(c.projects) ? c.projects.length : 0,
+    projects: undefined,
+  }));
+
+  return NextResponse.json({ clients: enriched });
 }
 
 export async function POST(request: NextRequest) {
@@ -53,4 +59,64 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ client: data });
+}
+
+export async function PATCH(request: NextRequest) {
+  if (!checkKey(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { client_id, name, company_name, email, notes, is_active } = body;
+
+  if (!client_id) {
+    return NextResponse.json({ error: "client_id is required" }, { status: 400 });
+  }
+
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (name !== undefined) patch.name = name.trim();
+  if (company_name !== undefined) patch.company_name = company_name?.trim() || null;
+  if (email !== undefined) patch.email = email?.trim() || null;
+  if (notes !== undefined) patch.notes = notes?.trim() || null;
+  if (is_active !== undefined) patch.is_active = is_active;
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("clients").update(patch).eq("id", client_id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  return NextResponse.json({ success: true });
+}
+
+export async function DELETE(request: NextRequest) {
+  if (!checkKey(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const clientId = request.nextUrl.searchParams.get("clientId");
+  if (!clientId) {
+    return NextResponse.json({ error: "clientId is required" }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("projects")
+    .select("*", { count: "exact", head: true })
+    .eq("client_id", clientId);
+
+  if ((count || 0) > 0) {
+    return NextResponse.json(
+      { error: "Remove or reassign all projects before deleting this client." },
+      { status: 400 }
+    );
+  }
+
+  const { error } = await admin.from("clients").delete().eq("id", clientId);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  return NextResponse.json({ success: true });
 }

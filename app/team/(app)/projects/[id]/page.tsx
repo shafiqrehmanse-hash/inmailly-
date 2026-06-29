@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ProjectClientWorkspace from "@/components/team/ProjectClientWorkspace";
 import { getCurrentMember } from "@/lib/team";
 import { getMemberProject } from "@/lib/team-projects";
 
@@ -19,7 +20,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
   ].filter((s) => s.text);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <Link href="/team/hub" className="text-sm text-lux-muted hover:text-lux-cyan">
           ← Back to home
@@ -30,6 +31,8 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
           {project.status}
         </span>
       </div>
+
+      <ProjectClientWorkspace project={project} memberId={member.id} />
 
       <div className="lux-card p-5 sm:p-6 space-y-4">
         <h2 className="font-bricolage font-bold text-lux-text">Target audience</h2>
@@ -77,19 +80,13 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
       )}
 
       <div className="lux-card p-5 sm:p-6">
-        <h2 className="font-bricolage font-bold text-lux-text mb-2">Your workflow</h2>
-        <p className="text-sm text-lux-muted mb-4 leading-relaxed">
-          Run outreach using the scripts above. When someone responds, log them as a lead — in Phase 2
-          responses will sync live to the client dashboard.
+        <h2 className="font-bricolage font-bold text-lux-text mb-2">Outreach links</h2>
+        <p className="text-sm text-lux-muted mb-4">
+          Claim profile links from the shared pool, run outreach, then log responses above — not in My Leads.
         </p>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/team/links" className="lux-btn-primary inline-flex items-center px-5 py-2.5 text-sm">
-            Work links →
-          </Link>
-          <Link href="/team/leads" className="lux-btn-ghost inline-flex items-center px-5 py-2.5 text-sm">
-            Log a lead →
-          </Link>
-        </div>
+        <Link href="/team/links" className="lux-btn-primary inline-flex items-center px-5 py-2.5 text-sm">
+          Work links →
+        </Link>
       </div>
     </div>
   );

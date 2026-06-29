@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { id: "overview", label: "Overview", icon: "◫" },
   { id: "links", label: "Links", icon: "⛓" },
+  { id: "clients", label: "Clients", icon: "◇" },
   { id: "projects", label: "Projects", icon: "◎" },
   { id: "team", label: "Team", icon: "👥" },
   { id: "leads", label: "Leads", icon: "📋" },

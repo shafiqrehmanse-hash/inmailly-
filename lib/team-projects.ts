@@ -46,6 +46,7 @@ export async function getMemberAssignedProjects(memberId: string): Promise<Assig
         inmail_script,
         followup_script,
         status,
+        portal_token,
         created_at,
         updated_at,
         clients (

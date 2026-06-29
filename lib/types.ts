@@ -34,6 +34,8 @@ export type OutreachLink = {
 export type Lead = {
   id: string;
   member_id: string;
+  project_id: string | null;
+  visible_to_client: boolean;
   name: string;
   profile_url: string | null;
   company: string | null;
@@ -113,6 +115,7 @@ export type Project = {
   inmail_script: string | null;
   followup_script: string | null;
   status: ProjectStatus;
+  portal_token: string | null;
   created_at: string;
   updated_at: string;
 };

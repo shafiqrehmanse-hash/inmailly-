@@ -40,3 +40,7 @@ export function truncateUrl(url: string, max = 48) {
   const display = url.replace(/^https?:\/\//, "");
   return display.length > max ? display.slice(0, max) + "…" : display;
 }
+
+export function randomToken() {
+  return crypto.randomUUID().replace(/-/g, "");
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
+import { randomToken } from "@/lib/utils";
 
 function checkKey(request: NextRequest) {
   const key = request.headers.get("x-admin-key") || request.nextUrl.searchParams.get("key");
@@ -103,6 +104,7 @@ export async function POST(request: NextRequest) {
       inmail_script: inmail_script?.trim() || null,
       followup_script: followup_script?.trim() || null,
       status: status || "active",
+      portal_token: randomToken(),
     })
     .select()
     .single();

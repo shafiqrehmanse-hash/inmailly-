@@ -61,26 +61,35 @@ function LeadsWorkspaceInner() {
 
     const today = new Date().toISOString().slice(0, 10);
     const [allLeads, todayC, intC, repC, closedC] = await Promise.all([
-      supabase.from("leads").select("*").eq("member_id", m.id).order("created_at", { ascending: false }),
+      supabase
+        .from("leads")
+        .select("*")
+        .eq("member_id", m.id)
+        .is("project_id", null)
+        .order("created_at", { ascending: false }),
       supabase
         .from("leads")
         .select("*", { count: "exact", head: true })
         .eq("member_id", m.id)
+        .is("project_id", null)
         .gte("created_at", `${today}T00:00:00`),
       supabase
         .from("leads")
         .select("*", { count: "exact", head: true })
         .eq("member_id", m.id)
+        .is("project_id", null)
         .eq("status", "interested"),
       supabase
         .from("leads")
         .select("*", { count: "exact", head: true })
         .eq("member_id", m.id)
+        .is("project_id", null)
         .eq("status", "replied"),
       supabase
         .from("leads")
         .select("*", { count: "exact", head: true })
         .eq("member_id", m.id)
+        .is("project_id", null)
         .eq("deal_closed", true),
     ]);
 
@@ -139,6 +148,8 @@ function LeadsWorkspaceInner() {
     const name = `${form.first_name.trim()} ${form.last_name.trim()}`;
     const { error } = await supabase.from("leads").insert({
       member_id: member.id,
+      project_id: null,
+      visible_to_client: false,
       name,
       profile_url: form.profile_url || null,
       email: form.email || null,
@@ -175,13 +186,13 @@ function LeadsWorkspaceInner() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">My Leads</h1>
+        <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">My Marketing Leads</h1>
         <p className="text-[0.8rem] text-lux-muted mt-1">
-          Log leads when someone responds — claim links from{" "}
-          <Link href="/team/links" className="text-lux-cyan font-semibold hover:underline">
-            Work Links
-          </Link>
-          .
+          Your personal outreach pool — separate from client projects. For client work, open{" "}
+          <Link href="/team/hub" className="text-lux-cyan font-semibold hover:underline">
+            My Projects
+          </Link>{" "}
+          and log responses there.
         </p>
       </div>
 

@@ -33,6 +33,7 @@ export default function ResponsesPage() {
       .from("leads")
       .select("*")
       .eq("member_id", m.id)
+      .is("project_id", null)
       .in("status", ["replied", "interested"])
       .order("updated_at", { ascending: false });
 
@@ -72,7 +73,7 @@ export default function ResponsesPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">💬 Responses</h1>
-        <p className="text-lux-muted text-sm mt-1">Leads who replied or showed interest</p>
+        <p className="text-lux-muted text-sm mt-1">Your marketing leads who replied — client project responses are on each project page.</p>
       </div>
 
       <div className="space-y-3">
