@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentClient } from "@/lib/client-auth-server";
+import { ensureClientHasProject } from "@/lib/ensure-client-project";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createServerSupabase } from "@/lib/supabase/server";
 
 export async function GET() {
   const client = await getCurrentClient();
@@ -9,20 +9,10 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = createServerSupabase();
   const admin = createAdminClient();
-
-  const { data: projects } = await supabase
-    .from("projects")
-    .select(
-      "id, name, status, audience_brief, target_titles, portal_token, created_at, clients ( id, name, company_name )"
-    )
-    .eq("client_id", client.id)
-    .order("created_at", { ascending: false });
-
-  const project = projects?.[0];
+  const project = await ensureClientHasProject(admin, client);
   if (!project) {
-    return NextResponse.json({ error: "No project found" }, { status: 404 });
+    return NextResponse.json({ error: "Could not load your project. Please try again." }, { status: 500 });
   }
 
   const { data: responses } = await admin

@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { notifyAdminClientSignup, sendClientVerificationEmail } from "@/lib/email";
 import { getSiteUrl } from "@/lib/site-url";
+import { ensureClientHasProject } from "@/lib/ensure-client-project";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { randomToken } from "@/lib/utils";
 
 async function createClientProfile(
   admin: ReturnType<typeof createAdminClient>,
@@ -56,26 +56,15 @@ async function createClientProfile(
     clientId = client.id;
   }
 
-  const { data: existingProject } = await admin
-    .from("projects")
-    .select("id")
-    .eq("client_id", clientId!)
-    .maybeSingle();
-
-  if (!existingProject) {
-    const projectName = companyName ? `${companyName} Campaign` : `${name.trim().split(" ")[0]}'s Campaign`;
-    const { error: projectError } = await admin.from("projects").insert({
-      client_id: clientId!,
-      name: projectName,
-      status: "preview",
-      audience_brief:
-        "Your preview dashboard — book a call with InMailly to launch a live campaign with your audience and scripts.",
-      portal_token: randomToken(),
-    });
-    if (projectError) {
-      if (!orphan) await admin.from("clients").delete().eq("id", clientId!);
-      return { error: projectError.message };
-    }
+  const project = await ensureClientHasProject(admin, {
+    id: clientId!,
+    name: name.trim(),
+    email: normalizedEmail,
+    company_name: companyName,
+  });
+  if (!project) {
+    if (!orphan) await admin.from("clients").delete().eq("id", clientId!);
+    return { error: "Failed to create preview project" };
   }
 
   return { ok: true as const };
