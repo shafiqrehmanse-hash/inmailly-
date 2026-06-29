@@ -1,0 +1,86 @@
+export function normalizeUrl(url: string): string {
+  url = url.trim();
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+  return url.replace(/\/+$/, "");
+}
+
+function toBase64Slice(str: string): string {
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(str).toString("base64").slice(0, 32);
+  }
+  return btoa(str).slice(0, 32);
+}
+
+export function urlKey(url: string): string {
+  const u = normalizeUrl(url).toLowerCase();
+  const liMatch = u.match(/linkedin\.com\/in\/([^/?#]+)/i);
+  if (liMatch) return "li:" + liMatch[1];
+  return "url:" + toBase64Slice(u);
+}
+
+export function smartLabel(url: string): string {
+  const u = normalizeUrl(url);
+  const liMatch = u.match(/linkedin\.com\/in\/([^/?#]+)/i);
+  if (liMatch)
+    return liMatch[1]
+      .replace(/[-_]/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  if (/linkedin\.com\/sales/i.test(u)) return "Sales Navigator lead";
+  try {
+    const host = new URL(u).hostname.replace("www.", "");
+    return host.charAt(0).toUpperCase() + host.slice(1);
+  } catch {
+    return "Link";
+  }
+}
+
+export function smartCategory(
+  url: string
+): "linkedin" | "salesnav" | "email" | "general" {
+  const u = url.toLowerCase();
+  if (u.includes("linkedin.com/sales")) return "salesnav";
+  if (u.includes("linkedin.com")) return "linkedin";
+  if (u.includes("mailto:") || u.includes("@")) return "email";
+  return "general";
+}
+
+export function aiHint(category: string): string {
+  if (category === "salesnav")
+    return "Open in Sales Navigator → send InMail → log response as a lead when they reply.";
+  if (category === "linkedin")
+    return "View profile → send personalized connect message → mark Used once done → add as Lead if they respond.";
+  return "Open link → complete outreach step → mark Used so admin can track progress.";
+}
+
+export function parseLinksFromPaste(paste: string): { url: string; key: string }[] {
+  const lines = paste.split(/\r?\n/);
+  const seen = new Set<string>();
+  const results: { url: string; key: string }[] = [];
+  for (const line of lines) {
+    const match = line.match(/https?:\/\/[^\s]+/i);
+    if (!match) continue;
+    try {
+      const url = normalizeUrl(match[0]);
+      const key = urlKey(url);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      results.push({ url, key });
+    } catch {
+      continue;
+    }
+  }
+  return results;
+}
+
+export function categoryIcon(category: string) {
+  switch (category) {
+    case "salesnav":
+      return "🎯";
+    case "linkedin":
+      return "💼";
+    case "email":
+      return "✉";
+    default:
+      return "🔗";
+  }
+}

@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>InMailly — LinkedIn Outreach at Scale</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet"/>
+<style>
+/* ── RESET ─────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:    #ffffff;
+  --off:      #f7f8fc;
+  --off2:     #f0f2f8;
+  --ink:      #0f0f1a;
+  --ink2:     #1e1f2e;
+  --mid:      #4b5268;
+  --dim:      #8892a4;
+  --dimmer:   #b0b8c8;
+  --line:     #e4e7ef;
+  --line2:    #d0d5e4;
+  --ind:      #4338ca;
+  --ind2:     #6366f1;
+  --ind-light:#eef0ff;
+  --sky:      #0ea5e9;
+  --sky-light:#e0f2fe;
+  --green:    #059669;
+  --green-l:  #d1fae5;
+  --red:      #dc2626;
+  --red-l:    #fee2e2;
+  --amber:    #d97706;
+  --r:        12px;
+  --r2:       20px;
+  --r3:       28px;
+  --shadow:   0 1px 3px rgba(15,15,26,.06), 0 4px 16px rgba(15,15,26,.06);
+  --shadow2:  0 2px 8px rgba(15,15,26,.08), 0 16px 48px rgba(15,15,26,.1);
+  --shadow3:  0 4px 24px rgba(67,56,202,.12), 0 1px 4px rgba(67,56,202,.08);
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+
+/* ── NAV ────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:64px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;
+  background:rgba(255,255,255,.88);
+  backdrop-filter:blur(20px) saturate(1.8);
+  border-bottom:1px solid var(--line);
+}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-mark{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,var(--ind),var(--ind2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+  font-size:.9rem;color:#fff;
+  box-shadow:0 2px 8px rgba(67,56,202,.3);
+}
+.nav-name{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+  font-size:1.2rem;letter-spacing:-.03em;color:var(--ink);
+}
+.nav-links{display:flex;gap:4px;list-style:none}
+.nav-links a{
+  padding:6px 14px;border-radius:8px;font-size:.83rem;
+  font-weight:500;color:var(--mid);transition:all .15s;
+}
+.nav-links a:hover{color:var(--ink);background:var(--off)}
+.nav-actions{display:flex;align-items:center;gap:10px}
+.btn-ghost{
+  padding:8px 18px;border-radius:9px;font-size:.82rem;font-weight:600;
+  color:var(--mid);border:1.5px solid var(--line2);background:transparent;
+  cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.btn-ghost:hover{border-color:var(--ind);color:var(--ind);background:var(--ind-light)}
+.btn-pri{
+  padding:9px 20px;border-radius:9px;font-size:.82rem;font-weight:700;
+  color:#fff;background:var(--ind);border:none;cursor:pointer;
+  font-family:inherit;
+  box-shadow:0 2px 8px rgba(67,56,202,.25);
+  transition:all .2s;
+}
+.btn-pri:hover{background:var(--ind2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(67,56,202,.35)}
+
+/* ── HERO ───────────────────────────────────────── */
+.hero{
+  padding:140px 48px 80px;
+  text-align:center;
+  background:linear-gradient(180deg, #f7f8fc 0%, #ffffff 100%);
+  position:relative;
+  overflow:hidden;
+}
+/* subtle grid lines */
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:40px 40px;
+  opacity:.55;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 100%);
+}
+.hero-inner{position:relative;z-index:1}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:5px 14px 5px 8px;
+  border-radius:50px;
+  background:var(--ind-light);
+  border:1.5px solid rgba(67,56,202,.2);
+  font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ind);margin-bottom:28px;
+}
+.badge-dot{
+  width:18px;height:18px;border-radius:50%;
+  background:rgba(67,56,202,.15);
+  display:flex;align-items:center;justify-content:center;
+}
+.badge-dot::after{
+  content:'';width:7px;height:7px;border-radius:50%;
+  background:var(--ind);
+  animation:pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
+
+.hero-h1{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:800;
+  font-size:clamp(3rem,7vw,5.6rem);
+  line-height:1.04;
+  letter-spacing:-.04em;
+  color:var(--ink);
+  max-width:860px;margin:0 auto 8px;
+}
+.hero-h1 em{
+  font-style:normal;
+  background:linear-gradient(90deg, var(--ind) 0%, var(--sky) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero-sub{
+  font-size:1.05rem;color:var(--mid);line-height:1.72;
+  max-width:520px;margin:22px auto 36px;font-weight:400;
+}
+.hero-actions{
+  display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
+  margin-bottom:60px;
+}
+.btn-hero{
+  padding:14px 30px;border-radius:12px;font-size:.95rem;
+  font-weight:700;font-family:inherit;cursor:pointer;
+  transition:all .2s;display:inline-flex;align-items:center;gap:8px;
+}
+.btn-hero-pri{
+  background:var(--ind);color:#fff;border:none;
+  box-shadow:0 4px 16px rgba(67,56,202,.3);
+}
+.btn-hero-pri:hover{background:var(--ind2);transform:translateY(-2px);box-shadow:0 8px 28px rgba(67,56,202,.4)}
+.btn-hero-sec{
+  background:var(--white);color:var(--mid);
+  border:1.5px solid var(--line2);
+}
+.btn-hero-sec:hover{border-color:var(--ind);color:var(--ind);background:var(--ind-light)}
+
+/* ── COUNTER STRIP ──────────────────────────────── */
+.counter-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  max-width:760px;margin:0 auto;
+  background:var(--white);
+  border:1.5px solid var(--line);
+  border-radius:var(--r2);
+  box-shadow:var(--shadow2);
+  overflow:hidden;
+}
+.cs-item{
+  padding:28px 24px;text-align:center;
+  position:relative;
+}
+.cs-item+.cs-item{border-left:1px solid var(--line)}
+.cs-label{
+  font-size:.65rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--dimmer);margin-bottom:10px;
+}
+.cs-value{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:800;font-size:2.2rem;letter-spacing:-.03em;
+  color:var(--ind);line-height:1;
+}
+.cs-sub{font-size:.72rem;color:var(--dimmer);margin-top:8px}
+.cs-live{
+  position:absolute;top:10px;right:12px;
+  display:flex;align-items:center;gap:4px;
+  font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green);
+}
+.cs-live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+
+/* ── VS SECTION (NEWSPAPER STYLE) ──────────────── */
+.vs-section{
+  padding:80px 48px;
+  background:var(--white);
+}
+.vs-wrap{max-width:900px;margin:0 auto}
+.vs-head{text-align:center;margin-bottom:48px}
+.vs-head-kicker{
+  font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--ind);margin-bottom:12px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.vs-head-kicker::before,.vs-head-kicker::after{content:'';flex:0 0 24px;height:1px;background:var(--ind)}
+.vs-head h2{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+  font-size:clamp(1.8rem,4vw,2.8rem);letter-spacing:-.04em;color:var(--ink);
+}
+
+.vs-table{
+  border:1.5px solid var(--line2);border-radius:var(--r2);
+  overflow:hidden;box-shadow:var(--shadow);
+}
+.vs-table-head{
+  display:grid;grid-template-columns:2fr 1.5fr 1.5fr;
+  background:var(--off);
+  border-bottom:1.5px solid var(--line2);
+}
+.vs-th{
+  padding:14px 24px;font-size:.72rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.08em;color:var(--dim);
+}
+.vs-th:nth-child(2){
+  border-left:1px solid var(--line2);color:var(--red);
+  background:rgba(220,38,38,.03);
+}
+.vs-th:nth-child(3){
+  border-left:1px solid var(--line2);color:var(--ind);
+  background:rgba(67,56,202,.04);
+}
+.vs-row{
+  display:grid;grid-template-columns:2fr 1.5fr 1.5fr;
+  border-bottom:1px solid var(--line);
+}
+.vs-row:last-child{border-bottom:none}
+.vs-row:hover{background:var(--off)}
+.vs-cell{padding:16px 24px;font-size:.88rem;display:flex;align-items:center}
+.vs-cell-label{font-weight:500;color:var(--mid)}
+.vs-cell:nth-child(2){
+  border-left:1px solid var(--line);
+  background:rgba(220,38,38,.02);
+  color:var(--red);font-weight:700;
+  font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;
+}
+.vs-cell:nth-child(3){
+  border-left:1px solid var(--line);
+  background:rgba(67,56,202,.02);
+  color:var(--ind);font-weight:700;
+  font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;
+}
+.vs-verdict-row{
+  display:grid;grid-template-columns:2fr 3fr;
+  background:linear-gradient(90deg,rgba(67,56,202,.04),rgba(14,165,233,.04));
+  border-top:1.5px solid rgba(67,56,202,.15);
+}
+.vs-verdict-cell{padding:16px 24px;font-size:.85rem;color:var(--ind);font-weight:700;display:flex;align-items:center;gap:8px}
+.vs-verdict-cell:first-child{color:var(--mid);font-weight:500;border-right:1px solid var(--line)}
+
+/* ── PRICING ────────────────────────────────────── */
+.pricing-section{padding:100px 48px;background:var(--off)}
+.section-head{max-width:1100px;margin:0 auto 56px}
+.s-kicker{
+  font-size:.65rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--ind);margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.s-kicker::before{content:'';width:20px;height:2px;background:var(--ind);border-radius:1px}
+.s-title{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+  font-size:clamp(1.9rem,4vw,2.9rem);letter-spacing:-.04em;
+  color:var(--ink);line-height:1.1;margin-bottom:14px;
+}
+.s-sub{font-size:.95rem;color:var(--mid);line-height:1.7;max-width:500px}
+
+.pricing-grid{
+  max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:16px;
+}
+.pc{
+  background:var(--white);border:1.5px solid var(--line);
+  border-radius:var(--r2);padding:30px 24px;
+  display:flex;flex-direction:column;
+  position:relative;transition:all .22s;
+}
+.pc:hover{border-color:var(--ind);box-shadow:var(--shadow3);transform:translateY(-3px)}
+.pc.featured{
+  border-color:var(--ind);
+  background:var(--white);
+  box-shadow:var(--shadow3);
+}
+.pc-pop{
+  position:absolute;top:-1px;left:50%;transform:translate(-50%,-50%);
+  background:var(--ind);color:#fff;
+  font-size:.62rem;font-weight:800;padding:5px 14px;
+  border-radius:50px;letter-spacing:.06em;text-transform:uppercase;
+  white-space:nowrap;
+}
+.pc-tier{
+  font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--dimmer);margin-bottom:18px;
+}
+.pc-vol{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+  font-size:1.5rem;letter-spacing:-.02em;color:var(--ind);margin-bottom:2px;
+}
+.pc-price-row{display:flex;align-items:flex-end;gap:3px;margin:10px 0 4px}
+.pc-curr{font-size:.9rem;font-weight:700;color:var(--dim);line-height:2.1}
+.pc-amt{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+  font-size:2.4rem;letter-spacing:-.04em;color:var(--ink);line-height:1;
+}
+.pc-per{font-size:.72rem;color:var(--dimmer);margin-bottom:24px}
+.pc-div{height:1px;background:var(--line);margin-bottom:20px}
+.pc-feats{
+  list-style:none;display:flex;flex-direction:column;gap:10px;
+  font-size:.8rem;color:var(--mid);flex:1;margin-bottom:24px;
+}
+.pc-feats li{display:flex;align-items:flex-start;gap:9px;line-height:1.45}
+.pc-feats li::before{
+  content:'';flex-shrink:0;margin-top:3px;
+  width:13px;height:13px;border-radius:50%;
+  background:var(--green-l);border:1.5px solid rgba(5,150,105,.25);
+  background-image:url("data:image/svg+xml,%3Csvg width='7' height='5' viewBox='0 0 7 5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 2.5l1.5 1.5L6 1' stroke='%23059669' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:center;
+}
+.pc-btn{
+  display:block;padding:11px;border-radius:10px;text-align:center;
+  font-size:.82rem;font-weight:700;font-family:inherit;cursor:pointer;
+  border:1.5px solid var(--line2);color:var(--mid);background:transparent;
+  transition:all .15s;
+}
+.pc-btn:hover{border-color:var(--ind);color:var(--ind);background:var(--ind-light)}
+.pc.featured .pc-btn{
+  background:var(--ind);color:#fff;border-color:var(--ind);
+  box-shadow:0 4px 14px rgba(67,56,202,.3);
+}
+.pc.featured .pc-btn:hover{background:var(--ind2);box-shadow:0 6px 20px rgba(67,56,202,.4);transform:translateY(-1px)}
+
+/* ── FEATURES ───────────────────────────────────── */
+.features-section{padding:100px 48px;background:var(--white)}
+.feat-grid{
+  max-width:1100px;margin:56px auto 0;
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:16px;
+}
+.fc{
+  background:var(--white);border:1.5px solid var(--line);
+  border-radius:var(--r2);padding:32px 28px;
+  transition:all .2s;
+}
+.fc:hover{border-color:rgba(67,56,202,.3);box-shadow:var(--shadow3);transform:translateY(-2px)}
+.fc-icon{
+  width:48px;height:48px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.25rem;margin-bottom:18px;
+  background:var(--ind-light);
+}
+.fc-title{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700;font-size:1.05rem;letter-spacing:-.02em;
+  color:var(--ink);margin-bottom:10px;
+}
+.fc-desc{font-size:.82rem;color:var(--mid);line-height:1.68}
+
+/* ── HOW IT WORKS ───────────────────────────────── */
+.how-section{padding:100px 48px;background:var(--off)}
+.steps{
+  max-width:1000px;margin:60px auto 0;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  position:relative;gap:24px;
+}
+.steps::before{
+  content:'';position:absolute;
+  top:27px;left:calc(12.5% + 8px);right:calc(12.5% + 8px);
+  height:1.5px;
+  background:linear-gradient(90deg,var(--ind),var(--sky));
+  z-index:0;opacity:.3;
+}
+.step{text-align:center;position:relative;z-index:1}
+.step-n{
+  width:56px;height:56px;border-radius:50%;
+  border:2px solid var(--line2);background:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 20px;
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:800;font-size:1.1rem;color:var(--ind);
+  box-shadow:0 0 0 6px rgba(67,56,202,.06),0 0 0 12px rgba(67,56,202,.03);
+}
+.step-t{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-weight:700;font-size:.93rem;letter-spacing:-.02em;
+  color:var(--ink);margin-bottom:9px;
+}
+.step-d{font-size:.78rem;color:var(--mid);line-height:1.6}
+
+/* ── DASHBOARD PREVIEW ──────────────────────────── */
+.dash-section{padding:100px 48px;background:var(--white)}
+.browser{
+  max-width:1040px;margin:56px auto 0;
+  border-radius:var(--r3);overflow:hidden;
+  border:1.5px solid var(--line2);
+  box-shadow:0 32px 80px rgba(15,15,26,.12),0 8px 24px rgba(15,15,26,.06);
+}
+.browser-bar{
+  background:var(--off);border-bottom:1.5px solid var(--line);
+  padding:12px 20px;display:flex;align-items:center;gap:12px;
+}
+.b-dots{display:flex;gap:7px}
+.b-dot{width:11px;height:11px;border-radius:50%}
+.b-url{
+  flex:1;margin:0 12px;
+  background:var(--white);border:1px solid var(--line);
+  border-radius:7px;padding:5px 14px;
+  font-size:.7rem;color:var(--dim);
+  display:flex;align-items:center;gap:7px;
+}
+.b-lock{font-size:.65rem;color:var(--green)}
+.dash-body{display:grid;grid-template-columns:230px 1fr;min-height:480px}
+/* sidebar */
+.d-sb{
+  background:var(--ink2);border-right:1px solid rgba(255,255,255,.07);
+  padding:20px 0;display:flex;flex-direction:column;
+}
+.d-sb-logo{padding:0 18px 18px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:12px}
+.d-sb-name{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:.95rem;color:#fff}
+.d-sb-tag{font-size:.58rem;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+.d-sb-grp{padding:0 10px;margin-bottom:2px}
+.d-sb-grp-l{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.2);padding:10px 10px 6px}
+.d-sb-a{
+  display:flex;align-items:center;gap:9px;padding:9px 10px;
+  border-radius:9px;font-size:.78rem;color:rgba(255,255,255,.4);cursor:pointer;
+}
+.d-sb-a.on{background:rgba(99,102,241,.2);color:#fff}
+.d-sb-ic{width:18px;text-align:center}
+.d-sb-badge{
+  margin-left:auto;background:rgba(99,102,241,.3);
+  color:#a5b4fc;font-size:.58rem;font-weight:700;
+  padding:2px 7px;border-radius:50px;
+}
+.d-sb-user{
+  margin-top:auto;padding:14px 18px 0;
+  border-top:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;gap:10px;
+}
+.d-avatar{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--ind),var(--sky));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:800;color:#fff;
+}
+.d-uname{font-size:.75rem;color:rgba(255,255,255,.6)}
+.d-urole{font-size:.58rem;color:rgba(255,255,255,.3)}
+/* main */
+.d-main{padding:24px;background:var(--off);overflow:hidden}
+.d-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.d-title{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.1rem;letter-spacing:-.02em;color:var(--ink)}
+.d-sub{font-size:.72rem;color:var(--dim);margin-top:3px}
+.d-hact{display:flex;gap:8px}
+.d-btn{
+  padding:7px 14px;border-radius:8px;font-size:.72rem;font-weight:700;
+  border:1.5px solid var(--line2);color:var(--mid);background:var(--white);
+  cursor:pointer;font-family:inherit;
+}
+.d-btn.pri{background:var(--ind);border-color:var(--ind);color:#fff}
+.d-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.d-stat{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 12px;text-align:center}
+.d-sv{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.35rem;color:var(--ind)}
+.d-sl{font-size:.58rem;color:var(--dimmer);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.d-tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:1.5px solid var(--line)}
+.d-tab{
+  padding:7px 16px;font-size:.72rem;font-weight:600;
+  color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;
+}
+.d-tab.on{color:var(--ind);border-bottom-color:var(--ind)}
+.d-links{display:flex;flex-direction:column;gap:8px}
+.d-lrow{
+  background:var(--white);border:1.5px solid var(--line);border-radius:10px;
+  padding:12px 14px;display:flex;align-items:center;gap:12px;font-size:.75rem;
+  transition:border-color .15s;
+}
+.d-lrow:hover{border-color:var(--ind)}
+.d-lcat{font-size:.7rem;opacity:.5}
+.d-lurl{flex:1;color:var(--sky);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.d-lbadge{padding:3px 9px;border-radius:50px;font-size:.6rem;font-weight:700;flex-shrink:0}
+.d-lbadge.av{background:var(--green-l);color:var(--green)}
+.d-lbadge.cl{background:#fef3c7;color:var(--amber)}
+.d-lbadge.ud{background:var(--off2);color:var(--dimmer)}
+.d-lbtn{
+  padding:5px 11px;border-radius:7px;font-size:.65rem;font-weight:700;
+  background:var(--ind-light);border:1.5px solid rgba(67,56,202,.2);
+  color:var(--ind);cursor:pointer;font-family:inherit;flex-shrink:0;
+}
+
+/* ── SOCIAL PROOF ───────────────────────────────── */
+.testi-section{padding:100px 48px;background:var(--off)}
+.testi-grid{
+  max-width:1100px;margin:56px auto 0;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+}
+.tc{
+  background:var(--white);border:1.5px solid var(--line);
+  border-radius:var(--r2);padding:30px;
+  transition:all .2s;
+}
+.tc:hover{border-color:rgba(67,56,202,.25);box-shadow:var(--shadow2);transform:translateY(-2px)}
+.tc-stars{color:#f59e0b;font-size:.8rem;letter-spacing:2px;margin-bottom:14px}
+.tc-quote{
+  font-size:.88rem;line-height:1.72;color:var(--mid);
+  margin-bottom:20px;position:relative;padding-top:20px;
+}
+.tc-quote::before{
+  content:'"';position:absolute;top:-8px;left:-4px;
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-size:3rem;font-weight:800;color:var(--ind-light);
+  line-height:1;
+}
+.tc-author{display:flex;align-items:center;gap:12px}
+.tc-av{
+  width:40px;height:40px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;font-weight:800;color:#fff;flex-shrink:0;
+}
+.tc-name{font-size:.83rem;font-weight:700;color:var(--ink)}
+.tc-role{font-size:.72rem;color:var(--dimmer);margin-top:2px}
+
+/* ── CTA ────────────────────────────────────────── */
+.cta-section{padding:100px 48px;background:var(--white)}
+.cta-box{
+  max-width:780px;margin:0 auto;
+  background:linear-gradient(135deg,var(--ind) 0%,var(--ind2) 50%,#6d28d9 100%);
+  border-radius:var(--r3);padding:72px 64px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.cta-box::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+.cta-box::after{
+  content:'';position:absolute;
+  bottom:-80px;right:-80px;width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.12),transparent 70%);
+  pointer-events:none;
+}
+.cta-inner{position:relative;z-index:1}
+.cta-tag{
+  display:inline-block;padding:5px 14px;border-radius:50px;
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+  font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(255,255,255,.9);margin-bottom:22px;
+}
+.cta-h2{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+  font-size:clamp(1.9rem,4vw,3rem);letter-spacing:-.04em;
+  color:#fff;margin-bottom:14px;line-height:1.1;
+}
+.cta-sub{font-size:.92rem;color:rgba(255,255,255,.72);line-height:1.7;max-width:440px;margin:0 auto 36px}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-cta-pri{
+  padding:14px 30px;border-radius:12px;
+  font-size:.92rem;font-weight:700;font-family:inherit;cursor:pointer;
+  background:#fff;color:var(--ind);border:none;
+  box-shadow:0 4px 16px rgba(0,0,0,.15);transition:all .2s;
+}
+.btn-cta-pri:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.2)}
+.btn-cta-sec{
+  padding:14px 28px;border-radius:12px;
+  font-size:.92rem;font-weight:600;font-family:inherit;cursor:pointer;
+  background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);
+  border:1.5px solid rgba(255,255,255,.25);transition:all .2s;
+}
+.btn-cta-sec:hover{background:rgba(255,255,255,.18)}
+
+/* ── FOOTER ─────────────────────────────────────── */
+footer{
+  background:var(--ink);
+  padding:40px 48px;
+}
+.ft{
+  max-width:1100px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;
+}
+.ft-logo{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.1rem;
+  color:#fff;
+}
+.ft-links{display:flex;gap:24px;list-style:none}
+.ft-links a{font-size:.78rem;color:rgba(255,255,255,.4);transition:color .15s}
+.ft-links a:hover{color:#fff}
+.ft-copy{font-size:.72rem;color:rgba(255,255,255,.3)}
+
+/* ── RESPONSIVE ─────────────────────────────────── */
+@media(max-width:1000px){
+  .pricing-grid{grid-template-columns:repeat(2,1fr)}
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .steps::before{display:none}
+  .testi-grid{grid-template-columns:1fr}
+  .feat-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:720px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .hero,.vs-section,.pricing-section,.features-section,.how-section,.dash-section,.testi-section,.cta-section{padding:60px 20px}
+  .counter-strip{grid-template-columns:1fr}
+  .cs-item+.cs-item{border-left:none;border-top:1px solid var(--line)}
+  .vs-table-head,.vs-row,.vs-verdict-row{grid-template-columns:1.5fr 1fr 1fr}
+  .vs-cell,.vs-th{padding:12px 14px;font-size:.78rem}
+  .pricing-grid{grid-template-columns:1fr}
+  .feat-grid{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .dash-body{grid-template-columns:1fr}
+  .d-sb{display:none}
+  .cta-box{padding:40px 24px;border-radius:20px}
+  .ft{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-mark">I</div>
+    <span class="nav-name">InMailly</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#dashboard">Dashboard</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="btn-ghost">Sign in</button>
+    <button class="btn-pri">Get started →</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <div class="badge-dot"></div>
+      LinkedIn outreach — without the LinkedIn price
+    </div>
+    <h1 class="hero-h1">
+      Reach 50,000 buyers<br>
+      for <em>less than one ad spend.</em>
+    </h1>
+    <p class="hero-sub">LinkedIn charges $6.67 per InMail. We send 1,000 personalized messages for $275 — real human delivery, full reply tracking, zero ad platform complexity.</p>
+    <div class="hero-actions">
+      <button class="btn-hero btn-hero-pri">Start your campaign →</button>
+      <button class="btn-hero btn-hero-sec">See pricing</button>
+    </div>
+
+    <!-- LIVE COUNTER -->
+    <div class="counter-strip">
+      <div class="cs-live-badge" style="position:absolute;top:0;right:0;display:none"></div>
+      <div class="cs-item">
+        <div class="cs-live"><div class="cs-live-dot"></div>Live</div>
+        <div class="cs-label">Messages sent today</div>
+        <div class="cs-value" id="c1">2,847</div>
+        <div class="cs-sub">across all active campaigns</div>
+      </div>
+      <div class="cs-item">
+        <div class="cs-label">Average reply rate</div>
+        <div class="cs-value" id="c2">11.4%</div>
+        <div class="cs-sub">vs 2% LinkedIn ads average</div>
+      </div>
+      <div class="cs-item">
+        <div class="cs-label">Cost per message</div>
+        <div class="cs-value" id="c3">$0.275</div>
+        <div class="cs-sub">vs $6.67 LinkedIn InMail credit</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VS TABLE -->
+<section class="vs-section">
+  <div class="vs-wrap">
+    <div class="vs-head">
+      <div class="vs-head-kicker">The honest comparison</div>
+      <h2>Stop overpaying for 15 InMail credits.</h2>
+    </div>
+    <div class="vs-table">
+      <div class="vs-table-head">
+        <div class="vs-th">What you're comparing</div>
+        <div class="vs-th">❌ LinkedIn Ads / InMail</div>
+        <div class="vs-th">✓ InMailly</div>
+      </div>
+      <div class="vs-row">
+        <div class="vs-cell vs-cell-label">Budget spent</div>
+        <div class="vs-cell">$100</div>
+        <div class="vs-cell">$275</div>
+      </div>
+      <div class="vs-row">
+        <div class="vs-cell vs-cell-label">Messages sent</div>
+        <div class="vs-cell">15 InMail credits</div>
+        <div class="vs-cell">1,000 sends</div>
+      </div>
+      <div class="vs-row">
+        <div class="vs-cell vs-cell-label">Cost per message</div>
+        <div class="vs-cell">$6.67</div>
+        <div class="vs-cell">$0.275</div>
+      </div>
+      <div class="vs-row">
+        <div class="vs-cell vs-cell-label">Reply tracking</div>
+        <div class="vs-cell">None</div>
+        <div class="vs-cell">Full dashboard</div>
+      </div>
+      <div class="vs-row">
+        <div class="vs-cell vs-cell-label">Setup time</div>
+        <div class="vs-cell">3–5 days approval</div>
+        <div class="vs-cell">48 hours</div>
+      </div>
+      <div class="vs-row">
+        <div class="vs-cell vs-cell-label">Lead pipeline</div>
+        <div class="vs-cell">No</div>
+        <div class="vs-cell">Built-in CRM</div>
+      </div>
+      <div class="vs-row">
+        <div class="vs-cell vs-cell-label">Account restrictions</div>
+        <div class="vs-cell">Platform limits apply</div>
+        <div class="vs-cell">None — human operated</div>
+      </div>
+      <div class="vs-verdict-row">
+        <div class="vs-verdict-cell" style="color:var(--mid);font-weight:500">Bottom line</div>
+        <div class="vs-verdict-cell" style="grid-column:2/4;border-left:1px solid var(--line)">
+          ⚡ InMailly delivers <strong>24× more messages</strong> for less money — with a full pipeline to track every reply.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div class="section-head">
+    <div class="s-kicker">Pricing</div>
+    <h2 class="s-title">Scale your outreach.<br>Not your budget.</h2>
+    <p class="s-sub">Every plan includes human-operated delivery, reply tracking, and a built-in lead dashboard. No setup fees.</p>
+  </div>
+  <div class="pricing-grid">
+    <div class="pc">
+      <div class="pc-tier">Starter</div>
+      <div class="pc-vol">1,000 sends</div>
+      <div class="pc-price-row"><div class="pc-curr">$</div><div class="pc-amt">275</div></div>
+      <div class="pc-per">$0.275 per message</div>
+      <div class="pc-div"></div>
+      <ul class="pc-feats">
+        <li>1,000 LinkedIn InMails</li>
+        <li>Reply tracking dashboard</li>
+        <li>Lead pipeline included</li>
+        <li>7-day delivery window</li>
+        <li>Team member assigned</li>
+      </ul>
+      <a href="#" class="pc-btn">Get started</a>
+    </div>
+    <div class="pc featured">
+      <div class="pc-pop">Most popular</div>
+      <div class="pc-tier">Growth</div>
+      <div class="pc-vol">5,000 sends</div>
+      <div class="pc-price-row"><div class="pc-curr">$</div><div class="pc-amt">1,100</div></div>
+      <div class="pc-per">$0.22 per message — save 20%</div>
+      <div class="pc-div"></div>
+      <ul class="pc-feats">
+        <li>5,000 LinkedIn InMails</li>
+        <li>Everything in Starter</li>
+        <li>Priority team assignment</li>
+        <li>Custom message templates</li>
+        <li>Weekly campaign reports</li>
+        <li>A/B headline testing</li>
+      </ul>
+      <a href="#" class="pc-btn">Get started</a>
+    </div>
+    <div class="pc">
+      <div class="pc-tier">Scale</div>
+      <div class="pc-vol">20,000 sends</div>
+      <div class="pc-price-row"><div class="pc-curr">$</div><div class="pc-amt">3,800</div></div>
+      <div class="pc-per">$0.19 per message — save 31%</div>
+      <div class="pc-div"></div>
+      <ul class="pc-feats">
+        <li>20,000 LinkedIn InMails</li>
+        <li>Everything in Growth</li>
+        <li>Multiple team members</li>
+        <li>Industry-specific targeting</li>
+        <li>Duplicate URL protection</li>
+        <li>Dedicated account manager</li>
+      </ul>
+      <a href="#" class="pc-btn">Get started</a>
+    </div>
+    <div class="pc">
+      <div class="pc-tier">Enterprise</div>
+      <div class="pc-vol">50,000 sends</div>
+      <div class="pc-price-row"><div class="pc-amt" style="font-size:2rem;line-height:1.2">Custom</div></div>
+      <div class="pc-per">Volume discounts — talk to us</div>
+      <div class="pc-div"></div>
+      <ul class="pc-feats">
+        <li>50,000+ LinkedIn InMails</li>
+        <li>Everything in Scale</li>
+        <li>White-label reporting</li>
+        <li>Custom SLA agreement</li>
+        <li>API integrations</li>
+        <li>Dedicated infrastructure</li>
+      </ul>
+      <a href="#" class="pc-btn">Contact us</a>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section" id="features">
+  <div class="section-head container" style="max-width:1100px;margin:0 auto 0">
+    <div class="s-kicker">Features</div>
+    <h2 class="s-title">Everything your team needs.<br>Nothing they don't.</h2>
+    <p class="s-sub">Built for outreach teams who need speed, visibility, and control — without enterprise complexity.</p>
+  </div>
+  <div class="feat-grid">
+    <div class="fc">
+      <div class="fc-icon">⛓</div>
+      <div class="fc-title">Link Pool & Claim System</div>
+      <div class="fc-desc">Admin drops hundreds of LinkedIn URLs into the pool. Each team member claims, works, and marks done. Zero duplicate outreach — auto-detected by URL fingerprint.</div>
+    </div>
+    <div class="fc">
+      <div class="fc-icon">◫</div>
+      <div class="fc-title">Lead Pipeline Dashboard</div>
+      <div class="fc-desc">Every reply becomes a lead card. Log follow-ups, InMails, notes, and track deals from new → interested → closed. Full conversation history per lead.</div>
+    </div>
+    <div class="fc">
+      <div class="fc-icon">🔒</div>
+      <div class="fc-title">Duplicate URL Protection</div>
+      <div class="fc-desc">Smart URL fingerprinting ensures no two operators ever contact the same LinkedIn profile. The same /in/ slug from different URL formats is caught and blocked.</div>
+    </div>
+    <div class="fc">
+      <div class="fc-icon">📊</div>
+      <div class="fc-title">Admin Control Panel</div>
+      <div class="fc-desc">Paste 500 links at once — see new vs duplicates before import. Track every member's performance, links worked, leads added, and deals closed live.</div>
+    </div>
+    <div class="fc">
+      <div class="fc-icon">✦</div>
+      <div class="fc-title">Referral & Earnings Tracker</div>
+      <div class="fc-desc">Team members earn when clients they refer convert. Track referral codes, credit history, and total PKR earnings — all inside one clean dashboard.</div>
+    </div>
+    <div class="fc">
+      <div class="fc-icon">💬</div>
+      <div class="fc-title">Full Conversation Log</div>
+      <div class="fc-desc">Every message type logged — InMail, follow-up, reply, cold message, or internal note. See what was said, when, and by whom. Nothing falls through the cracks.</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div style="max-width:1100px;margin:0 auto;text-align:center">
+    <div class="s-kicker" style="justify-content:center">Process</div>
+    <h2 class="s-title">From order to inbox in 48 hours.</h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">1</div>
+      <div class="step-t">Place your order</div>
+      <div class="step-d">Pick your send volume and share your target audience — or let us define it. Signup takes under 2 minutes.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div class="step-t">Team gets assigned</div>
+      <div class="step-d">Admin allocates your LinkedIn profile URLs to our outreach team. Each link uniquely claimed — no overlaps, ever.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div class="step-t">Outreach goes live</div>
+      <div class="step-d">Real operators send personalized InMails via genuine LinkedIn profiles. Replies land directly in your dashboard.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">4</div>
+      <div class="step-t">You close the deals</div>
+      <div class="step-d">Track every reply, schedule follow-ups, log deals — all inside your InMailly workspace. We handle the volume.</div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD PREVIEW -->
+<section class="dash-section" id="dashboard">
+  <div style="max-width:1100px;margin:0 auto;text-align:center">
+    <div class="s-kicker" style="justify-content:center">Team workspace</div>
+    <h2 class="s-title">Your whole operation,<br>one clean screen.</h2>
+    <p class="s-sub" style="margin:0 auto">Links. Leads. Replies. Earnings. Every team member sees exactly what they need.</p>
+  </div>
+  <div class="browser">
+    <div class="browser-bar">
+      <div class="b-dots">
+        <div class="b-dot" style="background:#ff5f57"></div>
+        <div class="b-dot" style="background:#febc2e"></div>
+        <div class="b-dot" style="background:#28c840"></div>
+      </div>
+      <div class="b-url">
+        <span class="b-lock">🔒</span>
+        <span>app.inmailly.com/team/links</span>
+      </div>
+    </div>
+    <div class="dash-body">
+      <div class="d-sb">
+        <div class="d-sb-logo">
+          <div class="d-sb-name">InMailly</div>
+          <div class="d-sb-tag">Team workspace</div>
+        </div>
+        <div class="d-sb-grp">
+          <div class="d-sb-grp-l">Main</div>
+          <div class="d-sb-a"><span class="d-sb-ic">⌂</span>Home</div>
+          <div class="d-sb-a on"><span class="d-sb-ic">⛓</span>Work Links<span class="d-sb-badge">31</span></div>
+          <div class="d-sb-a"><span class="d-sb-ic">◫</span>My Leads</div>
+          <div class="d-sb-grp-l">Outreach</div>
+          <div class="d-sb-a"><span class="d-sb-ic">💬</span>Responses</div>
+          <div class="d-sb-a"><span class="d-sb-ic">✦</span>Earn & Refer</div>
+        </div>
+        <div class="d-sb-user">
+          <div class="d-avatar">D</div>
+          <div><div class="d-uname">Dania K.</div><div class="d-urole">Outreach Member</div></div>
+        </div>
+      </div>
+      <div class="d-main">
+        <div class="d-top">
+          <div>
+            <div class="d-title">⛓ Work Links</div>
+            <div class="d-sub">Claim a profile, run outreach, mark used when done</div>
+          </div>
+          <div class="d-hact">
+            <button class="d-btn">Export</button>
+            <button class="d-btn pri">+ Add lead</button>
+          </div>
+        </div>
+        <div class="d-stats">
+          <div class="d-stat"><div class="d-sv">31</div><div class="d-sl">Pool</div></div>
+          <div class="d-stat"><div class="d-sv">4</div><div class="d-sl">My active</div></div>
+          <div class="d-stat"><div class="d-sv">22</div><div class="d-sl">I used</div></div>
+          <div class="d-stat"><div class="d-sv">9</div><div class="d-sl">My leads</div></div>
+        </div>
+        <div class="d-tabs">
+          <div class="d-tab on">📥 Available (31)</div>
+          <div class="d-tab">🎯 My active (4)</div>
+          <div class="d-tab">✅ Used (22)</div>
+        </div>
+        <div class="d-links">
+          <div class="d-lrow"><span class="d-lcat">💼</span><span class="d-lurl">linkedin.com/in/james-morrison-vp-growth</span><span class="d-lbadge av">Available</span><button class="d-lbtn">🎯 Claim</button></div>
+          <div class="d-lrow"><span class="d-lcat">🎯</span><span class="d-lurl">linkedin.com/sales/lead/ACwAAABq3RsB7N...</span><span class="d-lbadge cl">Claimed</span><button class="d-lbtn">✅ Mark used</button></div>
+          <div class="d-lrow"><span class="d-lcat">💼</span><span class="d-lurl">linkedin.com/in/sarah-chen-head-of-sales</span><span class="d-lbadge av">Available</span><button class="d-lbtn">🎯 Claim</button></div>
+          <div class="d-lrow" style="opacity:.5"><span class="d-lcat">💼</span><span class="d-lurl">linkedin.com/in/robert-klein-cto-fintech</span><span class="d-lbadge ud">Used</span><button class="d-lbtn" style="opacity:.5">📋 View</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testi-section">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="s-kicker">Results</div>
+    <h2 class="s-title">What our clients say.</h2>
+  </div>
+  <div class="testi-grid">
+    <div class="tc">
+      <div class="tc-stars">★★★★★</div>
+      <div class="tc-quote">We burned $3,000/month on LinkedIn Ads and got maybe 40 replies. InMailly sent 5,000 messages in two weeks and we got 380 conversations. The math is genuinely insane.</div>
+      <div class="tc-author">
+        <div class="tc-av" style="background:linear-gradient(135deg,#4338ca,#0ea5e9)">AK</div>
+        <div><div class="tc-name">Amir K.</div><div class="tc-role">Founder, B2B SaaS</div></div>
+      </div>
+    </div>
+    <div class="tc">
+      <div class="tc-stars">★★★★★</div>
+      <div class="tc-quote">I've tried every LinkedIn automation tool. InMailly is different — real humans, no restrictions, no account bans. My pipeline went from dry to full in 3 weeks flat.</div>
+      <div class="tc-author">
+        <div class="tc-av" style="background:linear-gradient(135deg,#7c3aed,#e879f9)">SR</div>
+        <div><div class="tc-name">Sofia R.</div><div class="tc-role">VP Sales, Enterprise tech</div></div>
+      </div>
+    </div>
+    <div class="tc">
+      <div class="tc-stars">★★★★★</div>
+      <div class="tc-quote">The dashboard is clean, the team is responsive, and every reply is logged in real time. It feels like having 10 SDRs without the payroll. Surprised how well this works.</div>
+      <div class="tc-author">
+        <div class="tc-av" style="background:linear-gradient(135deg,#0ea5e9,#10b981)">MW</div>
+        <div><div class="tc-name">Marcus W.</div><div class="tc-role">Growth Lead, Series A startup</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-box">
+    <div class="cta-inner">
+      <div class="cta-tag">Get started today</div>
+      <h2 class="cta-h2">Stop paying $6.67 per message.<br>Start at $275 for 1,000.</h2>
+      <p class="cta-sub">Join growth teams who've switched from LinkedIn Ads to real human outreach at scale. Up and running in 48 hours.</p>
+      <div class="cta-btns">
+        <button class="btn-cta-pri">Launch your campaign →</button>
+        <button class="btn-cta-sec">Talk to us first</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="ft">
+    <div class="ft-logo">InMailly</div>
+    <ul class="ft-links">
+      <li><a href="#">Pricing</a></li>
+      <li><a href="#">Features</a></li>
+      <li><a href="#">Login</a></li>
+      <li><a href="#">Privacy</a></li>
+    </ul>
+    <div class="ft-copy">© 2026 InMailly. LinkedIn outreach at scale.</div>
+  </div>
+</footer>
+
+<script>
+// Counter animation
+function animateCount(el, target, duration, fmt) {
+  let start = null;
+  const step = ts => {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    const val = target * ease;
+    el.textContent = fmt(val);
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    animateCount(document.getElementById('c1'), 2847, 2000, v => Math.round(v).toLocaleString());
+    animateCount(document.getElementById('c2'), 11.4, 1800, v => v.toFixed(1) + '%');
+    animateCount(document.getElementById('c3'), 0.275, 1600, v => '$' + v.toFixed(3));
+    io.disconnect();
+    // keep ticking after load
+    setInterval(() => {
+      const el = document.getElementById('c1');
+      if (!el) return;
+      const cur = parseInt(el.textContent.replace(/,/g,''));
+      if (!isNaN(cur)) el.textContent = (cur + Math.floor(Math.random() * 3 + 1)).toLocaleString();
+    }, 3800);
+  });
+}, { threshold: 0.3 });
+io.observe(document.querySelector('.counter-strip'));
+
+// Scroll reveal
+const cards = document.querySelectorAll('.fc,.pc,.tc,.step');
+const revIo = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const idx = [...cards].indexOf(e.target) % 4;
+    setTimeout(() => {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }, idx * 70);
+    revIo.unobserve(e.target);
+  });
+}, { threshold: 0.1 });
+cards.forEach(c => {
+  c.style.opacity = '0';
+  c.style.transform = 'translateY(16px)';
+  c.style.transition = 'opacity .45s ease, transform .45s ease';
+  revIo.observe(c);
+});
+</script>
+</body>
+</html>
