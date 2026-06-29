@@ -5,7 +5,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/team";
 import { getTeamScriptsPayload } from "@/lib/team-scripts-server";
 
-export default async function TeamLayout({
+export default async function TeamAppLayout({
   children,
 }: {
   children: React.ReactNode;
