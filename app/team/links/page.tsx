@@ -184,42 +184,70 @@ export default function LinksPage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="font-bricolage font-extrabold text-2xl">⛓ Work Links</h1>
-        <p className="text-mid text-sm mt-1">
-          Claim a profile, run outreach, mark used when done
+        <h1 className="font-bricolage font-extrabold text-2xl">🔗 Outreach Links</h1>
+        <p className="text-mid text-[0.88rem] mt-2 leading-relaxed max-w-2xl">
+          Pick a profile link from the pool admin shared — claim it, run outreach on LinkedIn,
+          mark <strong className="text-ink">Used</strong>, then add as a Lead when they reply.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard value={stats.pool} label="Pool total" />
-        <StatCard value={stats.claimed} label="Team claimed" />
-        <StatCard value={stats.myActive} label="My active" />
-        <StatCard value={stats.iUsed} label="I used" />
+      <div className="rounded-xl bg-gradient-to-br from-[#0a150d] to-[#152018] border border-green-500/25 p-4 text-white/75 text-[0.84rem] leading-relaxed">
+        <strong className="text-green-400 text-[0.7rem] uppercase tracking-wide block mb-1.5">
+          ✨ Smart workflow tips
+        </strong>
+        LinkedIn profiles are auto-labeled from the URL. Sales Nav links get a different playbook.
+        Always mark <strong className="text-white">Used</strong> after outreach so admin can track
+        progress.
       </div>
 
-      <div className="flex gap-1 border-b border-line">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard value={stats.pool} label="Available" />
+        <StatCard value={stats.claimed} label="Claimed (team)" />
+        <StatCard value={stats.myActive} label="Your active" />
+        <StatCard value={stats.iUsed} label="You used" />
+      </div>
+
+      <div className="flex gap-2 flex-wrap items-center">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors",
+              "px-4 py-2 rounded-full border-[1.5px] text-[0.8rem] font-bold transition-colors",
               tab === t.id
-                ? "text-ind border-ind"
-                : "text-dimmer border-transparent hover:text-mid"
+                ? "bg-ink text-green-400 border-ink"
+                : "bg-white text-mid border-line hover:border-green-500/40"
             )}
           >
+            {t.id === "pool" && "📥 "}
+            {t.id === "mine" && "🎯 "}
+            {t.id === "used" && "✅ "}
             {t.label} ({t.count})
           </button>
         ))}
+        <a
+          href="/team/leads"
+          className="ml-auto text-sm font-bold text-mid border border-dashed border-line rounded-full px-4 py-2 hover:border-green-500/40"
+        >
+          ← Back to leads
+        </a>
       </div>
 
       {loading ? (
         <p className="text-mid text-center py-12">Loading links…</p>
       ) : links.length === 0 ? (
-        <p className="text-mid text-center py-12">No links in this tab.</p>
+        <div className="card-dark text-center py-12 px-6 border-dashed">
+          <div className="text-4xl mb-3">{tab === "pool" ? "📭" : "✨"}</div>
+          <p className="text-mid text-sm">
+            {tab === "pool"
+              ? "No links in the pool right now — ask admin to import more in Team Admin."
+              : tab === "mine"
+                ? "You have no active links. Claim one from Available."
+                : "You have not marked any links used yet."}
+          </p>
+        </div>
       ) : (
         <div className="space-y-3">
           {links.map((link) => (

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import Button from "@/components/ui/Button";
+import AuthSplitLayout, { AuthFormHeader } from "@/components/auth/AuthSplitLayout";
 
 function RegisterForm() {
   const router = useRouter();
@@ -20,57 +20,110 @@ function RegisterForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (password !== confirm) { setError("Passwords do not match"); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters"); return; }
+    if (password !== confirm) {
+      setError("Passwords do not match");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
     setLoading(true);
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, inviteCode, refCode: refCode || undefined }),
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        inviteCode,
+        refCode: refCode || undefined,
+      }),
     });
     const data = await res.json();
     setLoading(false);
-    if (!res.ok) { setError(data.error || "Registration failed"); return; }
+    if (!res.ok) {
+      setError(data.error || "Registration failed");
+      return;
+    }
     router.push("/login?registered=1");
   }
 
   return (
-    <div className="min-h-screen bg-off flex items-center justify-center p-4">
-      <div className="w-full max-w-md card-dark p-8 shadow-card">
-        <div className="flex items-center gap-3 mb-8 justify-center">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ind to-ind2 flex items-center justify-center font-bricolage font-extrabold text-white">I</div>
-          <div>
-            <div className="font-bricolage font-extrabold text-xl text-ink">InMailly</div>
-            <div className="text-sm text-mid">Create team account</div>
-          </div>
+    <AuthSplitLayout tab="register" onTabChange={(t) => router.push(t === "login" ? "/login" : "/register")}>
+      <AuthFormHeader title="Join the team" subtitle="Create your account with an invite code from admin." />
+      {refCode && (
+        <p className="text-xs text-ind text-center mb-4 font-medium">Referred by code: {refCode}</p>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-5">
+          {error}
         </div>
-        {refCode && <p className="text-xs text-ind text-center mb-4">Referred by code: {refCode}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Full Name" value={name} onChange={setName} required />
-          <Field label="Email" value={email} onChange={setEmail} type="email" required />
-          <Field label="Password" value={password} onChange={setPassword} type="password" required />
-          <Field label="Confirm Password" value={confirm} onChange={setConfirm} type="password" required />
-          <Field label="Invite Code" value={inviteCode} onChange={setInviteCode} required />
-          {error && <p className="text-sm text-red">{error}</p>}
-          <Button type="submit" disabled={loading} className="w-full py-3">{loading ? "Creating account…" : "Register"}</Button>
-        </form>
-        <p className="text-center text-sm text-mid mt-6">
-          Already have an account? <Link href="/login" className="text-ind font-semibold hover:underline">Sign in</Link>
-        </p>
-      </div>
-    </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Full name" value={name} onChange={setName} required />
+        <Field label="Email" value={email} onChange={setEmail} type="email" required />
+        <Field label="Password" value={password} onChange={setPassword} type="password" required />
+        <Field label="Confirm password" value={confirm} onChange={setConfirm} type="password" required />
+        <div>
+          <label className="text-[0.78rem] font-bold uppercase tracking-wide text-mid">Invite code</label>
+          <input
+            type="text"
+            required
+            className="input-field mt-1.5 font-mono font-bold uppercase tracking-wider text-green-700"
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value)}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3.5 bg-ink text-white rounded-xl font-bricolage font-extrabold hover:bg-green-700 transition-all hover:-translate-y-0.5 disabled:opacity-50"
+        >
+          {loading ? "Creating account…" : "Join Team →"}
+        </button>
+      </form>
+      <p className="text-center text-sm text-mid mt-6">
+        Already have an account?{" "}
+        <Link href="/login" className="text-green-700 font-semibold hover:underline">
+          Log In
+        </Link>
+      </p>
+    </AuthSplitLayout>
   );
 }
 
-function Field({ label, value, onChange, type = "text", required }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean }) {
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  required?: boolean;
+}) {
   return (
     <div>
-      <label className="text-xs text-dimmer uppercase tracking-wide">{label}</label>
-      <input type={type} required={required} className="input-field mt-1" value={value} onChange={(e) => onChange(e.target.value)} />
+      <label className="text-[0.78rem] font-bold uppercase tracking-wide text-mid">{label}</label>
+      <input
+        type={type}
+        required={required}
+        className="input-field mt-1.5"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   );
 }
 
 export default function RegisterPage() {
-  return <Suspense><RegisterForm /></Suspense>;
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  );
 }

@@ -1,9 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import Button from "@/components/ui/Button";
+import AuthSplitLayout, { AuthFormHeader } from "@/components/auth/AuthSplitLayout";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -24,11 +24,20 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
-      const { data: member } = await supabase.from("team_members").select("id").eq("user_id", user.id).single();
+      const { data: member } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
       if (member) {
-        await supabase.from("team_members").update({ last_login: new Date().toISOString() }).eq("id", member.id);
+        await supabase
+          .from("team_members")
+          .update({ last_login: new Date().toISOString() })
+          .eq("id", member.id);
       }
     }
     router.push("/team/hub");
@@ -36,35 +45,50 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-off flex items-center justify-center p-4">
-      <div className="w-full max-w-md card-dark p-8 shadow-card">
-        <div className="flex items-center gap-3 mb-8 justify-center">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ind to-ind2 flex items-center justify-center font-bricolage font-extrabold text-white">
-            I
-          </div>
-          <div>
-            <div className="font-bricolage font-extrabold text-xl text-ink">InMailly</div>
-            <div className="text-sm text-mid">Team Login</div>
-          </div>
+    <AuthSplitLayout tab="login" onTabChange={(t) => router.push(t === "register" ? "/register" : "/login")}>
+      <AuthFormHeader title="Welcome back" subtitle="Log in to your team account to manage your leads." />
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-5">
+          {error}
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-xs text-dimmer uppercase tracking-wide">Email</label>
-            <input type="email" required className="input-field mt-1" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div>
-            <label className="text-xs text-dimmer uppercase tracking-wide">Password</label>
-            <input type="password" required className="input-field mt-1" value={password} onChange={(e) => setPassword(e.target.value)} />
-          </div>
-          {error && <p className="text-sm text-red">{error}</p>}
-          <Button type="submit" disabled={loading} className="w-full py-3">{loading ? "Signing in…" : "Sign in"}</Button>
-        </form>
-
-        <p className="text-center text-sm text-mid mt-6">
-          No account? <Link href="/register" className="text-ind font-semibold hover:underline">Register with invite code</Link>
-        </p>
-      </div>
-    </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="text-[0.78rem] font-bold uppercase tracking-wide text-mid">Email</label>
+          <input
+            type="email"
+            required
+            placeholder="you@email.com"
+            className="input-field mt-1.5"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-[0.78rem] font-bold uppercase tracking-wide text-mid">Password</label>
+          <input
+            type="password"
+            required
+            placeholder="Your password"
+            className="input-field mt-1.5"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3.5 bg-ink text-white rounded-xl font-bricolage font-extrabold hover:bg-green-700 transition-all hover:-translate-y-0.5 disabled:opacity-50"
+        >
+          {loading ? "Signing in…" : "Log In →"}
+        </button>
+      </form>
+      <p className="text-center text-sm text-mid mt-6">
+        Don&apos;t have an account?{" "}
+        <Link href="/register" className="text-green-700 font-semibold hover:underline">
+          Join Team
+        </Link>
+      </p>
+    </AuthSplitLayout>
   );
 }

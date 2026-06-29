@@ -14,6 +14,8 @@ const STATUSES = [
   "contacted",
   "replied",
   "interested",
+  "not_interested",
+  "follow_up",
   "closed",
   "dead",
 ] as const;
