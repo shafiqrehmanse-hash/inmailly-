@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertProjectAccess, getCampaignMember } from "@/lib/campaign-auth-server";
+import { getClientEmailForProject, notifyClientSendProof } from "@/lib/email";
 import { processProofScreenshot } from "@/lib/proof-crop";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -124,6 +125,18 @@ export async function POST(request: NextRequest) {
       uploaded.push(withUrls);
     } catch (e) {
       errors.push(`${file.name}: ${e instanceof Error ? e.message : "upload failed"}`);
+    }
+  }
+
+  if (uploaded.length > 0) {
+    const client = await getClientEmailForProject(projectId);
+    if (client.email) {
+      void notifyClientSendProof({
+        email: client.email,
+        clientName: client.clientName,
+        projectName: client.projectName,
+        count: uploaded.length,
+      });
     }
   }
 

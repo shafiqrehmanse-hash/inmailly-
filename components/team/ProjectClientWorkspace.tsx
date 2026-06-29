@@ -83,6 +83,15 @@ export default function ProjectClientWorkspace({
       setMsg({ text: error.message, type: "error" });
       return;
     }
+    void fetch("/api/notify/client-response", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        project_id: project.id,
+        lead_name: name,
+        preview: form.notes || null,
+      }),
+    });
     setMsg({ text: "Response sent to client dashboard!", type: "success" });
     setForm({
       first_name: "",

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getClientEmailForProject, notifyClientCampaignLive } from "@/lib/email";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
 import { randomToken } from "@/lib/utils";
 
@@ -142,6 +143,12 @@ export async function PATCH(request: NextRequest) {
   const admin = createAdminClient();
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
+  const { data: existing } = await admin
+    .from("projects")
+    .select("status")
+    .eq("id", project_id)
+    .maybeSingle();
+
   const fields = [
     "name",
     "audience_brief",
@@ -164,6 +171,18 @@ export async function PATCH(request: NextRequest) {
     const { error } = await admin.from("projects").update(patch).eq("id", project_id);
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    const newStatus = updates.status as string | undefined;
+    if (newStatus === "active" && existing?.status !== "active") {
+      const client = await getClientEmailForProject(project_id);
+      if (client.email) {
+        void notifyClientCampaignLive({
+          email: client.email,
+          clientName: client.clientName,
+          projectName: client.projectName,
+        });
+      }
     }
   }
 

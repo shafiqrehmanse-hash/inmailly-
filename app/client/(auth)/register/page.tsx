@@ -2,12 +2,9 @@
 
 import Link from "next/link";
 import { Suspense, useState } from "react";
-import { useRouter } from "next/navigation";
 import TeamAuthLayout from "@/components/team/TeamAuthLayout";
-import { createClient } from "@/lib/supabase/client";
 
 function RegisterForm() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
@@ -15,6 +12,8 @@ function RegisterForm() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkEmail, setCheckEmail] = useState(false);
+  const [sentTo, setSentTo] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,25 +34,44 @@ function RegisterForm() {
       body: JSON.stringify({ name, email, password, company }),
     });
     const data = await res.json();
+    setLoading(false);
+
     if (!res.ok) {
-      setLoading(false);
       setError(data.error || "Registration failed");
       return;
     }
 
-    const supabase = createClient();
-    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (loginError) {
-      router.push("/client/login?registered=1");
+    if (data.verifyEmail) {
+      setSentTo(email.trim().toLowerCase());
+      setCheckEmail(true);
       return;
     }
-    router.push("/client/dashboard");
-    router.refresh();
+  }
+
+  if (checkEmail) {
+    return (
+      <TeamAuthLayout title="Check your email" subtitle="One more step to unlock your dashboard">
+        <div className="bg-lux-cyan/10 border border-lux-cyan/30 rounded-xl px-5 py-5 mb-5 space-y-3">
+          <p className="text-sm text-lux-cyan font-semibold">Verification email sent</p>
+          <p className="text-sm text-white/70 leading-relaxed">
+            We sent a link to <strong className="text-white">{sentTo}</strong>. Click{" "}
+            <strong className="text-white">Verify email &amp; open dashboard</strong> in that message to
+            continue.
+          </p>
+          <p className="text-xs text-white/40">Check spam if you don&apos;t see it within a minute.</p>
+        </div>
+        <Link
+          href="/client/login"
+          className="block w-full text-center py-3.5 border border-white/15 text-white/80 rounded-xl text-sm font-semibold hover:border-lux-cyan/40 hover:text-lux-cyan transition-colors"
+        >
+          Already verified? Log in →
+        </Link>
+      </TeamAuthLayout>
+    );
   }
 
   return (
-    <TeamAuthLayout title="Create client account" subtitle="See your campaign dashboard — no free trial spam">
+    <TeamAuthLayout title="Create client account" subtitle="See your campaign dashboard — verify your email to get in">
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm mb-5">
           {error}
@@ -77,12 +95,6 @@ function RegisterForm() {
         Already have an account?{" "}
         <Link href="/client/login" className="text-lux-cyan hover:underline">
           Log in
-        </Link>
-      </p>
-      <p className="text-center text-xs text-white/25 mt-3">
-        Team member?{" "}
-        <Link href="/team/login" className="text-white/40 hover:underline">
-          /team/login
         </Link>
       </p>
     </TeamAuthLayout>

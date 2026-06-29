@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyAdminContact } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -21,6 +22,14 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  void notifyAdminContact({
+    name: name.trim(),
+    email: email.trim(),
+    company: company?.trim() || null,
+    volume: volume || null,
+    message: message?.trim() || null,
+  });
 
   return NextResponse.json({ ok: true });
 }
