@@ -9,7 +9,7 @@ export default function AdminPage() {
   const adminKey = process.env.ADMIN_SECRET_KEY;
   if (!adminKey) {
     return (
-      <div className="min-h-screen bg-off text-ink p-8">
+      <div className="min-h-screen bg-lux-bg text-lux-text p-8">
         ADMIN_SECRET_KEY is not set on the server.
       </div>
     );
