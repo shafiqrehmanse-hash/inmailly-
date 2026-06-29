@@ -61,14 +61,14 @@ export default function Sidebar({
 
   const NavContent = () => (
     <>
-      <div className="px-5 pb-5 border-b border-white/[0.07]">
+      <div className="px-5 pb-5 border-b border-white/[0.08]">
         <Link href="/team/hub" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-ws-ind to-ws-cyan flex items-center justify-center font-bricolage font-extrabold text-sm text-white">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-lux-blue to-lux-cyan flex items-center justify-center font-bricolage font-extrabold text-sm text-white">
             I
           </div>
           <div>
-            <div className="font-bricolage font-extrabold text-sm text-white">InMailly</div>
-            <div className="text-[0.58rem] text-white/35 uppercase tracking-widest">Team workspace</div>
+            <div className="font-bricolage font-extrabold text-sm text-lux-text">InMailly</div>
+            <div className="text-[0.58rem] text-lux-muted uppercase tracking-widest">Team workspace</div>
           </div>
         </Link>
       </div>
@@ -76,7 +76,7 @@ export default function Sidebar({
       <nav className="flex-1 py-3 overflow-y-auto">
         {sections.map((section) => (
           <div key={section.label} className="px-3 mb-1">
-            <div className="text-[0.55rem] font-bold uppercase tracking-widest text-white/20 px-2 py-2">
+            <div className="text-[0.55rem] font-bold uppercase tracking-widest text-lux-muted/60 px-2 py-2">
               {section.label}
             </div>
             {section.items.map((item) => {
@@ -89,14 +89,14 @@ export default function Sidebar({
                   className={cn(
                     "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors mb-0.5 border-l-2",
                     active
-                      ? "border-ws-ind bg-ws-ind/10 text-white"
-                      : "border-transparent text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
+                      ? "border-lux-cyan bg-lux-cyan/10 text-lux-text"
+                      : "border-transparent text-lux-muted hover:text-lux-text hover:bg-white/[0.04]"
                   )}
                 >
                   <span className="w-[18px] text-center shrink-0">{item.icon}</span>
                   <span className="flex-1">{item.label}</span>
                   {item.badge && poolCount > 0 && (
-                    <span className="bg-ws-cyan/15 text-ws-cyan text-[0.58rem] font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-lux-cyan/15 text-lux-cyan text-[0.58rem] font-bold px-2 py-0.5 rounded-full">
                       {poolCount}
                     </span>
                   )}
@@ -107,20 +107,20 @@ export default function Sidebar({
         ))}
       </nav>
 
-      <div className="px-5 py-4 border-t border-white/[0.07]">
+      <div className="px-5 py-4 border-t border-white/[0.08]">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-ws-ind to-ws-cyan flex items-center justify-center text-xs font-bold text-white">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-lux-blue to-lux-cyan flex items-center justify-center text-xs font-bold text-white">
             {initials}
           </div>
           <div className="min-w-0">
-            <div className="text-sm text-white/80 truncate">{member.name}</div>
-            <div className="text-[0.65rem] text-white/35">Outreach member</div>
+            <div className="text-sm text-lux-text truncate">{member.name}</div>
+            <div className="text-[0.65rem] text-lux-muted">Outreach member</div>
           </div>
         </div>
         <button
           type="button"
           onClick={logout}
-          className="w-full text-left text-sm text-white/40 hover:text-white/70 py-1.5"
+          className="w-full text-left text-sm text-lux-muted hover:text-lux-text py-1.5"
         >
           Sign out
         </button>
@@ -131,7 +131,7 @@ export default function Sidebar({
   return (
     <>
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-ws-card border border-ws-border flex items-center justify-center text-lg text-white"
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl lux-card flex items-center justify-center text-lg text-lux-text"
         onClick={() => setOpen(true)}
         aria-label="Open menu"
       >
@@ -144,7 +144,7 @@ export default function Sidebar({
 
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-[230px] bg-[#060818] flex flex-col z-50 transition-transform duration-300",
+          "fixed top-0 left-0 h-full w-[220px] bg-lux-bg2 border-r border-white/[0.08] flex flex-col z-50 transition-transform duration-300",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >

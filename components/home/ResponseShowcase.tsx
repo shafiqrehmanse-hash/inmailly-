@@ -1,11 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
-import ClientDashboard, { MockLinkedInThread, ScreenshotFrame } from "@/components/client/ClientDashboard";
+import { MockLinkedInThread, ScreenshotFrame } from "@/components/client/ClientDashboard";
 import { RESPONSE_SCREENSHOTS } from "@/lib/response-screenshots";
 import MagneticButton from "./MagneticButton";
+
+const ClientDashboard = dynamic(() => import("@/components/client/ClientDashboard"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full min-h-[320px] lux-card animate-pulse flex items-center justify-center text-lux-muted text-sm">
+      Loading dashboard…
+    </div>
+  ),
+});
 
 const MOCK_MESSAGES = [
   {

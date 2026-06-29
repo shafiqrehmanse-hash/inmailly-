@@ -75,12 +75,12 @@ export default function DailyScriptBar({
   return (
     <>
       <div
-        className="sticky top-0 z-40 bg-gradient-to-r from-ink2 via-[#122018] to-ink2 border-b border-green-500/20"
+        className="sticky top-0 z-40 bg-lux-bg2/95 backdrop-blur-md border-b border-white/[0.08]"
         role="region"
         aria-label="Daily outreach scripts"
       >
-        <div className="max-w-6xl mx-auto px-4 py-2 flex items-center gap-2 flex-wrap">
-          <span className="text-[0.62rem] font-bold uppercase tracking-widest text-green-400/80 mr-1">
+        <div className="max-w-[1200px] mx-auto px-4 py-2 flex items-center gap-2 flex-wrap">
+          <span className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-cyan mr-1">
             Daily scripts
           </span>
           <ScriptBtn

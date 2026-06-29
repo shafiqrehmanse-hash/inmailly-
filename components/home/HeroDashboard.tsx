@@ -1,7 +1,16 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import ClientDashboard from "@/components/client/ClientDashboard";
+
+const ClientDashboard = dynamic(() => import("@/components/client/ClientDashboard"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full aspect-[4/3] lux-card animate-pulse flex items-center justify-center text-lux-muted text-sm">
+      Loading preview…
+    </div>
+  ),
+});
 
 export default function HeroDashboard() {
   return (

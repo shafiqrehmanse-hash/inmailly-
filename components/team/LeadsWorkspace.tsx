@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Badge from "@/components/ui/Badge";
 import LeadModal from "@/components/team/LeadModal";
+import StatCard from "@/components/team/StatCard";
 import { createClient } from "@/lib/supabase/client";
 import type { Lead, TeamMember } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
@@ -93,13 +94,13 @@ function LeadsWorkspaceInner() {
       closed: closedC.count || 0,
     });
 
+    const leadIds = rows.map((l) => l.id);
     const counts: Record<string, number> = {};
-    for (const lead of rows) {
-      const { count } = await supabase
-        .from("lead_messages")
-        .select("*", { count: "exact", head: true })
-        .eq("lead_id", lead.id);
-      counts[lead.id] = count || 0;
+    if (leadIds.length > 0) {
+      const { data: msgs } = await supabase.from("lead_messages").select("lead_id").in("lead_id", leadIds);
+      for (const msg of msgs || []) {
+        counts[msg.lead_id] = (counts[msg.lead_id] || 0) + 1;
+      }
     }
     setMsgCounts(counts);
   }, [supabase]);
@@ -174,10 +175,10 @@ function LeadsWorkspaceInner() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-bricolage font-extrabold text-2xl text-ink">My Leads</h1>
-        <p className="text-[0.8rem] text-mid mt-1">
+        <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">My Leads</h1>
+        <p className="text-[0.8rem] text-lux-muted mt-1">
           Log leads when someone responds — claim links from{" "}
-          <Link href="/team/links" className="text-green-700 font-semibold hover:underline">
+          <Link href="/team/links" className="text-lux-cyan font-semibold hover:underline">
             Work Links
           </Link>
           .
@@ -185,46 +186,37 @@ function LeadsWorkspaceInner() {
       </div>
 
       {prefillFromUrl && (
-        <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm font-medium">
+        <div className="bg-lux-cyan/10 border border-lux-cyan/25 text-lux-cyan rounded-xl px-4 py-3 text-sm font-medium">
           Adding lead from outreach link — profile URL is filled in below.
         </div>
       )}
 
       {stats.closed > 0 && (
-        <div className="rounded-2xl bg-gradient-to-br from-[#0a150d] to-[#0d2010] border border-amber-500/30 p-5 text-white">
+        <div className="rounded-2xl lux-card border-amber-500/30 p-5">
           <div className="flex items-center gap-4">
             <span className="text-4xl">💰</span>
             <div>
-              <div className="font-bricolage font-extrabold text-xl">
+              <div className="font-bricolage font-extrabold text-xl text-lux-text">
                 {stats.closed} Deal{stats.closed > 1 ? "s" : ""} Closed!
               </div>
-              <div className="text-sm text-white/45 mt-0.5">Keep crushing it</div>
+              <div className="text-sm text-lux-muted mt-0.5">Keep crushing it</div>
             </div>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {[
-          { label: "Total leads", value: stats.total, accent: "border-t-green-500" },
-          { label: "Added today", value: stats.today, accent: "border-t-ind" },
-          { label: "Interested", value: stats.interested, accent: "border-t-sky" },
-          { label: "Replied", value: stats.replied, accent: "border-t-amber-500" },
-          { label: "Deals closed", value: stats.closed, accent: "border-t-amber-400 bg-amber-50/50" },
-        ].map((s) => (
-          <div key={s.label} className={`card-dark p-4 border-t-[3px] ${s.accent}`}>
-            <div className="text-[0.68rem] font-bold uppercase tracking-wide text-dimmer mb-2">
-              {s.label}
-            </div>
-            <div className="font-bricolage font-extrabold text-3xl text-ink">{s.value}</div>
-          </div>
-        ))}
+        <StatCard value={stats.total} label="Total leads" />
+        <StatCard value={stats.today} label="Added today" />
+        <StatCard value={stats.interested} label="Interested" />
+        <StatCard value={stats.replied} label="Replied" />
+        <StatCard value={stats.closed} label="Deals closed" />
       </div>
 
       <div className="grid lg:grid-cols-[380px_1fr] gap-5 items-start">
-        <div className="card-dark p-5 sm:p-6">
-          <h2 className="font-bricolage font-extrabold text-base flex items-center gap-2 mb-5">
-            <span className="w-1 h-5 bg-green-600 rounded-sm" />
+        <div className="lux-card p-5 sm:p-6">
+          <h2 className="font-bricolage font-extrabold text-base flex items-center gap-2 mb-5 text-lux-text">
+            <span className="w-1 h-5 bg-lux-cyan rounded-sm" />
             Add New Lead
           </h2>
           {formMsg && (
@@ -232,8 +224,8 @@ function LeadsWorkspaceInner() {
               className={cn(
                 "rounded-xl px-4 py-3 text-sm font-medium mb-4",
                 formMsg.type === "success"
-                  ? "bg-green-50 text-green-800 border border-green-200"
-                  : "bg-red-50 text-red-700 border border-red-200"
+                  ? "bg-lux-cyan/10 text-lux-cyan border border-lux-cyan/25"
+                  : "bg-red-500/10 text-red-400 border border-red-500/25"
               )}
             >
               {formMsg.text}
@@ -250,9 +242,9 @@ function LeadsWorkspaceInner() {
               <Field label="Phone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
             </div>
             <div>
-              <label className="text-[0.72rem] font-bold uppercase tracking-wide text-mid">Response status</label>
+              <label className="text-[0.72rem] font-bold uppercase tracking-wide text-lux-muted">Response status</label>
               <select
-                className="input-field mt-1 text-sm"
+                className="lux-input mt-1 text-sm w-full"
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value as Lead["status"] })}
               >
@@ -264,9 +256,9 @@ function LeadsWorkspaceInner() {
               </select>
             </div>
             <div>
-              <label className="text-[0.72rem] font-bold uppercase tracking-wide text-mid">Notes / what they said</label>
+              <label className="text-[0.72rem] font-bold uppercase tracking-wide text-lux-muted">Notes / what they said</label>
               <textarea
-                className="input-field mt-1 min-h-[80px] text-sm"
+                className="lux-input mt-1 min-h-[80px] text-sm w-full"
                 placeholder="Write what happened, their response…"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -275,16 +267,16 @@ function LeadsWorkspaceInner() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3.5 bg-ink text-white rounded-xl font-bricolage font-extrabold hover:bg-green-700 transition-colors disabled:opacity-50"
+              className="w-full py-3.5 lux-btn-primary rounded-xl font-bricolage font-extrabold disabled:opacity-50"
             >
               {saving ? "Saving…" : "Add Lead →"}
             </button>
           </form>
         </div>
 
-        <div className="card-dark p-5 sm:p-6 min-w-0">
-          <h2 className="font-bricolage font-extrabold text-base flex items-center gap-2 mb-4">
-            <span className="w-1 h-5 bg-green-600 rounded-sm" />
+        <div className="lux-card p-5 sm:p-6 min-w-0">
+          <h2 className="font-bricolage font-extrabold text-base flex items-center gap-2 mb-4 text-lux-text">
+            <span className="w-1 h-5 bg-lux-cyan rounded-sm" />
             My Lead List ({filtered.length})
           </h2>
           <div className="flex flex-wrap gap-2 mb-4">
@@ -294,10 +286,10 @@ function LeadsWorkspaceInner() {
                 type="button"
                 onClick={() => setFilter(s.key)}
                 className={cn(
-                  "px-4 py-1.5 rounded-full border-[1.5px] text-[0.78rem] font-semibold transition-colors",
+                  "px-4 py-1.5 rounded-full border text-[0.78rem] font-semibold transition-colors",
                   filter === s.key
-                    ? "bg-ink text-white border-ink"
-                    : "bg-white text-mid border-line hover:border-ink/30"
+                    ? "bg-lux-cyan/15 text-lux-cyan border-lux-cyan/40"
+                    : "bg-white/[0.03] text-lux-muted border-white/[0.08] hover:border-lux-cyan/25"
                 )}
               >
                 {s.label}
@@ -306,7 +298,7 @@ function LeadsWorkspaceInner() {
           </div>
 
           {filtered.length === 0 ? (
-            <div className="text-center py-12 text-mid">
+            <div className="text-center py-12 text-lux-muted">
               <div className="text-4xl mb-3">📋</div>
               <p>No leads yet. Add your first lead from the form!</p>
             </div>
@@ -314,7 +306,7 @@ function LeadsWorkspaceInner() {
             <div className="overflow-x-auto -mx-2">
               <table className="w-full text-sm border-collapse min-w-[640px]">
                 <thead>
-                  <tr className="text-[0.68rem] font-bold uppercase tracking-wide text-dimmer bg-off border-b border-line">
+                  <tr className="text-[0.68rem] font-bold uppercase tracking-wide text-lux-muted bg-white/[0.03] border-b border-white/[0.08]">
                     <th className="text-left px-3 py-2.5">Name</th>
                     <th className="text-left px-3 py-2.5">Profile</th>
                     <th className="text-left px-3 py-2.5">Status</th>
@@ -326,18 +318,18 @@ function LeadsWorkspaceInner() {
                 </thead>
                 <tbody>
                   {filtered.map((lead) => (
-                    <tr key={lead.id} className="border-b border-line/60 hover:bg-off/80">
-                      <td className="px-3 py-3 font-semibold whitespace-nowrap">
+                    <tr key={lead.id} className="border-b border-white/[0.06] hover:bg-white/[0.03]">
+                      <td className="px-3 py-3 font-semibold whitespace-nowrap text-lux-text">
                         {lead.name}
                         {lead.deal_closed && (
-                          <span className="ml-2 text-[0.65rem] bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full font-bold">
+                          <span className="ml-2 text-[0.65rem] bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
                             Closed
                           </span>
                         )}
                       </td>
                       <td className="px-3 py-3">
                         {lead.profile_url ? (
-                          <a href={lead.profile_url} target="_blank" rel="noopener noreferrer" className="text-[#0a66c2] text-xs font-semibold">
+                          <a href={lead.profile_url} target="_blank" rel="noopener noreferrer" className="text-lux-cyan text-xs font-semibold">
                             View →
                           </a>
                         ) : (
@@ -347,10 +339,10 @@ function LeadsWorkspaceInner() {
                       <td className="px-3 py-3">
                         <Badge variant={lead.status as Parameters<typeof Badge>[0]["variant"]}>{lead.status.replace("_", " ")}</Badge>
                       </td>
-                      <td className="px-3 py-3 text-xs text-mid max-w-[140px] truncate hidden md:table-cell" title={lead.notes || ""}>
+                      <td className="px-3 py-3 text-xs text-lux-muted max-w-[140px] truncate hidden md:table-cell" title={lead.notes || ""}>
                         {lead.notes || "—"}
                       </td>
-                      <td className="px-3 py-3 text-xs text-dimmer whitespace-nowrap">
+                      <td className="px-3 py-3 text-xs text-lux-muted/70 whitespace-nowrap">
                         {formatDate(lead.created_at)}
                       </td>
                       <td className="px-3 py-3">
@@ -360,11 +352,11 @@ function LeadsWorkspaceInner() {
                             setModalLead(lead);
                             setModalOpen(true);
                           }}
-                          className="inline-flex items-center gap-1 bg-ink2 text-green-400 border border-green-500/25 rounded-lg px-2.5 py-1 text-xs font-bold"
+                          className="inline-flex items-center gap-1 bg-lux-blue/15 text-lux-cyan border border-lux-cyan/25 rounded-lg px-2.5 py-1 text-xs font-bold"
                         >
                           💬 Thread
                           {msgCounts[lead.id] > 0 && (
-                            <span className="bg-green-500 text-ink2 text-[0.6rem] px-1.5 rounded-full">
+                            <span className="bg-lux-cyan text-lux-bg text-[0.6rem] px-1.5 rounded-full">
                               {msgCounts[lead.id]}
                             </span>
                           )}
@@ -374,7 +366,7 @@ function LeadsWorkspaceInner() {
                         <button
                           type="button"
                           onClick={() => deleteLead(lead.id)}
-                          className="text-red text-xs border border-red/30 px-2 py-1 rounded-lg hover:bg-red-50"
+                          className="text-red-400 text-xs border border-red-500/30 px-2 py-1 rounded-lg hover:bg-red-500/10"
                           aria-label="Delete lead"
                         >
                           ✕
@@ -421,10 +413,10 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-[0.72rem] font-bold uppercase tracking-wide text-mid">{label}</label>
+      <label className="text-[0.72rem] font-bold uppercase tracking-wide text-lux-muted">{label}</label>
       <input
         type={type}
-        className="input-field mt-1 text-sm py-2.5"
+        className="lux-input mt-1 text-sm py-2.5 w-full"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

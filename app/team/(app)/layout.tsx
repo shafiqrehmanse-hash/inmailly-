@@ -24,11 +24,11 @@ export default async function TeamAppLayout({
   ]);
 
   return (
-    <div className="min-h-screen bg-ws-bg text-white">
+    <div className="min-h-screen bg-lux-bg text-lux-text">
       <Sidebar member={member} poolCount={count || 0} />
-      <div className="lg:ml-[230px] min-h-screen flex flex-col">
+      <div className="lg:ml-[220px] min-h-screen flex flex-col">
         <DailyScriptBar scripts={scripts} />
-        <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-6xl mx-auto w-full">{children}</main>
+        <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-[1200px] mx-auto w-full">{children}</main>
       </div>
     </div>
   );
