@@ -11,6 +11,7 @@ import {
 } from "@/lib/client-demo";
 import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 import ProofLightbox, { ProofThumb } from "@/components/proof/ProofLightbox";
+import { cn } from "@/lib/utils";
 import {
   HiArrowTrendingUp,
   HiBolt,
@@ -22,6 +23,29 @@ import {
 } from "react-icons/hi2";
 
 type Tab = "overview" | "responses" | "sends" | "campaigns" | "analytics";
+
+function TeamVisibleCount({
+  visible,
+  team,
+  singular,
+  plural,
+}: {
+  visible: number;
+  team?: number;
+  singular: string;
+  plural: string;
+}) {
+  const teamTotal = team ?? visible;
+  const differs = teamTotal > visible;
+  const label = visible === 1 ? singular : plural;
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className={cn(differs && "text-red-400 font-semibold", "tabular-nums")}>{visible}</span>
+      <span>{label}</span>
+      {differs && <span className="text-lux-muted/60 tabular-nums">/ {teamTotal} logged</span>}
+    </span>
+  );
+}
 
 const TABS: { id: Tab; label: string; icon: typeof HiSquares2X2 }[] = [
   { id: "overview", label: "Overview", icon: HiSquares2X2 },
@@ -148,9 +172,20 @@ export default function ClientDashboard({
               >
                 {isPreviewLive ? "Preview dashboard" : "Live campaign"} · {live!.projectName}
               </span>
-              <span className="text-[0.65rem] text-lux-muted">
-                {live!.stats.total} response{live!.stats.total !== 1 ? "s" : ""} · {live!.stats.sends}{" "}
-                send proof{live!.stats.sends !== 1 ? "s" : ""}
+              <span className="text-[0.65rem] text-lux-muted flex flex-wrap gap-x-3 gap-y-1">
+                <TeamVisibleCount
+                  visible={live!.stats.total}
+                  team={live!.stats.teamResponses}
+                  singular="response"
+                  plural="responses"
+                />
+                <span>·</span>
+                <TeamVisibleCount
+                  visible={live!.stats.sends}
+                  team={live!.stats.teamSends}
+                  singular="send proof"
+                  plural="send proofs"
+                />
               </span>
             </div>
             )
@@ -168,6 +203,7 @@ export default function ClientDashboard({
           {(isHero || tab === "overview") && (
             <OverviewPanel
               sent={isLive ? live!.stats.total : sent}
+              teamSent={isLive ? live!.stats.teamResponses : undefined}
               replyRate={isLive ? live!.stats.replyRate : DEMO_CAMPAIGN.replyRate}
               costPerMsg={DEMO_CAMPAIGN.costPerMsg}
               sentLabel={isLive ? "Responses" : "Sent"}
@@ -177,11 +213,17 @@ export default function ClientDashboard({
             />
           )}
           {!isHero && tab === "responses" && (
-            <ResponsesPanel responses={isLive ? live!.responses : DEMO_RESPONSES} />
+            <ResponsesPanel
+              responses={isLive ? live!.responses : DEMO_RESPONSES}
+              visibleCount={isLive ? live!.stats.total : DEMO_RESPONSES.length}
+              teamCount={isLive ? live!.stats.teamResponses : undefined}
+            />
           )}
           {!isHero && tab === "sends" && (
             <SendsProofPanel
               proofs={isLive ? live!.proofs : []}
+              visibleCount={isLive ? live!.stats.sends : 0}
+              teamCount={isLive ? live!.stats.teamSends : undefined}
               onView={setProofLightbox}
               isLive={isLive}
               usingDemoFill={usingDemoFill}
@@ -196,8 +238,8 @@ export default function ClientDashboard({
               stats={
                 isLive
                   ? [
-                      { l: "Responses", v: live!.stats.total },
-                      { l: "Sends", v: live!.stats.sends },
+                      { l: "Responses", v: live!.stats.total, team: live!.stats.teamResponses },
+                      { l: "Sends", v: live!.stats.sends, team: live!.stats.teamSends },
                       { l: "Hot", v: live!.stats.interested },
                       { l: "Rate", v: `${live!.stats.replyRate}%` },
                     ]
@@ -224,6 +266,7 @@ export default function ClientDashboard({
 
 function OverviewPanel({
   sent,
+  teamSent,
   replyRate,
   costPerMsg,
   sentLabel,
@@ -232,6 +275,7 @@ function OverviewPanel({
   velocity,
 }: {
   sent: number;
+  teamSent?: number;
   replyRate: number;
   costPerMsg: number;
   sentLabel: string;
@@ -239,6 +283,8 @@ function OverviewPanel({
   pipeline: { label: string; count: number; value: number }[];
   velocity?: number[];
 }) {
+  const teamTotal = teamSent ?? sent;
+  const sentDiffers = teamTotal > sent;
   const points = velocity || [20, 35, 30, 55, 45, 70, 60, 85];
   const pathPoints = points
     .map((p, i) => {
@@ -253,15 +299,28 @@ function OverviewPanel({
     <>
       <div className="grid grid-cols-3 gap-2 lg:gap-3">
         {[
-          { label: sentLabel, value: typeof sent === "number" ? sent.toLocaleString() : sent, icon: HiEnvelope },
+          {
+            label: sentLabel,
+            value: typeof sent === "number" ? sent.toLocaleString() : sent,
+            teamValue: sentDiffers ? teamTotal : undefined,
+            icon: HiEnvelope,
+          },
           { label: "Reply rate", value: `${replyRate}%`, icon: HiArrowTrendingUp },
           { label: "Cost / msg", value: `$${costPerMsg}`, icon: HiBolt },
         ].map((m) => (
           <div key={m.label} className="border border-white/[0.06] bg-lux-bg2/60 p-2.5 lg:p-3">
             <m.icon className="w-3.5 h-3.5 text-lux-cyan mb-1.5 opacity-70" />
-            <div className="font-bricolage font-extrabold text-lg lg:text-xl text-lux-text tabular-nums">
+            <div
+              className={cn(
+                "font-bricolage font-extrabold text-lg lg:text-xl tabular-nums",
+                m.teamValue ? "text-red-400" : "text-lux-text"
+              )}
+            >
               {m.value}
             </div>
+            {m.teamValue !== undefined && (
+              <div className="text-[0.5rem] text-lux-muted/70 tabular-nums">{m.teamValue} logged</div>
+            )}
             <div className="text-[0.55rem] uppercase tracking-wider text-lux-muted">{m.label}</div>
           </div>
         ))}
@@ -333,20 +392,35 @@ function OverviewPanel({
 
 function SendsProofPanel({
   proofs,
+  visibleCount,
+  teamCount,
   onView,
   isLive,
   usingDemoFill = false,
 }: {
   proofs: { id: string; image_url: string; time: string }[];
+  visibleCount: number;
+  teamCount?: number;
   onView: (url: string) => void;
   isLive: boolean;
   usingDemoFill?: boolean;
 }) {
+  const teamTotal = teamCount ?? visibleCount;
+  const differs = teamTotal > visibleCount;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="text-[0.65rem] uppercase tracking-wider text-lux-muted">
-          Verified InMail sends · {usingDemoFill ? "—" : proofs.length}
+          Verified InMail sends ·{" "}
+          {usingDemoFill ? (
+            "—"
+          ) : (
+            <>
+              <span className={cn(differs && "text-red-400 font-semibold", "tabular-nums")}>{visibleCount}</span>
+              {differs && <span className="text-lux-muted/60 normal-case"> / {teamTotal} logged</span>}
+            </>
+          )}
         </div>
         <span className="text-[0.6rem] text-lux-cyan border border-lux-cyan/25 px-2 py-0.5">
           HD proof
@@ -395,6 +469,8 @@ function SendsProofPanel({
 
 function ResponsesPanel({
   responses,
+  visibleCount,
+  teamCount,
 }: {
   responses: {
     id: string;
@@ -405,12 +481,23 @@ function ResponsesPanel({
     status: string;
     unread?: boolean;
   }[];
+  visibleCount?: number;
+  teamCount?: number;
 }) {
   const unread = responses.filter((r) => r.unread).length;
+  const visible = visibleCount ?? responses.length;
+  const teamTotal = teamCount ?? visible;
+  const differs = teamTotal > visible;
+
   return (
     <div className="space-y-2">
-      <div className="text-[0.65rem] uppercase tracking-wider text-lux-muted mb-2">
-        Inbox · {unread} unread
+      <div className="text-[0.65rem] uppercase tracking-wider text-lux-muted mb-2 flex flex-wrap gap-x-3">
+        <span>
+          Inbox ·{" "}
+          <span className={cn(differs && "text-red-400 font-semibold", "tabular-nums")}>{visible}</span>
+          {differs && <span className="text-lux-muted/60"> / {teamTotal} logged</span>}
+        </span>
+        <span>{unread} unread</span>
       </div>
       {responses.length === 0 ? (
         <div className="border border-white/[0.06] bg-lux-bg2/30 p-6 text-center text-sm text-lux-muted">
@@ -456,7 +543,7 @@ function CampaignsPanel({
   status: string;
   audienceBrief: string | null;
   targetTitles: string | null;
-  stats: { l: string; v: number | string }[];
+  stats: { l: string; v: number | string; team?: number }[];
 }) {
   return (
     <div className="border border-white/[0.06] bg-lux-bg2/40 p-4">
@@ -470,12 +557,25 @@ function CampaignsPanel({
         </span>
       </div>
       <div className="grid grid-cols-4 gap-3 mt-6">
-        {stats.map((s) => (
-          <div key={s.l} className="text-center border border-white/[0.06] py-3">
-            <div className="font-bricolage font-extrabold text-xl text-lux-text">{s.v}</div>
-            <div className="text-[0.55rem] uppercase text-lux-muted mt-1">{s.l}</div>
-          </div>
-        ))}
+        {stats.map((s) => {
+          const differs = typeof s.v === "number" && s.team !== undefined && s.team > s.v;
+          return (
+            <div key={s.l} className="text-center border border-white/[0.06] py-3">
+              <div
+                className={cn(
+                  "font-bricolage font-extrabold text-xl tabular-nums",
+                  differs ? "text-red-400" : "text-lux-text"
+                )}
+              >
+                {s.v}
+              </div>
+              {differs && (
+                <div className="text-[0.5rem] text-lux-muted/70 tabular-nums">{s.team} logged</div>
+              )}
+              <div className="text-[0.55rem] uppercase text-lux-muted mt-1">{s.l}</div>
+            </div>
+          );
+        })}
       </div>
       <p className="text-[0.7rem] text-lux-muted mt-4 border-t border-white/[0.06] pt-4">
         {audienceBrief ||

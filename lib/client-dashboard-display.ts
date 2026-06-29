@@ -26,10 +26,12 @@ export function buildClientDisplayDashboard(live: ClientDashboardLiveData): {
       ...live,
       stats: {
         total: DEMO_CAMPAIGN.replied,
+        teamResponses: DEMO_CAMPAIGN.replied,
         interested: DEMO_CAMPAIGN.meetings + 18,
         replied: DEMO_CAMPAIGN.replied,
         replyRate: DEMO_CAMPAIGN.replyRate,
         sends: 8,
+        teamSends: 8,
       },
       responses: DEMO_RESPONSES,
       pipeline: PIPELINE_STAGES,

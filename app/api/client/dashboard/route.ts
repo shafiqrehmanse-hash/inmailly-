@@ -55,6 +55,16 @@ export async function GET() {
     .eq("visible_to_client", true)
     .in("status", ["interested", "replied"]);
 
+  const { count: teamResponses } = await admin
+    .from("leads")
+    .select("*", { count: "exact", head: true })
+    .eq("project_id", project.id);
+
+  const { count: teamProofs } = await admin
+    .from("send_proofs")
+    .select("*", { count: "exact", head: true })
+    .eq("project_id", project.id);
+
   const clients = project.clients as { name: string; company_name: string | null } | { name: string; company_name: string | null }[] | null;
   const clientRow = Array.isArray(clients) ? clients[0] : clients;
 
@@ -76,8 +86,10 @@ export async function GET() {
     },
     stats: {
       total: total || 0,
+      teamResponses: teamResponses || 0,
       interested: interested || 0,
       sends: proofs.filter((p) => p.image_url).length,
+      teamSends: teamProofs || 0,
     },
     responses: responses || [],
     proofs: proofs.filter((p) => p.image_url),

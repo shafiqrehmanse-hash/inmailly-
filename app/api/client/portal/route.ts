@@ -72,12 +72,24 @@ export async function GET(request: NextRequest) {
     })
   );
 
+  const { count: teamResponses } = await admin
+    .from("leads")
+    .select("*", { count: "exact", head: true })
+    .eq("project_id", project.id);
+
+  const { count: teamProofs } = await admin
+    .from("send_proofs")
+    .select("*", { count: "exact", head: true })
+    .eq("project_id", project.id);
+
   return NextResponse.json({
     project,
     stats: {
       total: total || 0,
+      teamResponses: teamResponses || 0,
       interested: interested || 0,
-      sends: proofs.length,
+      sends: proofs.filter((p) => p.image_url).length,
+      teamSends: teamProofs || 0,
     },
     responses: responses || [],
     proofs: proofs.filter((p) => p.image_url),

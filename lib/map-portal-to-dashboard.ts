@@ -8,10 +8,12 @@ export type ClientDashboardLiveData = {
   targetTitles: string | null;
   stats: {
     total: number;
+    teamResponses?: number;
     interested: number;
     replied: number;
     replyRate: number;
     sends: number;
+    teamSends?: number;
   };
   responses: {
     id: string;
@@ -52,7 +54,7 @@ type PortalPayload = {
     target_titles: string | null;
     clients: { name: string; company_name: string | null } | { name: string; company_name: string | null }[] | null;
   };
-  stats: { total: number; interested: number; sends?: number };
+  stats: { total: number; interested: number; sends?: number; teamResponses?: number; teamSends?: number };
   responses: PortalResponse[];
   proofs?: PortalProof[];
 };
@@ -126,10 +128,12 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
     targetTitles: data.project.target_titles,
     stats: {
       total,
+      teamResponses: data.stats.teamResponses ?? total,
       interested: hot,
       replied,
       replyRate,
       sends: data.stats.sends ?? proofList.length,
+      teamSends: data.stats.teamSends ?? data.stats.sends ?? proofList.length,
     },
     responses: mappedResponses,
     pipeline,

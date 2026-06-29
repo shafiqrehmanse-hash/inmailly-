@@ -99,7 +99,7 @@ export default function ProjectProofUploader({ projectId }: { projectId: string 
   }
 
   async function removeProof(id: string) {
-    if (!confirm("Delete this proof screenshot?")) return;
+    if (!confirm("Remove this screenshot permanently? It will disappear from the client dashboard.")) return;
     await fetch(`/api/campaign/proofs?id=${id}`, { method: "DELETE" });
     load();
   }
@@ -232,9 +232,10 @@ export default function ProjectProofUploader({ projectId }: { projectId: string 
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bricolage font-bold text-lux-text">
-            Uploaded proofs ({proofs.length})
+            Uploaded proofs ({proofs.filter((p) => p.visible_to_client).length} on client · {proofs.length}{" "}
+            total)
           </h3>
-          <span className="text-xs text-lux-muted">Client sees cropped HD</span>
+          <span className="text-xs text-lux-muted">Uncheck Client to hide · Delete removes file</span>
         </div>
 
         {loading ? (
@@ -246,7 +247,7 @@ export default function ProjectProofUploader({ projectId }: { projectId: string 
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {proofs.map((p) => (
-              <div key={p.id} className="lux-card p-3 space-y-2">
+              <div key={p.id} className={cn("lux-card p-3 space-y-2", !p.visible_to_client && "opacity-75 border-red-500/20")}>
                 {p.display_url ? (
                   <ProofThumb
                     src={p.display_url}
@@ -268,7 +269,7 @@ export default function ProjectProofUploader({ projectId }: { projectId: string 
                       onChange={(e) => toggleVisible(p.id, e.target.checked)}
                       className="rounded border-white/20"
                     />
-                    Client
+                    Client visible
                   </label>
                 </div>
                 <div className="flex gap-2">
@@ -281,12 +282,21 @@ export default function ProjectProofUploader({ projectId }: { projectId: string 
                       Full capture
                     </button>
                   )}
+                  {!p.visible_to_client && (
+                    <button
+                      type="button"
+                      className="text-[0.65rem] text-amber-400/90 hover:text-amber-400"
+                      onClick={() => toggleVisible(p.id, true)}
+                    >
+                      Show to client
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="text-[0.65rem] text-red-400/80 hover:text-red-400 ml-auto"
                     onClick={() => removeProof(p.id)}
                   >
-                    Delete
+                    Remove screenshot
                   </button>
                 </div>
               </div>

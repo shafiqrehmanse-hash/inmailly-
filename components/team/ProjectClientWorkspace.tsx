@@ -19,7 +19,6 @@ const STATUS_OPTIONS = [
 
 export default function ProjectClientWorkspace({
   project,
-  memberId,
 }: {
   project: AssignedProject;
   memberId: string;
@@ -45,12 +44,13 @@ export default function ProjectClientWorkspace({
         ? `/client/p/${project.portal_token}`
         : null;
 
+  const visibleCount = responses.filter((r) => r.visible_to_client).length;
+
   const load = useCallback(async () => {
     const { data } = await supabase
       .from("leads")
       .select("*")
       .eq("project_id", project.id)
-      .eq("visible_to_client", true)
       .order("created_at", { ascending: false });
     setResponses((data as Lead[]) || []);
     setLoading(false);
@@ -67,32 +67,31 @@ export default function ProjectClientWorkspace({
       return;
     }
     setSaving(true);
-    const name = `${form.first_name.trim()} ${form.last_name.trim()}`;
-    const { error } = await supabase.from("leads").insert({
-      member_id: memberId,
-      project_id: project.id,
-      visible_to_client: true,
-      name,
-      company: form.company || null,
-      profile_url: form.profile_url || null,
-      status: form.status,
-      notes: form.notes || null,
-    });
-    setSaving(false);
-    if (error) {
-      setMsg({ text: error.message, type: "error" });
-      return;
-    }
-    void fetch("/api/notify/client-response", {
+    const res = await fetch("/api/campaign/responses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         project_id: project.id,
-        lead_name: name,
-        preview: form.notes || null,
+        first_name: form.first_name,
+        last_name: form.last_name,
+        company: form.company,
+        profile_url: form.profile_url,
+        status: form.status,
+        notes: form.notes,
       }),
     });
-    setMsg({ text: "Response sent to client dashboard!", type: "success" });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) {
+      setMsg({ text: data.error || "Failed to log response", type: "error" });
+      return;
+    }
+    setMsg({
+      text: data.notified
+        ? "Response sent to client dashboard — email notification sent."
+        : "Response sent to client dashboard.",
+      type: "success",
+    });
     setForm({
       first_name: "",
       last_name: "",
@@ -101,6 +100,21 @@ export default function ProjectClientWorkspace({
       status: "replied",
       notes: "",
     });
+    load();
+  }
+
+  async function toggleResponseVisible(id: string, visible: boolean) {
+    await fetch("/api/campaign/responses", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, visible_to_client: visible }),
+    });
+    load();
+  }
+
+  async function removeResponse(id: string) {
+    if (!confirm("Remove this response from the client dashboard?")) return;
+    await fetch(`/api/campaign/responses?id=${id}`, { method: "DELETE" });
     load();
   }
 
@@ -126,8 +140,8 @@ export default function ProjectClientWorkspace({
               Log responses for your client
             </h2>
             <p className="text-sm text-lux-muted mt-2 max-w-xl leading-relaxed">
-              This is separate from <strong className="text-lux-text">My Leads</strong> (your personal
-              marketing pool). Everything you log here appears live on the client&apos;s dashboard.
+              Clients get an <strong className="text-lux-text">email when you log a response</strong>.
+              Screenshot uploads do not email the client. Hide or remove items below to adjust what they see.
             </p>
           </div>
           {portalUrl && (
@@ -196,9 +210,10 @@ export default function ProjectClientWorkspace({
         </div>
 
         <div className="lux-card p-5 sm:p-6 min-w-0">
-          <h3 className="font-bricolage font-bold text-lux-text mb-4">
-            Client responses ({responses.length})
+          <h3 className="font-bricolage font-bold text-lux-text mb-1">
+            Client responses ({visibleCount} shown · {responses.length} total)
           </h3>
+          <p className="text-xs text-lux-muted mb-4">Uncheck &quot;Client&quot; to hide from dashboard without deleting.</p>
           {loading ? (
             <p className="text-lux-muted text-sm">Loading…</p>
           ) : responses.length === 0 ? (
@@ -209,7 +224,13 @@ export default function ProjectClientWorkspace({
           ) : (
             <div className="space-y-3 max-h-[520px] overflow-y-auto">
               {responses.map((r) => (
-                <div key={r.id} className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4">
+                <div
+                  key={r.id}
+                  className={cn(
+                    "bg-white/[0.03] border rounded-xl p-4",
+                    r.visible_to_client ? "border-white/[0.08]" : "border-red-500/20 opacity-75"
+                  )}
+                >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
                       <div className="font-semibold text-lux-text">{r.name}</div>
@@ -220,7 +241,27 @@ export default function ProjectClientWorkspace({
                   {r.notes && (
                     <p className="text-sm text-lux-muted italic leading-relaxed">&ldquo;{r.notes}&rdquo;</p>
                   )}
-                  <div className="text-[0.65rem] text-lux-muted/70 mt-2">{formatDate(r.created_at)}</div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
+                    <div className="text-[0.65rem] text-lux-muted/70">{formatDate(r.created_at)}</div>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-1.5 text-[0.65rem] text-lux-muted cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={r.visible_to_client}
+                          onChange={(e) => toggleResponseVisible(r.id, e.target.checked)}
+                          className="rounded border-white/20"
+                        />
+                        Client
+                      </label>
+                      <button
+                        type="button"
+                        className="text-[0.65rem] text-red-400/80 hover:text-red-400"
+                        onClick={() => removeResponse(r.id)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

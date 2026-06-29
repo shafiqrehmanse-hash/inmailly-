@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertProjectAccess, getCampaignMember } from "@/lib/campaign-auth-server";
-import { getClientEmailForProject, notifyClientSendProof } from "@/lib/email";
 import { processProofScreenshot } from "@/lib/proof-crop";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createServerSupabase } from "@/lib/supabase/server";
 
 const BUCKET = "proof-screenshots";
 const SIGNED_TTL = 3600;
@@ -39,8 +37,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const supabase = createServerSupabase();
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("send_proofs")
     .select("*")
     .eq("project_id", projectId)
@@ -128,18 +126,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (uploaded.length > 0) {
-    const client = await getClientEmailForProject(projectId);
-    if (client.email) {
-      void notifyClientSendProof({
-        email: client.email,
-        clientName: client.clientName,
-        projectName: client.projectName,
-        count: uploaded.length,
-      });
-    }
-  }
-
   return NextResponse.json({
     uploaded,
     errors,
@@ -154,13 +140,13 @@ export async function PATCH(request: NextRequest) {
   const { id, visible_to_client } = await request.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  const supabase = createServerSupabase();
-  const { data: proof } = await supabase.from("send_proofs").select("project_id").eq("id", id).single();
+  const admin = createAdminClient();
+  const { data: proof } = await admin.from("send_proofs").select("project_id").eq("id", id).maybeSingle();
   if (!proof || !(await assertProjectAccess(member.id, proof.project_id))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("send_proofs")
     .update({ visible_to_client: Boolean(visible_to_client) })
     .eq("id", id);
@@ -177,16 +163,10 @@ export async function DELETE(request: NextRequest) {
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   const admin = createAdminClient();
-  const { data: proof } = await admin
-    .from("send_proofs")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { data: proof } = await admin.from("send_proofs").select("*").eq("id", id).maybeSingle();
 
-  if (!proof || proof.uploaded_by !== member.id) {
-    if (!proof || !(await assertProjectAccess(member.id, proof.project_id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+  if (!proof || !(await assertProjectAccess(member.id, proof.project_id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   await admin.storage.from(BUCKET).remove([proof.original_path, proof.display_path]);
