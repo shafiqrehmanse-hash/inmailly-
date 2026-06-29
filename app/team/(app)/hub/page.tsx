@@ -1,8 +1,10 @@
 import Link from "next/link";
 import StatCard from "@/components/team/StatCard";
+import TeamAssignedProjects from "@/components/team/TeamAssignedProjects";
 import TeamProgressChart from "@/components/team/TeamProgressChart";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/team";
+import { getMemberAssignedProjects } from "@/lib/team-projects";
 
 export default async function HubPage() {
   const member = await getCurrentMember();
@@ -13,7 +15,8 @@ export default async function HubPage() {
   fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
   const cutoff = fourteenDaysAgo.toISOString();
 
-  const [pool, myActive, iUsed, myLeads, refCount, leadDatesRes, linkDatesRes] = await Promise.all([
+  const [pool, myActive, iUsed, myLeads, refCount, leadDatesRes, linkDatesRes, assignedProjects] =
+    await Promise.all([
     supabase
       .from("outreach_links")
       .select("*", { count: "exact", head: true })
@@ -49,6 +52,7 @@ export default async function HubPage() {
       .eq("status", "used")
       .not("used_at", "is", null)
       .gte("used_at", cutoff),
+    getMemberAssignedProjects(member.id),
   ]);
 
   const avail = pool.count || 0;
@@ -101,6 +105,8 @@ export default async function HubPage() {
           Claim links, run outreach, log leads — your daily workflow in one place.
         </p>
       </div>
+
+      <TeamAssignedProjects projects={assignedProjects} />
 
       <TeamProgressChart leadDates={leadDates} linkDates={linkDates} />
 

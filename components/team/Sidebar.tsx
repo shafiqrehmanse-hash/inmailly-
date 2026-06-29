@@ -20,6 +20,7 @@ const sections: { label: string; items: NavItem[] }[] = [
     label: "Main",
     items: [
       { id: "hub", href: "/team/hub", label: "Home", icon: "⌂" },
+      { id: "projects", href: "/team/hub", label: "My Projects", icon: "◎" },
       { id: "links", href: "/team/links", label: "Work Links", icon: "⛓", badge: true },
       { id: "leads", href: "/team/leads", label: "My Leads", icon: "◫" },
     ],

@@ -86,3 +86,50 @@ export type InviteCode = {
   used_count: number;
   created_at: string;
 };
+
+export type Client = {
+  id: string;
+  name: string;
+  company_name: string | null;
+  email: string | null;
+  logo_url: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectStatus = "draft" | "active" | "paused" | "completed";
+
+export type Project = {
+  id: string;
+  client_id: string;
+  name: string;
+  audience_brief: string | null;
+  target_titles: string | null;
+  target_industries: string | null;
+  target_regions: string | null;
+  connection_script: string | null;
+  inmail_script: string | null;
+  followup_script: string | null;
+  status: ProjectStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectAssignment = {
+  id: string;
+  project_id: string;
+  member_id: string;
+  assigned_at: string;
+  assigned_by: string;
+};
+
+export type ProjectWithClient = Project & {
+  clients: Pick<Client, "id" | "name" | "company_name" | "email" | "logo_url"> | null;
+};
+
+export type AssignedProject = ProjectWithClient & {
+  assignment_id: string;
+  assigned_at: string;
+};

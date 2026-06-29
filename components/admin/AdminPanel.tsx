@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import LeadModal from "@/components/team/LeadModal";
+import AdminProjectsSection from "@/components/admin/AdminProjectsSection";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import Toast, { ToastType } from "@/components/team/Toast";
 import type { Lead, OutreachLink, TeamMember } from "@/lib/types";
@@ -119,6 +120,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
     if (tab === "overview") loadOverview();
     if (tab === "links") loadLinks();
     if (tab === "team") loadMembers();
+    if (tab === "projects") loadMembers();
     if (tab === "leads") { loadLeads(); loadMembers(); }
     if (tab === "scripts") loadScript();
     if (tab === "referrals") loadReferrals();
@@ -339,7 +341,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
                     <td className="px-4 py-3 max-w-[200px] truncate text-lux-cyan">{truncateUrl(link.url, 40)}</td>
                     <td className="px-4 py-3">{link.smart_label}</td>
                     <td className="px-4 py-3"><Badge variant={link.status}>{link.status}</Badge></td>
-                    <td className="px-4 py-3 text-lux-mutedmer text-xs">{formatDate(link.claimed_at)}</td>
+                    <td className="px-4 py-3 text-lux-muted text-xs">{formatDate(link.claimed_at)}</td>
                     <td className="px-4 py-3">
                       {link.status === "used" && (
                         <Button variant="lux-ghost" size="sm" onClick={() => resetLink(link.id)}>Reset</Button>
@@ -351,6 +353,14 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
             </table>
           </div>
         </div>
+      )}
+
+      {tab === "projects" && (
+        <AdminProjectsSection
+          adminKey={adminKey}
+          members={members}
+          onToast={(message, type) => showToast(message, type)}
+        />
       )}
 
       {tab === "team" && (
@@ -487,7 +497,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
                     <td className="px-4 py-3 text-lux-muted">{lead.team_members?.name}</td>
                     <td className="px-4 py-3">{lead.company || "—"}</td>
                     <td className="px-4 py-3"><Badge variant={lead.status}>{lead.status}</Badge></td>
-                    <td className="px-4 py-3 text-lux-mutedmer text-xs">{formatDate(lead.updated_at)}</td>
+                    <td className="px-4 py-3 text-lux-muted text-xs">{formatDate(lead.updated_at)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -525,7 +535,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
         <div className="lux-card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-lux-mutedmer text-xs uppercase border-b border-white/[0.06]">
+              <tr className="text-lux-muted text-xs uppercase border-b border-white/[0.06]">
                 <th className="text-left px-4 py-3">Referrer</th>
                 <th className="text-left px-4 py-3">Email</th>
                 <th className="text-left px-4 py-3">Status</th>
@@ -585,7 +595,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
                     <td className="px-4 py-3">{(f.team_members as { name: string })?.name}</td>
                     <td className="px-4 py-3 text-emerald-400 font-medium">+{f.amount_pkr as number} PKR</td>
                     <td className="px-4 py-3 text-lux-muted">{f.note as string}</td>
-                    <td className="px-4 py-3 text-lux-mutedmer">{formatDate(f.added_at as string)}</td>
+                    <td className="px-4 py-3 text-lux-muted">{formatDate(f.added_at as string)}</td>
                   </tr>
                 ))}
               </tbody>
