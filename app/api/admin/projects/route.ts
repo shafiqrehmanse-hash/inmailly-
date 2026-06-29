@@ -8,6 +8,13 @@ function checkKey(request: NextRequest) {
   return verifyAdminKey(key);
 }
 
+function parsePackageSize(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const n = typeof value === "number" ? value : parseInt(String(value), 10);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+}
+
 async function validateCampaignManagerIds(
   admin: ReturnType<typeof createAdminClient>,
   memberIds: string[]
@@ -142,6 +149,7 @@ export async function POST(request: NextRequest) {
     followup_script,
     status,
     member_ids,
+    inmail_package_size,
   } = body;
 
   if (!client_id || !name?.trim()) {
@@ -162,6 +170,7 @@ export async function POST(request: NextRequest) {
       inmail_script: inmail_script?.trim() || null,
       followup_script: followup_script?.trim() || null,
       status: status || "active",
+      inmail_package_size: parsePackageSize(inmail_package_size),
       portal_token: randomToken(),
     })
     .select()
@@ -213,6 +222,10 @@ export async function PATCH(request: NextRequest) {
     "followup_script",
     "status",
   ] as const;
+
+  if (updates.inmail_package_size !== undefined) {
+    patch.inmail_package_size = parsePackageSize(updates.inmail_package_size);
+  }
 
   for (const field of fields) {
     if (updates[field] !== undefined) {

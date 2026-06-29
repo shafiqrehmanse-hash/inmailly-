@@ -82,6 +82,7 @@ export async function GET() {
       audience_brief: project.audience_brief,
       target_titles: project.target_titles,
       portal_token: project.portal_token,
+      inmail_package_size: project.inmail_package_size,
       clients: clientRow,
     },
     stats: {

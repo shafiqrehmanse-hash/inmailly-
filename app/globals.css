@@ -64,3 +64,12 @@ body {
     @apply font-bricolage font-extrabold text-[clamp(1.9rem,4vw,2.9rem)] tracking-tight text-ink leading-tight;
   }
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}

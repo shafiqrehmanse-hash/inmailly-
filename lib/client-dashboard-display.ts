@@ -20,6 +20,9 @@ export function buildClientDisplayDashboard(live: ClientDashboardLiveData): {
   }
 
   const activity = DEMO_ACTIVITY[0];
+  const packageTarget = live.packageProgress?.target;
+  const demoCompleted = packageTarget ? Math.min(Math.round(packageTarget * 0.34), packageTarget) : 0;
+
   return {
     usingDemoFill: true,
     display: {
@@ -30,8 +33,8 @@ export function buildClientDisplayDashboard(live: ClientDashboardLiveData): {
         interested: DEMO_CAMPAIGN.meetings + 18,
         replied: DEMO_CAMPAIGN.replied,
         replyRate: DEMO_CAMPAIGN.replyRate,
-        sends: 8,
-        teamSends: 8,
+        sends: packageTarget ? demoCompleted : 8,
+        teamSends: packageTarget ? demoCompleted : 8,
       },
       responses: DEMO_RESPONSES,
       pipeline: PIPELINE_STAGES,
@@ -42,6 +45,13 @@ export function buildClientDisplayDashboard(live: ClientDashboardLiveData): {
         time: activity.time,
       },
       proofs: [],
+      packageProgress: packageTarget
+        ? {
+            target: packageTarget,
+            completed: demoCompleted,
+            percent: Math.min(100, (demoCompleted / packageTarget) * 100),
+          }
+        : null,
     },
   };
 }

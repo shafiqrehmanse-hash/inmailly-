@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
       target_industries,
       target_regions,
       portal_token,
+      inmail_package_size,
       clients ( id, name, company_name, email, logo_url )
     `
     )

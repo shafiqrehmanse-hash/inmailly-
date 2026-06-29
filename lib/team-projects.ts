@@ -19,8 +19,9 @@ const ASSIGNMENT_SELECT = `
     inmail_script,
     followup_script,
     status,
-    portal_token,
-    created_at,
+        portal_token,
+        inmail_package_size,
+        created_at,
     updated_at,
     clients (
       id,

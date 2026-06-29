@@ -18,6 +18,7 @@ type ProjectRow = {
   inmail_script: string | null;
   followup_script: string | null;
   status: ProjectStatus;
+  inmail_package_size: number | null;
   portal_token: string | null;
   created_at: string;
   clients: { id: string; name: string; company_name: string | null } | null;
@@ -36,8 +37,19 @@ const EMPTY_PROJECT = {
   inmail_script: "",
   followup_script: "",
   status: "active" as ProjectStatus,
+  inmail_package_size: "",
+  inmail_package_custom: "",
   member_ids: [] as string[],
 };
+
+const PACKAGE_PRESETS = [
+  { value: "", label: "No package" },
+  { value: "1000", label: "1,000 InMails" },
+  { value: "5000", label: "5,000 InMails" },
+  { value: "10000", label: "10,000 InMails" },
+  { value: "20000", label: "20,000 InMails" },
+  { value: "custom", label: "Custom amount…" },
+];
 
 export default function AdminProjectsSection({
   adminKey,
@@ -97,6 +109,10 @@ export default function AdminProjectsSection({
       inmail_script: projectForm.inmail_script,
       followup_script: projectForm.followup_script,
       status: projectForm.status,
+      inmail_package_size:
+        projectForm.inmail_package_size === "custom"
+          ? projectForm.inmail_package_custom || null
+          : projectForm.inmail_package_size || null,
       member_ids: projectForm.member_ids,
     };
 
@@ -132,6 +148,10 @@ export default function AdminProjectsSection({
   }
 
   function startEdit(p: ProjectRow) {
+    const presetValues = new Set(PACKAGE_PRESETS.map((x) => x.value).filter(Boolean));
+    const pkg = p.inmail_package_size;
+    const preset =
+      pkg && presetValues.has(String(pkg)) ? String(pkg) : pkg ? "custom" : "";
     setEditingId(p.id);
     setProjectForm({
       client_id: p.client_id,
@@ -144,6 +164,8 @@ export default function AdminProjectsSection({
       inmail_script: p.inmail_script || "",
       followup_script: p.followup_script || "",
       status: p.status,
+      inmail_package_size: preset,
+      inmail_package_custom: pkg ? String(pkg) : "",
       member_ids: p.assignments.map((a) => a.member_id),
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -227,7 +249,28 @@ export default function AdminProjectsSection({
                 label: s.charAt(0).toUpperCase() + s.slice(1),
               }))}
             />
+            <LuxSelect
+              value={projectForm.inmail_package_size}
+              onChange={(inmail_package_size) =>
+                setProjectForm({ ...projectForm, inmail_package_size })
+              }
+              placeholder="InMail package"
+              options={PACKAGE_PRESETS}
+            />
           </div>
+
+          {projectForm.inmail_package_size === "custom" && (
+            <input
+              className="lux-input"
+              type="number"
+              min={1}
+              placeholder="Custom package size (e.g. 2500)"
+              value={projectForm.inmail_package_custom}
+              onChange={(e) =>
+                setProjectForm({ ...projectForm, inmail_package_custom: e.target.value })
+              }
+            />
+          )}
 
           <textarea
             className="lux-input min-h-[90px]"
@@ -375,6 +418,9 @@ export default function AdminProjectsSection({
                 )}
                 <div className="flex flex-wrap gap-4 text-xs text-lux-muted/80">
                   <span>{p.assignee_count} assigned</span>
+                  {p.inmail_package_size ? (
+                    <span>{p.inmail_package_size.toLocaleString()} InMail package</span>
+                  ) : null}
                   <span>Created {formatDate(p.created_at)}</span>
                 </div>
                 {p.assignments.length > 0 && (

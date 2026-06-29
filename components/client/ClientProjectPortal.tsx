@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ClientDashboard from "@/components/client/ClientDashboard";
+import ClientPackageProgress from "@/components/client/ClientPackageProgress";
 import LuxBackground from "@/components/home/LuxBackground";
 import { mapPortalToDashboard } from "@/lib/map-portal-to-dashboard";
 import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
@@ -83,6 +84,11 @@ export default function ClientProjectPortal({ token }: { token: string }) {
           </p>
         </div>
         <ClientDashboard mode="full" live={live} />
+        {live.packageProgress && (
+          <div className="mt-8">
+            <ClientPackageProgress progress={live.packageProgress} />
+          </div>
+        )}
       </main>
     </div>
   );

@@ -28,6 +28,7 @@ export type ClientDashboardLiveData = {
   velocity: number[];
   latestActivity: { name: string; action: string; time: string } | null;
   proofs: { id: string; image_url: string; time: string }[];
+  packageProgress: { target: number; completed: number; percent: number } | null;
 };
 
 type PortalResponse = {
@@ -52,6 +53,7 @@ type PortalPayload = {
     status: string;
     audience_brief: string | null;
     target_titles: string | null;
+    inmail_package_size?: number | null;
     clients: { name: string; company_name: string | null } | { name: string; company_name: string | null }[] | null;
   };
   stats: { total: number; interested: number; sends?: number; teamResponses?: number; teamSends?: number };
@@ -63,6 +65,19 @@ function clientLabel(clients: PortalPayload["project"]["clients"]) {
   if (!clients) return "Client";
   const c = Array.isArray(clients) ? clients[0] : clients;
   return c?.company_name || c?.name || "Client";
+}
+
+function buildPackageProgress(
+  packageSize: number | null | undefined,
+  completed: number
+): ClientDashboardLiveData["packageProgress"] {
+  if (!packageSize || packageSize <= 0) return null;
+  const safeCompleted = Math.min(completed, packageSize);
+  return {
+    target: packageSize,
+    completed: safeCompleted,
+    percent: Math.min(100, (safeCompleted / packageSize) * 100),
+  };
 }
 
 function bucketVelocity(responses: PortalResponse[]): number[] {
@@ -159,5 +174,6 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
       image_url: p.image_url!,
       time: formatDate(p.created_at),
     })),
+    packageProgress: buildPackageProgress(data.project.inmail_package_size, inmailsSent),
   };
 }
