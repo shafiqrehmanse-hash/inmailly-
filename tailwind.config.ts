@@ -45,6 +45,17 @@ const config: Config = {
         "ws-border": "rgba(79,70,229,0.16)",
         "ws-ind": "#6366f1",
         "ws-cyan": "#22d3ee",
+        // luxury landing
+        lux: {
+          bg: "#05070B",
+          bg2: "#0C1018",
+          card: "#131A24",
+          text: "#FFFFFF",
+          muted: "#9DA8B8",
+          blue: "#2563EB",
+          cyan: "#22D3EE",
+          violet: "#7C6AEF",
+        },
       },
       fontFamily: {
         bricolage: ["var(--font-bricolage)", "sans-serif"],
@@ -64,10 +75,15 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(24px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        scroll: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         pulse: "pulse 2.2s ease-in-out infinite",
         "slide-up": "slide-up 0.6s ease forwards",
+        scroll: "scroll 30s linear infinite",
       },
     },
   },

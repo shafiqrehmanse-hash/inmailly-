@@ -15,9 +15,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "InMailly — LinkedIn Outreach at Scale",
+  title: "InMailly — Premium LinkedIn Outreach Infrastructure",
   description:
-    "LinkedIn InMail campaign platform with link pool, lead tracking, and team dashboard.",
+    "Reach thousands of decision makers on LinkedIn without enterprise InMail pricing. Human-operated outreach at scale.",
 };
 
 export default function RootLayout({
