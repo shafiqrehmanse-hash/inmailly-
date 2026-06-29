@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { SiteContent } from "@/lib/site-content-defaults";
 import LuxBackground from "./LuxBackground";
 import LuxNav from "./LuxNav";
 import LuxHero from "./LuxHero";
@@ -17,23 +18,23 @@ const LuxFAQ = dynamic(() => import("./LuxFAQ"));
 const LuxFinalCTA = dynamic(() => import("./LuxFinalCTA"));
 const LuxFooter = dynamic(() => import("./LuxFooter"));
 
-export default function HomePage() {
+export default function HomePage({ content }: { content: SiteContent }) {
   return (
     <div className="relative min-h-screen bg-lux-bg text-lux-text overflow-x-hidden">
       <LuxBackground />
       <LuxNav />
       <main>
-        <LuxHero />
+        <LuxHero content={content.hero} />
         <ProblemStory />
         <ProductShowcase />
         <ResponseShowcase />
         <LuxTimeline />
         <LuxFeatures />
-        <LuxStats />
-        <LuxPricing />
-        <LuxTestimonials />
-        <LuxFAQ />
-        <LuxFinalCTA />
+        <LuxStats content={content.stats} />
+        <LuxPricing content={content.pricing} />
+        <LuxTestimonials content={content.testimonials} />
+        <LuxFAQ content={content.faq} />
+        <LuxFinalCTA content={content.finalCta} />
       </main>
       <LuxFooter />
     </div>

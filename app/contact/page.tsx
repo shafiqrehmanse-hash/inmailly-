@@ -3,8 +3,11 @@ import ContactForm from "@/components/home/ContactForm";
 import LuxBackground from "@/components/home/LuxBackground";
 import LuxFooter from "@/components/home/LuxFooter";
 import LuxNav from "@/components/home/LuxNav";
+import { getSiteContent } from "@/lib/site-content-server";
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const content = await getSiteContent();
+
   return (
     <div className="relative min-h-screen bg-lux-bg text-lux-text">
       <LuxBackground />
@@ -15,11 +18,9 @@ export default function ContactPage() {
             ← Back
           </Link>
           <h1 className="font-bricolage font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight text-lux-text mb-3">
-            Start your campaign
+            {content.contact.headline}
           </h1>
-          <p className="text-lux-muted mb-10 leading-relaxed">
-            Tell us about your outreach goals. We respond within 24 hours.
-          </p>
+          <p className="text-lux-muted mb-10 leading-relaxed">{content.contact.subline}</p>
           <div className="border border-white/[0.08] bg-lux-card/80 backdrop-blur-xl p-8">
             <ContactForm />
           </div>

@@ -1,16 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
+import type { StatsContent } from "@/lib/site-content-defaults";
+import { DEFAULT_SITE_CONTENT } from "@/lib/site-content-defaults";
 import AnimatedCounter from "./AnimatedCounter";
 
-const STATS = [
-  { value: 2847000, suffix: "+", label: "Messages delivered", decimals: 0 },
-  { value: 11.4, suffix: "%", label: "Average reply rate", decimals: 1 },
-  { value: 0.27, prefix: "$", label: "Cost per message", decimals: 2 },
-  { value: 48, suffix: "h", label: "Average launch time", decimals: 0 },
-];
+export default function LuxStats({ content }: { content?: StatsContent }) {
+  const c = content ?? DEFAULT_SITE_CONTENT.stats;
 
-export default function LuxStats() {
   return (
     <section className="relative py-32 lg:py-40 border-t border-white/[0.04] overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-lux-blue/[0.03] via-transparent to-lux-violet/[0.03]" />
@@ -21,11 +18,11 @@ export default function LuxStats() {
           viewport={{ once: true }}
           className="text-[0.7rem] uppercase tracking-[0.2em] text-lux-cyan font-semibold mb-6 text-center"
         >
-          By the numbers
+          {c.sectionLabel}
         </motion.p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.06] border border-white/[0.06]">
-          {STATS.map((s, i) => (
+          {c.items.map((s, i) => (
             <motion.div
               key={s.label}
               initial={{ opacity: 0, y: 30 }}
@@ -42,12 +39,13 @@ export default function LuxStats() {
                   decimals={s.decimals}
                 />
               </div>
-              <div className="text-[0.7rem] uppercase tracking-[0.15em] text-lux-muted mt-3">{s.label}</div>
+              <div className="text-[0.7rem] uppercase tracking-[0.15em] text-lux-muted mt-3">
+                {s.label}
+              </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Mini activity feed */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -57,13 +55,7 @@ export default function LuxStats() {
           <div className="flex gap-8 animate-[scroll_30s_linear_infinite] whitespace-nowrap">
             {[...Array(2)].map((_, gi) => (
               <div key={gi} className="flex gap-8">
-                {[
-                  "Campaign #2847 · 142 replies today",
-                  "Acme Corp · 1,000 sends complete",
-                  "Series A SaaS · 11.2% reply rate",
-                  "Agency batch · 5,000 profiles queued",
-                  "Enterprise · 48h launch confirmed",
-                ].map((t) => (
+                {c.ticker.map((t) => (
                   <span key={`${gi}-${t}`} className="text-[0.75rem] text-lux-muted font-medium">
                     <span className="text-lux-cyan mr-2">●</span>
                     {t}

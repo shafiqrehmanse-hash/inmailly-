@@ -1,15 +1,13 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import TeamAuthLayout from "@/components/team/TeamAuthLayout";
-import { getLoginRedirect, isCampaignManager } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
+import { getLoginRedirect } from "@/lib/roles";
 
-function LoginForm() {
+export default function CampaignLoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const registered = searchParams.get("registered");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,42 +24,47 @@ function LoginForm() {
       setLoading(false);
       return;
     }
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
     if (user) {
       const { data: member } = await supabase
         .from("team_members")
         .select("id, role")
         .eq("user_id", user.id)
         .single();
-      if (member) {
-        if (isCampaignManager(member.role)) {
-          setError("Campaign managers should use /campaign/login");
-          await supabase.auth.signOut();
-          setLoading(false);
-          return;
-        }
-        await supabase
-          .from("team_members")
-          .update({ last_login: new Date().toISOString() })
-          .eq("id", member.id);
-        router.push(getLoginRedirect(member.role as "member"));
-        router.refresh();
+
+      if (!member) {
+        setError("No campaign manager account found.");
+        await supabase.auth.signOut();
+        setLoading(false);
         return;
       }
+
+      if (member.role !== "campaign_manager") {
+        setError("This login is for campaign managers only. Use /team/login for outreach work.");
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
+      }
+
+      await supabase
+        .from("team_members")
+        .update({ last_login: new Date().toISOString() })
+        .eq("id", member.id);
     }
-    router.push("/team/hub");
+
+    router.push(getLoginRedirect("campaign_manager"));
     router.refresh();
   }
 
   return (
-    <TeamAuthLayout title="Team Login" subtitle="Internal outreach workspace">
-      {registered && (
-        <div className="bg-ws-ind/10 border border-ws-ind/30 text-ws-cyan rounded-xl px-4 py-3 text-sm mb-5">
-          Account created — you can log in now.
-        </div>
-      )}
+    <TeamAuthLayout
+      title="Campaign Manager"
+      subtitle="Client campaigns & portal responses"
+    >
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm mb-5">
           {error}
@@ -69,7 +72,9 @@ function LoginForm() {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Email</label>
+          <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">
+            Email
+          </label>
           <input
             type="email"
             required
@@ -79,7 +84,9 @@ function LoginForm() {
           />
         </div>
         <div>
-          <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Password</label>
+          <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">
+            Password
+          </label>
           <input
             type="password"
             required
@@ -91,25 +98,17 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3.5 bg-ws-ind text-white rounded-xl font-bricolage font-extrabold hover:bg-ind2 transition-all disabled:opacity-50"
+          className="w-full py-3.5 bg-gradient-to-r from-lux-violet to-lux-cyan text-white rounded-xl font-bricolage font-extrabold hover:opacity-90 transition-all disabled:opacity-50"
         >
           {loading ? "Signing in…" : "Log in →"}
         </button>
       </form>
       <p className="text-center text-xs text-white/30 mt-6">
-        Campaign managers:{" "}
-        <a href="/campaign/login" className="text-lux-cyan hover:underline">
-          /campaign/login
+        Outreach workers:{" "}
+        <a href="/team/login" className="text-lux-cyan hover:underline">
+          /team/login
         </a>
       </p>
     </TeamAuthLayout>
-  );
-}
-
-export default function TeamLoginPage() {
-  return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import LuxSelect from "@/components/ui/LuxSelect";
 
 const VOLUMES = ["1,000 messages", "5,000 messages", "20,000 messages", "50,000+ messages"];
 
@@ -68,14 +69,13 @@ export default function ContactForm() {
         <label className="text-[0.65rem] uppercase tracking-[0.15em] text-lux-muted font-semibold">
           Estimated volume
         </label>
-        <select className="lux-input mt-2" value={volume} onChange={(e) => setVolume(e.target.value)}>
-          <option value="">Select volume…</option>
-          {VOLUMES.map((v) => (
-            <option key={v} value={v}>
-              {v}
-            </option>
-          ))}
-        </select>
+        <LuxSelect
+          className="mt-2"
+          value={volume}
+          onChange={setVolume}
+          placeholder="Select volume…"
+          options={VOLUMES.map((v) => ({ value: v, label: v }))}
+        />
       </div>
       <div>
         <label className="text-[0.65rem] uppercase tracking-[0.15em] text-lux-muted font-semibold">

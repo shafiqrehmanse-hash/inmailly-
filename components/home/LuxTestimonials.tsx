@@ -1,44 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
+import type { TestimonialsContent } from "@/lib/site-content-defaults";
+import { DEFAULT_SITE_CONTENT } from "@/lib/site-content-defaults";
 
-const QUOTES = [
-  {
-    quote:
-      "We burned $3,000/month on LinkedIn Ads for 40 replies. InMailly sent 5,000 messages and we got 380 conversations. The math is absurd.",
-    name: "Amir K.",
-    role: "Founder",
-    company: "B2B SaaS",
-    initials: "AK",
-  },
-  {
-    quote:
-      "This isn't another automation tool. Real humans, no restrictions, no bans. My pipeline went from dry to full in three weeks.",
-    name: "Sofia R.",
-    role: "VP Sales",
-    company: "Enterprise Tech",
-    initials: "SR",
-  },
-  {
-    quote:
-      "Clean operations layer. Every reply logged in real time. It feels like having ten SDRs without the payroll.",
-    name: "Marcus W.",
-    role: "Growth Lead",
-    company: "Series A",
-    initials: "MW",
-  },
-];
+export default function LuxTestimonials({ content }: { content?: TestimonialsContent }) {
+  const c = content ?? DEFAULT_SITE_CONTENT.testimonials;
 
-export default function LuxTestimonials() {
   return (
     <section className="relative py-32 lg:py-40 border-t border-white/[0.04]">
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
         <p className="text-[0.7rem] uppercase tracking-[0.2em] text-lux-cyan font-semibold mb-16">
-          What operators say
+          {c.sectionLabel}
         </p>
 
         <div className="space-y-24">
-          {QUOTES.map((q, i) => (
+          {c.items.map((q, i) => (
             <motion.blockquote
               key={q.name}
               initial={{ opacity: 0, x: i % 2 === 0 ? -40 : 40 }}

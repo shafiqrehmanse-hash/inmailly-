@@ -2,61 +2,30 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import type { PricingContent } from "@/lib/site-content-defaults";
+import { DEFAULT_SITE_CONTENT } from "@/lib/site-content-defaults";
 import MagneticButton from "./MagneticButton";
 
-const PLANS = [
-  {
-    name: "Free trial",
-    price: "0",
-    unit: "200 InMails",
-    per: "No credit card · Full dashboard",
-    featured: true,
-    trial: true,
-  },
-  {
-    name: "Starter",
-    price: "275",
-    unit: "1,000 messages",
-    per: "$0.27/msg after trial",
-    featured: false,
-  },
-  {
-    name: "Growth",
-    price: "1,100",
-    unit: "5,000 messages",
-    per: "$0.22/msg",
-    featured: false,
-  },
-  {
-    name: "Scale",
-    price: "3,800",
-    unit: "20,000 messages",
-    per: "$0.19/msg",
-    featured: false,
-  },
-];
+export default function LuxPricing({ content }: { content?: PricingContent }) {
+  const c = content ?? DEFAULT_SITE_CONTENT.pricing;
 
-export default function LuxPricing() {
   return (
     <section id="pricing" className="relative py-32 lg:py-48 border-t border-white/[0.04]">
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-20">
           <div>
             <p className="text-[0.7rem] uppercase tracking-[0.2em] text-lux-cyan font-semibold mb-6">
-              Pricing
+              {c.sectionLabel}
             </p>
             <h2 className="font-bricolage font-extrabold text-[clamp(2.2rem,5vw,4rem)] leading-[1.05] text-lux-text max-w-xl">
-              Try 200 InMails free. Pay when it works.
+              {c.title}
             </h2>
           </div>
-          <p className="text-lux-muted max-w-sm leading-relaxed">
-            Verified Sales Nav profiles. You provide audience + script. We handle delivery and your
-            dashboard tracks every reply.
-          </p>
+          <p className="text-lux-muted max-w-sm leading-relaxed">{c.subtitle}</p>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 items-end">
-          {PLANS.map((plan, i) => (
+          {c.plans.map((plan, i) => (
             <motion.div
               key={plan.name}
               initial={{ opacity: 0, y: 40 }}

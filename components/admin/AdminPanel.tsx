@@ -6,8 +6,10 @@ import Button from "@/components/ui/Button";
 import LeadModal from "@/components/team/LeadModal";
 import AdminClientsSection from "@/components/admin/AdminClientsSection";
 import AdminProjectsSection from "@/components/admin/AdminProjectsSection";
+import AdminWebsiteSection from "@/components/admin/AdminWebsiteSection";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import Toast, { ToastType } from "@/components/team/Toast";
+import LuxSelect from "@/components/ui/LuxSelect";
 import type { Lead, OutreachLink, TeamMember } from "@/lib/types";
 import { formatDate, truncateUrl } from "@/lib/utils";
 import AdminShell, { type AdminTab } from "@/components/admin/AdminShell";
@@ -185,6 +187,27 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
     loadMembers();
   }
 
+  async function updateRole(memberId: string, role: string) {
+    const res = await fetch(`/api/admin/members?key=${adminKey}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ memberId, role }),
+    });
+    const data = await res.json();
+    if (data.error) showToast(data.error, "error");
+    else {
+      showToast("Role updated");
+      loadMembers();
+    }
+  }
+
+  const roleOptions = [
+    { value: "member", label: "Outreach worker" },
+    { value: "senior", label: "Senior worker" },
+    { value: "campaign_manager", label: "Campaign manager" },
+    { value: "admin", label: "Team admin" },
+  ];
+
   async function resetPassword(email: string) {
     await fetch(`/api/admin/members/reset-password?key=${adminKey}`, {
       method: "POST",
@@ -315,16 +338,17 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               </p>
             )}
           </div>
-          <div className="flex gap-3">
-            <select
-              className="lux-input w-auto text-sm py-2"
+          <div className="flex gap-3 flex-wrap">
+            <LuxSelect
+              className="w-44"
+              size="sm"
               value={linkStatusFilter}
-              onChange={(e) => setLinkStatusFilter(e.target.value)}
-            >
-              {["all", "available", "claimed", "used"].map((s) => (
-                <option key={s} value={s} className="bg-lux-bg capitalize">{s}</option>
-              ))}
-            </select>
+              onChange={setLinkStatusFilter}
+              options={["all", "available", "claimed", "used"].map((s) => ({
+                value: s,
+                label: s.charAt(0).toUpperCase() + s.slice(1),
+              }))}
+            />
           </div>
           <div className="lux-card overflow-x-auto">
             <table className="w-full text-sm">
@@ -367,7 +391,14 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
       {tab === "projects" && (
         <AdminProjectsSection
           adminKey={adminKey}
-          members={members}
+          members={members.filter((m) => m.role === "campaign_manager")}
+          onToast={(message, type) => showToast(message, type)}
+        />
+      )}
+
+      {tab === "website" && (
+        <AdminWebsiteSection
+          adminKey={adminKey}
           onToast={(message, type) => showToast(message, type)}
         />
       )}
@@ -383,6 +414,11 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
                 <input className="lux-input" placeholder="Full name" value={newMember.name} onChange={(e) => setNewMember({ ...newMember, name: e.target.value })} />
                 <input className="lux-input" placeholder="Email" type="email" value={newMember.email} onChange={(e) => setNewMember({ ...newMember, email: e.target.value })} />
                 <input className="lux-input" type="password" placeholder="Temporary password" value={newMember.password} onChange={(e) => setNewMember({ ...newMember, password: e.target.value })} />
+                <LuxSelect
+                  value={newMember.role}
+                  onChange={(role) => setNewMember({ ...newMember, role })}
+                  options={roleOptions}
+                />
                 <Button variant="lux" onClick={addMember} className="w-full">Add member</Button>
               </div>
               <div className="lux-card p-5 space-y-3">
@@ -402,12 +438,13 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
             <div className="lux-card p-5 space-y-3 mt-4">
               <h3 className="font-bricolage font-bold text-lux-text">Add funds</h3>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <select className="lux-input sm:col-span-2" value={fundMemberId} onChange={(e) => setFundMemberId(e.target.value)}>
-                  <option value="">Select member</option>
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
+                <LuxSelect
+                  className="sm:col-span-2"
+                  value={fundMemberId}
+                  onChange={setFundMemberId}
+                  placeholder="Select member"
+                  options={members.map((m) => ({ value: m.id, label: m.name }))}
+                />
                 <input className="lux-input" type="number" placeholder="Amount PKR" value={fundAmount} onChange={(e) => setFundAmount(e.target.value)} />
                 <input className="lux-input" placeholder="Note" value={fundNote} onChange={(e) => setFundNote(e.target.value)} />
               </div>
@@ -445,7 +482,15 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
                       <tr key={m.id} className="border-b border-white/[0.06] last:border-0 hover:bg-lux-bg2/50">
                         <td className="px-4 py-3 font-medium text-lux-text">{m.name}</td>
                         <td className="px-4 py-3 text-lux-muted">{m.email}</td>
-                        <td className="px-4 py-3 capitalize text-lux-muted">{m.role}</td>
+                        <td className="px-4 py-3">
+                          <LuxSelect
+                            size="sm"
+                            className="min-w-[160px]"
+                            value={m.role}
+                            onChange={(role) => updateRole(m.id, role)}
+                            options={roleOptions}
+                          />
+                        </td>
                         <td className="px-4 py-3">{m.active_links}</td>
                         <td className="px-4 py-3">{m.leads_count}</td>
                         <td className="px-4 py-3">
@@ -471,18 +516,26 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
 
       {tab === "leads" && (
         <div className="space-y-4">
-          <div className="flex gap-3">
-            <select className="lux-input w-auto text-sm py-2" value={leadMemberFilter} onChange={(e) => setLeadMemberFilter(e.target.value)}>
-              <option value="all" className="bg-lux-bg">All members</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id} className="bg-lux-bg">{m.name}</option>
-              ))}
-            </select>
-            <select className="lux-input w-auto text-sm py-2" value={leadStatusFilter} onChange={(e) => setLeadStatusFilter(e.target.value)}>
-              {["all", "new", "contacted", "replied", "interested", "closed", "dead"].map((s) => (
-                <option key={s} value={s} className="bg-lux-bg capitalize">{s}</option>
-              ))}
-            </select>
+          <div className="flex gap-3 flex-wrap">
+            <LuxSelect
+              className="w-44"
+              size="sm"
+              value={leadMemberFilter}
+              onChange={setLeadMemberFilter}
+              options={[
+                { value: "all", label: "All members" },
+                ...members.map((m) => ({ value: m.id, label: m.name })),
+              ]}
+            />
+            <LuxSelect
+              className="w-44"
+              size="sm"
+              value={leadStatusFilter}
+              onChange={setLeadStatusFilter}
+              options={["all", "new", "contacted", "replied", "interested", "closed", "dead"].map(
+                (s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) })
+              )}
+            />
           </div>
           <div className="lux-card overflow-x-auto">
             <table className="w-full text-sm">
@@ -582,12 +635,16 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
 
       {tab === "funds" && (
         <div className="space-y-4">
-          <select className="lux-input w-auto text-sm py-2" value={fundFilter} onChange={(e) => setFundFilter(e.target.value)}>
-            <option value="all" className="bg-lux-bg">All members</option>
-            {members.map((m) => (
-              <option key={m.id} value={m.id} className="bg-lux-bg">{m.name}</option>
-            ))}
-          </select>
+          <LuxSelect
+            className="w-44"
+            size="sm"
+            value={fundFilter}
+            onChange={setFundFilter}
+            options={[
+              { value: "all", label: "All members" },
+              ...members.map((m) => ({ value: m.id, label: m.name })),
+            ]}
+          />
           <div className="lux-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

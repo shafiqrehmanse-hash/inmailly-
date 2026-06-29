@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
+import LuxSelect from "@/components/ui/LuxSelect";
 import type { Client, ProjectStatus, TeamMember } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
@@ -192,39 +193,30 @@ export default function AdminProjectsSection({
         </div>
         <div className="lux-card p-5 space-y-4">
           <div className="grid sm:grid-cols-2 gap-3">
-            <select
-              className="lux-input"
+            <LuxSelect
               value={projectForm.client_id}
-              onChange={(e) => setProjectForm({ ...projectForm, client_id: e.target.value })}
-            >
-              <option value="" className="bg-lux-bg">
-                Select client *
-              </option>
-              {clients.filter((c) => c.is_active).map((c) => (
-                <option key={c.id} value={c.id} className="bg-lux-bg">
-                  {c.company_name || c.name}
-                </option>
-              ))}
-            </select>
+              onChange={(client_id) => setProjectForm({ ...projectForm, client_id })}
+              placeholder="Select client *"
+              options={clients
+                .filter((c) => c.is_active)
+                .map((c) => ({ value: c.id, label: c.company_name || c.name }))}
+            />
             <input
               className="lux-input"
               placeholder="Project name *"
               value={projectForm.name}
               onChange={(e) => setProjectForm({ ...projectForm, name: e.target.value })}
             />
-            <select
-              className="lux-input"
+            <LuxSelect
               value={projectForm.status}
-              onChange={(e) =>
-                setProjectForm({ ...projectForm, status: e.target.value as ProjectStatus })
+              onChange={(status) =>
+                setProjectForm({ ...projectForm, status: status as ProjectStatus })
               }
-            >
-              {(["draft", "active", "paused", "completed"] as const).map((s) => (
-                <option key={s} value={s} className="bg-lux-bg capitalize">
-                  {s}
-                </option>
-              ))}
-            </select>
+              options={(["draft", "active", "paused", "completed"] as const).map((s) => ({
+                value: s,
+                label: s.charAt(0).toUpperCase() + s.slice(1),
+              }))}
+            />
           </div>
 
           <textarea
@@ -278,27 +270,33 @@ export default function AdminProjectsSection({
 
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-lux-muted mb-2">
-              Assign team members
+              Assign campaign managers
             </p>
-            <div className="flex flex-wrap gap-2">
-              {members.filter((m) => m.is_active).map((m) => {
-                const selected = projectForm.member_ids.includes(m.id);
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => toggleMember(m.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                      selected
-                        ? "bg-lux-cyan/15 text-lux-cyan border-lux-cyan/40"
-                        : "bg-white/[0.03] text-lux-muted border-white/[0.08] hover:border-lux-cyan/25"
-                    }`}
-                  >
-                    {m.name}
-                  </button>
-                );
-              })}
-            </div>
+            {members.length === 0 ? (
+              <p className="text-sm text-amber-300/90">
+                No campaign managers yet — add one in Team tab with role &quot;Campaign manager&quot;.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {members.filter((m) => m.is_active).map((m) => {
+                  const selected = projectForm.member_ids.includes(m.id);
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => toggleMember(m.id)}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                        selected
+                          ? "bg-lux-cyan/15 text-lux-cyan border-lux-cyan/40"
+                          : "bg-white/[0.03] text-lux-muted border-white/[0.08] hover:border-lux-cyan/25"
+                      }`}
+                    >
+                      {m.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <Button variant="lux" onClick={saveProject} className="w-full sm:w-auto">
@@ -310,20 +308,19 @@ export default function AdminProjectsSection({
       <section>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <p className="admin-section-title">All projects</p>
-          <select
-            className="lux-input w-auto text-sm py-2"
+          <LuxSelect
+            className="w-48"
+            size="sm"
             value={clientFilter}
-            onChange={(e) => setClientFilter(e.target.value)}
-          >
-            <option value="all" className="bg-lux-bg">
-              All clients
-            </option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id} className="bg-lux-bg">
-                {c.company_name || c.name}
-              </option>
-            ))}
-          </select>
+            onChange={setClientFilter}
+            options={[
+              { value: "all", label: "All clients" },
+              ...clients.map((c) => ({
+                value: c.id,
+                label: c.company_name || c.name,
+              })),
+            ]}
+          />
         </div>
         <div className="space-y-3">
           {projects.length === 0 ? (

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import LuxSelect from "@/components/ui/LuxSelect";
 import Modal from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import type { Lead, LeadMessage } from "@/lib/types";
@@ -202,17 +203,15 @@ export default function LeadModal({
           </div>
           <div>
             <label className="text-xs text-lux-muted uppercase tracking-wide">Status</label>
-            <select
-              className="lux-input mt-1"
+            <LuxSelect
+              className="mt-1"
               value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value as Lead["status"] })}
-            >
-              {STATUSES.map((s) => (
-                <option key={s} value={s} className="bg-card">
-                  {s}
-                </option>
-              ))}
-            </select>
+              onChange={(status) => setForm({ ...form, status: status as Lead["status"] })}
+              options={STATUSES.map((s) => ({
+                value: s,
+                label: s.replace(/_/g, " "),
+              }))}
+            />
           </div>
           <div>
             <label className="text-xs text-lux-muted uppercase tracking-wide">Notes</label>
@@ -250,19 +249,18 @@ export default function LeadModal({
               Deal closed
             </label>
             {!isAdmin && (
-              <select
-                className="lux-input text-sm py-1.5 ml-auto w-auto"
+              <LuxSelect
+                className="ml-auto w-40"
+                size="sm"
                 value={currentLead.status}
-                onChange={(e) =>
-                  handleUpdateLead({ status: e.target.value as Lead["status"] })
+                onChange={(status) =>
+                  handleUpdateLead({ status: status as Lead["status"] })
                 }
-              >
-                {STATUSES.map((s) => (
-                  <option key={s} value={s} className="bg-card">
-                    {s}
-                  </option>
-                ))}
-              </select>
+                options={STATUSES.map((s) => ({
+                  value: s,
+                  label: s.replace(/_/g, " "),
+                }))}
+              />
             )}
           </div>
 
@@ -304,17 +302,13 @@ export default function LeadModal({
                 onChange={(e) => setMsgContent(e.target.value)}
               />
               <div className="flex flex-wrap gap-3">
-                <select
-                  className="lux-input w-auto text-sm py-2"
+                <LuxSelect
+                  className="w-36"
+                  size="sm"
                   value={msgType}
-                  onChange={(e) => setMsgType(e.target.value as LeadMessage["msg_type"])}
-                >
-                  {MSG_TYPES.map((t) => (
-                    <option key={t} value={t} className="bg-card">
-                      {t}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(t) => setMsgType(t as LeadMessage["msg_type"])}
+                  options={MSG_TYPES.map((t) => ({ value: t, label: t }))}
+                />
                 <div className="flex rounded-xl overflow-hidden border border-white/[0.08]">
                   {(["team", "lead"] as const).map((s) => (
                     <button

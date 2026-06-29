@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Badge from "@/components/ui/Badge";
+import LuxSelect from "@/components/ui/LuxSelect";
 import LeadModal from "@/components/team/LeadModal";
 import StatCard from "@/components/team/StatCard";
 import { createClient } from "@/lib/supabase/client";
@@ -254,17 +255,12 @@ function LeadsWorkspaceInner() {
             </div>
             <div>
               <label className="text-[0.72rem] font-bold uppercase tracking-wide text-lux-muted">Response status</label>
-              <select
-                className="lux-input mt-1 text-sm w-full"
+              <LuxSelect
+                className="mt-1"
                 value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value as Lead["status"] })}
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s.key} value={s.key}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(status) => setForm({ ...form, status: status as Lead["status"] })}
+                options={STATUS_OPTIONS.map((s) => ({ value: s.key, label: s.label }))}
+              />
             </div>
             <div>
               <label className="text-[0.72rem] font-bold uppercase tracking-wide text-lux-muted">Notes / what they said</label>

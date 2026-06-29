@@ -1,5 +1,6 @@
 "use client";
 
+import LuxSelect from "@/components/ui/LuxSelect";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -7,6 +8,7 @@ const NAV = [
   { id: "links", label: "Links", icon: "⛓" },
   { id: "clients", label: "Clients", icon: "◇" },
   { id: "projects", label: "Projects", icon: "◎" },
+  { id: "website", label: "Website", icon: "🌐" },
   { id: "team", label: "Team", icon: "👥" },
   { id: "leads", label: "Leads", icon: "📋" },
   { id: "scripts", label: "Scripts", icon: "📝" },
@@ -69,17 +71,13 @@ export default function AdminShell({
       <div className="flex-1 min-w-0 flex flex-col">
         <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-lux-card/80">
           <span className="font-bricolage font-bold text-lux-text">Admin</span>
-          <select
-            className="lux-input w-auto text-sm py-2"
+          <LuxSelect
+            className="w-40"
+            size="sm"
             value={tab}
-            onChange={(e) => onTab(e.target.value as AdminTab)}
-          >
-            {NAV.map((n) => (
-              <option key={n.id} value={n.id} className="bg-lux-bg">
-                {n.label}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => onTab(v as AdminTab)}
+            options={NAV.map((n) => ({ value: n.id, label: n.label }))}
+          />
         </header>
         <main className="flex-1 p-5 sm:p-8 overflow-auto">{children}</main>
       </div>

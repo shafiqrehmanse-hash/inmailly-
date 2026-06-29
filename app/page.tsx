@@ -1,5 +1,7 @@
 import HomePage from "@/components/home/HomePage";
+import { getSiteContent } from "@/lib/site-content-server";
 
-export default function Page() {
-  return <HomePage />;
+export default async function Page() {
+  const content = await getSiteContent();
+  return <HomePage content={content} />;
 }

@@ -49,9 +49,15 @@ export async function PATCH(request: NextRequest) {
   if (!checkKey(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { memberId, is_active } = await request.json();
+  const { memberId, is_active, role } = await request.json();
   const admin = createAdminClient();
-  const { error } = await admin.from("team_members").update({ is_active }).eq("id", memberId);
+  const updates: Record<string, unknown> = {};
+  if (typeof is_active === "boolean") updates.is_active = is_active;
+  if (role) updates.role = role;
+  if (!Object.keys(updates).length) {
+    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+  }
+  const { error } = await admin.from("team_members").update(updates).eq("id", memberId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

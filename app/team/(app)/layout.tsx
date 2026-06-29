@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import DailyScriptBar from "@/components/team/DailyScriptBar";
 import Sidebar from "@/components/team/Sidebar";
+import { isCampaignManager } from "@/lib/roles";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/team";
 import { getTeamScriptsPayload } from "@/lib/team-scripts-server";
@@ -12,6 +13,7 @@ export default async function TeamAppLayout({
 }) {
   const member = await getCurrentMember();
   if (!member) redirect("/team/login");
+  if (isCampaignManager(member.role)) redirect("/campaign/hub");
 
   const supabase = createServerSupabase();
   const [{ count }, scripts] = await Promise.all([

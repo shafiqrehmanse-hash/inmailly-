@@ -5,7 +5,7 @@ export type TeamMember = {
   email: string;
   phone: string | null;
   photo_url: string | null;
-  role: "member" | "senior" | "admin";
+  role: "member" | "senior" | "admin" | "campaign_manager";
   is_active: boolean;
   invite_code: string | null;
   joined_at: string;
