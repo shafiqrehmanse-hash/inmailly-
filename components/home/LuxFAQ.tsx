@@ -6,24 +6,24 @@ import { HiPlus } from "react-icons/hi2";
 
 const FAQS = [
   {
-    q: "Is this LinkedIn automation?",
-    a: "No. InMailly is human-operated outreach infrastructure. Real operators on real profiles — no bots, no browser extensions, no account risk.",
+    q: "How does the free trial work?",
+    a: "You get 200 InMails free with full dashboard access. Send us your target audience and InMail script. If the results impress you, we move to a paid plan. No credit card to start.",
   },
   {
-    q: "How fast can we launch?",
-    a: "Most campaigns go live within 48 hours of onboarding. Upload your targets, we assign operators, outreach begins.",
+    q: "What LinkedIn accounts do you use?",
+    a: "Verified, established LinkedIn profiles with Sales Navigator activated. Not your personal account — our infrastructure, operated by humans using our internal software.",
   },
   {
-    q: "How do you prevent duplicate outreach?",
-    a: "Every URL is fingerprinted and deduplicated. If two operators try to claim the same profile, the system blocks it instantly.",
+    q: "What do I need to provide?",
+    a: "Two things: your target audience (profile list or ICP criteria) and your InMail script. We handle delivery, tracking, and reporting.",
   },
   {
-    q: "Who is this for?",
-    a: "SaaS founders, agencies, recruiters, lead gen companies, and B2B sales teams who need scale without LinkedIn's per-message pricing.",
+    q: "How is this different from Sales Navigator?",
+    a: "Sales Navigator costs $100/month for 50 InMail credits — that's $2 per message from your own account. We deliver at $0.27/InMail on verified profiles with a full client dashboard.",
   },
   {
-    q: "Do I get a dashboard?",
-    a: "You receive full visibility into replies, pipeline status, and conversation history. Your team operates on our infrastructure — you see the results.",
+    q: "Can I see replies in real time?",
+    a: "Yes. Your client dashboard at /client shows live responses, pipeline stages, and campaign analytics — the same interface previewed on our homepage.",
   },
 ];
 

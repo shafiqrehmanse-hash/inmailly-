@@ -32,7 +32,7 @@ export default function LuxFinalCTA() {
           className="mt-12"
         >
           <MagneticButton href="/contact" className="!px-12 !py-4 !text-base">
-            Start your campaign
+            Claim 200 free InMails
           </MagneticButton>
         </motion.div>
       </div>

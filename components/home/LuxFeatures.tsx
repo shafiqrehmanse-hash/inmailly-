@@ -5,31 +5,31 @@ import { HiChatBubbleLeftRight, HiLink, HiShieldCheck, HiUsers } from "react-ico
 
 const FEATURES = [
   {
-    icon: HiLink,
-    tag: "Infrastructure",
-    title: "Private link pool",
-    desc: "Admin imports thousands of profiles. Operators claim, execute, mark complete. Zero overlap.",
-    align: "left" as const,
-  },
-  {
-    icon: HiChatBubbleLeftRight,
-    tag: "Intelligence",
-    title: "Full conversation log",
-    desc: "Every InMail, follow-up, reply, and note — timestamped, searchable, exportable.",
-    align: "right" as const,
-  },
-  {
     icon: HiShieldCheck,
-    tag: "Protection",
-    title: "URL fingerprinting",
-    desc: "Same profile from different URL formats? Caught. Duplicate outreach never happens.",
+    tag: "Accounts",
+    title: "Verified Sales Nav profiles",
+    desc: "Established LinkedIn accounts with Sales Navigator activated. Not your personal profile — our verified infrastructure.",
     align: "left" as const,
   },
   {
     icon: HiUsers,
-    tag: "Operations",
-    title: "Human-operated scale",
-    desc: "Real operators on real profiles. No automation risk. No account restrictions.",
+    tag: "Delivery",
+    title: "You send two things. We do the rest.",
+    desc: "Target audience list + InMail script. Our operators and internal software handle every send, track, and reply.",
+    align: "right" as const,
+  },
+  {
+    icon: HiChatBubbleLeftRight,
+    tag: "Dashboard",
+    title: "Client command center",
+    desc: "Same dashboard on the homepage and at /client. Live replies, pipeline, analytics — built for founders who demand clarity.",
+    align: "left" as const,
+  },
+  {
+    icon: HiLink,
+    tag: "Trial",
+    title: "200 InMails free",
+    desc: "Full campaign with real results before you pay. Love the reply rate? Scale to thousands at $0.27 per message.",
     align: "right" as const,
   },
 ];

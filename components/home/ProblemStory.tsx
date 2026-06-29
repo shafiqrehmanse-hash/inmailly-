@@ -5,28 +5,28 @@ import { useState } from "react";
 import { fadeUp } from "./motion";
 
 const LINKEDIN = {
-  title: "LinkedIn InMail",
-  subtitle: "The expensive default",
+  title: "LinkedIn Sales Navigator",
+  subtitle: "$100/mo · 50 InMail credits included",
   rows: [
-    { label: "Budget", value: "$100", bad: true },
-    { label: "Messages", value: "15 credits", bad: true },
-    { label: "Cost per send", value: "$6.67", bad: true },
-    { label: "Reply tracking", value: "None", bad: true },
-    { label: "Setup", value: "3–5 days", bad: true },
-    { label: "Pipeline", value: "Not included", bad: true },
+    { label: "Monthly cost", value: "$100", bad: true },
+    { label: "InMail credits", value: "50 / month", bad: true },
+    { label: "Cost per InMail", value: "$2.00", bad: true },
+    { label: "Accounts used", value: "Your profile only", bad: true },
+    { label: "Reply dashboard", value: "Not included", bad: true },
+    { label: "Human delivery", value: "You send manually", bad: true },
   ],
 };
 
 const INMAILLY = {
   title: "InMailly",
-  subtitle: "Outreach infrastructure",
+  subtitle: "Verified Sales Nav · Human-operated infrastructure",
   rows: [
-    { label: "Budget", value: "$275", bad: false },
-    { label: "Messages", value: "1,000 sends", bad: false },
-    { label: "Cost per send", value: "$0.27", bad: false },
-    { label: "Reply tracking", value: "Full dashboard", bad: false },
+    { label: "Free trial", value: "200 InMails", bad: false },
+    { label: "You provide", value: "Audience + script", bad: false },
+    { label: "We deliver via", value: "Verified Sales Nav profiles", bad: false },
+    { label: "Paid from", value: "$0.27 / InMail", bad: false },
+    { label: "Client dashboard", value: "Full live tracking", bad: false },
     { label: "Setup", value: "48 hours", bad: false },
-    { label: "Pipeline", value: "Built-in CRM", bad: false },
   ],
 };
 
@@ -45,14 +45,15 @@ export default function ProblemStory() {
             variants={fadeUp}
           >
             <p className="text-[0.7rem] uppercase tracking-[0.2em] text-lux-cyan font-semibold mb-6">
-              The problem
+              The math
             </p>
             <h2 className="font-bricolage font-extrabold text-[clamp(2.2rem,5vw,4rem)] leading-[1.05] tracking-tight text-lux-text">
-              LinkedIn charges enterprise prices for startup results.
+              $100 gets you 50 InMails on LinkedIn.
             </h2>
             <p className="mt-6 text-lg text-lux-muted leading-relaxed max-w-md">
-              You&apos;re paying premium ad-platform rates for a handful of messages. Your competitors
-              are scaling outreach. You&apos;re scaling invoices.
+              Sales Navigator gives 50 credits a month. That&apos;s $2 per message — from your own
+              account, with no pipeline, no team, and no scale. We run verified Sales Nav profiles
+              with our internal software. You send us your target audience and script.
             </p>
 
             <div className="mt-10 flex border border-white/[0.08] p-1 w-fit">
@@ -62,9 +63,7 @@ export default function ProblemStory() {
                   type="button"
                   onClick={() => setSide(s)}
                   className={`px-6 py-2.5 text-[0.75rem] font-semibold uppercase tracking-wider transition-all ${
-                    side === s
-                      ? "bg-lux-blue text-white"
-                      : "text-lux-muted hover:text-lux-text"
+                    side === s ? "bg-lux-blue text-white" : "text-lux-muted hover:text-lux-text"
                   }`}
                 >
                   {s === "linkedin" ? "LinkedIn" : "InMailly"}
@@ -111,7 +110,7 @@ export default function ProblemStory() {
                       >
                         <span className="text-sm text-lux-muted">{row.label}</span>
                         <span
-                          className={`font-bricolage font-bold text-lg ${
+                          className={`font-bricolage font-bold text-lg text-right max-w-[55%] ${
                             row.bad ? "text-red-400" : "text-lux-cyan"
                           }`}
                         >
@@ -130,7 +129,7 @@ export default function ProblemStory() {
                   className="mt-8 pt-6 border-t border-lux-cyan/20 text-center"
                 >
                   <span className="text-sm font-semibold text-lux-cyan">
-                    24× more messages for less money
+                    Start free — 200 InMails. Pay only when you love the results.
                   </span>
                 </motion.div>
               )}

@@ -1,0 +1,38 @@
+"use client";
+
+import Link from "next/link";
+import ClientDashboard from "@/components/client/ClientDashboard";
+import LuxBackground from "@/components/home/LuxBackground";
+
+export default function ClientPortalPage() {
+  return (
+    <div className="relative min-h-screen bg-lux-bg text-lux-text">
+      <LuxBackground />
+      <header className="border-b border-white/[0.06] bg-lux-bg/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 h-[64px] flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 border border-lux-blue/40 bg-lux-blue/10 flex items-center justify-center font-bricolage font-extrabold text-sm text-lux-blue">
+              I
+            </div>
+            <span className="font-bricolage font-extrabold text-lux-text">InMailly</span>
+            <span className="text-[0.6rem] uppercase tracking-wider text-lux-muted border border-white/[0.08] px-2 py-0.5">
+              Client
+            </span>
+          </Link>
+          <Link href="/contact" className="lux-btn-primary text-[0.75rem] py-2.5 px-5">
+            Upgrade campaign
+          </Link>
+        </div>
+      </header>
+      <main className="max-w-[1400px] mx-auto px-6 lg:px-10 py-8">
+        <div className="mb-8">
+          <h1 className="font-bricolage font-extrabold text-3xl text-lux-text">Campaign dashboard</h1>
+          <p className="text-lux-muted mt-2 text-sm">
+            Live demo — same interface your team sees after onboarding.
+          </p>
+        </div>
+        <ClientDashboard mode="full" />
+      </main>
+    </div>
+  );
+}

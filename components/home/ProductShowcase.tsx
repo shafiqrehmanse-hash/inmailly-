@@ -5,25 +5,25 @@ import { useRef } from "react";
 
 const PANELS = [
   {
-    tag: "Command center",
-    title: "Every reply. One surface.",
-    desc: "Live pipeline, conversation history, and deal status — without switching tools.",
-    metric: "9 leads",
-    metricLabel: "Active today",
+    tag: "What you send",
+    title: "Target audience + InMail script.",
+    desc: "That's it. Upload your ICP list and the message you want delivered. We handle the rest on verified Sales Nav profiles.",
+    metric: "2 inputs",
+    metricLabel: "From you",
   },
   {
-    tag: "Link intelligence",
-    title: "Zero duplicate outreach.",
-    desc: "Smart URL fingerprinting ensures no two operators contact the same profile.",
+    tag: "What we run",
+    title: "Verified LinkedIn infrastructure.",
+    desc: "Established accounts with Sales Navigator activated. Our internal software coordinates human operators — not bots.",
     metric: "100%",
-    metricLabel: "Dedup accuracy",
+    metricLabel: "Human-operated",
   },
   {
-    tag: "Scale layer",
-    title: "Thousands of profiles. One upload.",
-    desc: "Drop your target list. Our team claims, messages, and tracks at enterprise velocity.",
-    metric: "50k+",
-    metricLabel: "Profiles / month",
+    tag: "What you see",
+    title: "The same dashboard on this page.",
+    desc: "Live replies, pipeline, analytics — identical to /client. Every response tracked in real time.",
+    metric: "Live",
+    metricLabel: "Client portal",
   },
 ];
 

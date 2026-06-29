@@ -8,6 +8,7 @@ import ProblemStory from "./ProblemStory";
 import ProductShowcase from "./ProductShowcase";
 import LuxTimeline from "./LuxTimeline";
 import LuxFeatures from "./LuxFeatures";
+import ResponseShowcase from "./ResponseShowcase";
 import LuxStats from "./LuxStats";
 import LuxPricing from "./LuxPricing";
 import LuxTestimonials from "./LuxTestimonials";
@@ -25,6 +26,7 @@ export default function HomePage() {
         <LuxHero />
         <ProblemStory />
         <ProductShowcase />
+        <ResponseShowcase />
         <LuxTimeline />
         <LuxFeatures />
         <LuxStats />
