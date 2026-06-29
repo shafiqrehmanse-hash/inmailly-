@@ -37,10 +37,10 @@ export default function Hero() {
 
         <div className="flex gap-3 justify-center flex-wrap mb-14">
           <Link
-            href="/register"
+            href="/contact"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-[0.95rem] font-bold text-white bg-ind shadow-[0_4px_16px_rgba(67,56,202,.3)] hover:bg-ind2 hover:-translate-y-0.5 transition-all"
           >
-            Start your campaign →
+            Get in touch →
           </Link>
           <a
             href="#pricing"

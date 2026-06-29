@@ -26,6 +26,12 @@ body {
   .card-dark {
     @apply bg-white border-[1.5px] border-line rounded-2xl shadow-sm;
   }
+  .ws-card {
+    @apply bg-ws-card border border-ws-border rounded-2xl;
+  }
+  .ws-input {
+    @apply w-full bg-ws-card2 border border-ws-border rounded-xl px-4 py-3 text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-ws-ind/40 focus:border-ws-ind;
+  }
   .section-kicker {
     @apply text-[0.65rem] font-bold uppercase tracking-widest text-ind flex items-center gap-2;
   }

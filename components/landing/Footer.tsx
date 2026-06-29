@@ -7,10 +7,9 @@ export default function Footer() {
         <div className="font-bricolage font-extrabold text-lg text-white">InMailly</div>
         <ul className="flex gap-6 list-none">
           {[
-            { href: "#pricing", label: "Pricing" },
-            { href: "#features", label: "Features" },
-            { href: "/login", label: "Login" },
-            { href: "#", label: "Privacy" },
+            { href: "/#pricing", label: "Pricing" },
+            { href: "/#features", label: "Features" },
+            { href: "/contact", label: "Contact" },
           ].map((l) => (
             <li key={l.label}>
               <Link href={l.href} className="text-[0.78rem] text-white/40 hover:text-white transition-colors">

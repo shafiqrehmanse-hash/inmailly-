@@ -38,6 +38,13 @@ const config: Config = {
         cyan: "#0ea5e9",
         cyan2: "#0ea5e9",
         border: "#e4e7ef",
+        // workspace (team + admin) — CURSOR_FINAL
+        "ws-bg": "#07091a",
+        "ws-card": "#0b0e22",
+        "ws-card2": "#0f1334",
+        "ws-border": "rgba(79,70,229,0.16)",
+        "ws-ind": "#6366f1",
+        "ws-cyan": "#22d3ee",
       },
       fontFamily: {
         bricolage: ["var(--font-bricolage)", "sans-serif"],

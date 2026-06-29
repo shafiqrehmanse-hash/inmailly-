@@ -11,7 +11,7 @@ const plans = [
     perUnit: "$0.275 per message",
     feats: ["1,000 LinkedIn InMails", "Reply tracking dashboard", "Lead pipeline included", "7-day delivery window", "Team member assigned"],
     featured: false,
-    cta: "Get started",
+    cta: "Get in touch",
   },
   {
     tier: "Growth",
@@ -20,7 +20,7 @@ const plans = [
     perUnit: "$0.22 per message — save 20%",
     feats: ["5,000 LinkedIn InMails", "Everything in Starter", "Priority team assignment", "Custom message templates", "Weekly campaign reports", "A/B headline testing"],
     featured: true,
-    cta: "Get started",
+    cta: "Get in touch",
   },
   {
     tier: "Scale",
@@ -29,7 +29,7 @@ const plans = [
     perUnit: "$0.19 per message — save 31%",
     feats: ["20,000 LinkedIn InMails", "Everything in Growth", "Multiple team members", "Industry-specific targeting", "Duplicate URL protection", "Dedicated account manager"],
     featured: false,
-    cta: "Get started",
+    cta: "Get in touch",
   },
   {
     tier: "Enterprise",
@@ -100,7 +100,7 @@ export default function PricingGrid() {
               ))}
             </ul>
             <Link
-              href="/register"
+              href="/contact"
               className={`block py-2.5 rounded-[10px] text-center text-[0.82rem] font-bold transition-all ${
                 plan.featured
                   ? "bg-ind text-white border border-ind shadow-[0_4px_14px_rgba(67,56,202,.3)] hover:bg-ind2"

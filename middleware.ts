@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
+  const { pathname } = request.nextUrl;
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,16 +15,12 @@ export async function middleware(request: NextRequest) {
         },
         set(name, value, options) {
           request.cookies.set({ name, value, ...options });
-          response = NextResponse.next({
-            request: { headers: request.headers },
-          });
+          response = NextResponse.next({ request: { headers: request.headers } });
           response.cookies.set({ name, value, ...options });
         },
         remove(name, options) {
           request.cookies.set({ name, value: "", ...options });
-          response = NextResponse.next({
-            request: { headers: request.headers },
-          });
+          response = NextResponse.next({ request: { headers: request.headers } });
           response.cookies.set({ name, value: "", ...options });
         },
       },
@@ -34,23 +31,31 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (request.nextUrl.pathname.startsWith("/team") && !user) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  const isTeamAuth =
+    pathname === "/team/login" ||
+    pathname === "/team/register" ||
+    pathname === "/login" ||
+    pathname === "/register";
+
+  if (pathname.startsWith("/team") && !isTeamAuth && !user) {
+    return NextResponse.redirect(new URL("/team/login", request.url));
   }
 
-  if (
-    (request.nextUrl.pathname === "/login" ||
-      request.nextUrl.pathname === "/register") &&
-    user
-  ) {
+  if (isTeamAuth && user) {
     return NextResponse.redirect(new URL("/team/hub", request.url));
+  }
+
+  if (pathname === "/admin" && request.cookies.get("admin_authed")?.value !== "1") {
+    return NextResponse.redirect(new URL("/admin/login", request.url));
+  }
+
+  if (pathname === "/admin/login" && request.cookies.get("admin_authed")?.value === "1") {
+    return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   return response;
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/team/:path*", "/admin", "/admin/login", "/login", "/register"],
 };

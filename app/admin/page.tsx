@@ -1,14 +1,19 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminPanel from "@/components/admin/AdminPanel";
-import { verifyAdminKey } from "@/lib/supabase/admin";
 
-export default function AdminPage({
-  searchParams,
-}: {
-  searchParams: { key?: string };
-}) {
-  if (!verifyAdminKey(searchParams.key)) {
-    redirect("/");
+export default function AdminPage() {
+  const authed = cookies().get("admin_authed")?.value === "1";
+  if (!authed) redirect("/admin/login");
+
+  const adminKey = process.env.ADMIN_SECRET_KEY;
+  if (!adminKey) {
+    return (
+      <div className="min-h-screen bg-ws-bg text-white p-8">
+        ADMIN_SECRET_KEY is not set on the server.
+      </div>
+    );
   }
-  return <AdminPanel adminKey={searchParams.key!} />;
+
+  return <AdminPanel adminKey={adminKey} />;
 }

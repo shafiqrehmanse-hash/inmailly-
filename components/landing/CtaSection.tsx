@@ -26,17 +26,17 @@ export default function CtaSection() {
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link
-              href="/register"
+              href="/contact"
               className="px-8 py-3.5 rounded-xl text-[0.92rem] font-bold bg-white text-ind shadow-[0_4px_16px_rgba(0,0,0,.15)] hover:-translate-y-0.5 transition-all"
             >
-              Launch your campaign →
+              Contact us →
             </Link>
-            <a
-              href="mailto:hello@inmailly.com"
+            <Link
+              href="/contact"
               className="px-7 py-3.5 rounded-xl text-[0.92rem] font-semibold text-white/90 bg-white/10 border-[1.5px] border-white/25 hover:bg-white/18 transition-all"
             >
               Talk to us first
-            </a>
+            </Link>
           </div>
         </div>
       </div>

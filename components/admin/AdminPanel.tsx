@@ -8,16 +8,15 @@ import StatCard from "@/components/team/StatCard";
 import Toast, { ToastType } from "@/components/team/Toast";
 import type { Lead, OutreachLink, TeamMember } from "@/lib/types";
 import { formatDate, truncateUrl } from "@/lib/utils";
-import { cn } from "@/lib/utils";
-
-const TABS = ["overview", "links", "team", "leads", "scripts", "referrals", "funds"] as const;
-type Tab = (typeof TABS)[number];
+import AdminShell, { type AdminTab } from "@/components/admin/AdminShell";
 
 type MemberRow = TeamMember & { active_links: number; leads_count: number };
 
 export default function AdminPanel({ adminKey }: { adminKey: string }) {
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<AdminTab>("overview");
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [overviewError, setOverviewError] = useState("");
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const showToast = (message: string, type: ToastType = "success") =>
     setToast({ message, type });
@@ -58,8 +57,22 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
   const [fundFilter, setFundFilter] = useState("all");
 
   const loadOverview = useCallback(async () => {
-    const res = await fetch(`/api/admin/overview?key=${adminKey}`);
-    setOverview(await res.json());
+    setOverviewLoading(true);
+    setOverviewError("");
+    try {
+      const res = await fetch(`/api/admin/overview?key=${adminKey}`);
+      const data = await res.json();
+      if (!res.ok) {
+        setOverviewError(data.error || "Could not load overview");
+        setOverview(null);
+      } else {
+        setOverview(data);
+      }
+    } catch {
+      setOverviewError("Network error loading overview");
+      setOverview(null);
+    }
+    setOverviewLoading(false);
   }, [adminKey]);
 
   const loadLinks = useCallback(async () => {
@@ -218,6 +231,11 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
     loadReferrals();
   }
 
+  async function handleLogout() {
+    await fetch("/api/admin/auth", { method: "DELETE" });
+    window.location.href = "/admin/login";
+  }
+
   const ov = overview as {
     members?: number;
     links?: { available: number; claimed: number; used: number };
@@ -227,50 +245,44 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
   } | null;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-bricolage font-extrabold text-2xl">Admin Panel</h1>
-        <span className="text-xs text-dimmer">InMailly Admin</span>
-      </div>
+    <AdminShell tab={tab} onTab={setTab} onLogout={handleLogout}>
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div>
+          <h1 className="font-bricolage font-extrabold text-2xl text-white capitalize">{tab}</h1>
+          <p className="text-sm text-white/40 mt-1">InMailly operations</p>
+        </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-line pb-0">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "px-4 py-2 text-sm font-semibold capitalize border-b-2 -mb-px",
-              tab === t ? "text-ind border-ind" : "text-dimmer border-transparent hover:text-mid"
-            )}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      {tab === "overview" && ov && (
+      {tab === "overview" && (
+        overviewLoading ? (
+          <p className="text-white/50">Loading overview…</p>
+        ) : overviewError ? (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm">
+            {overviewError}
+          </div>
+        ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard value={ov.members || 0} label="Members" />
-            <StatCard value={ov.leads || 0} label="Leads" />
-            <StatCard value={ov.deals || 0} label="Deals closed" />
+            <StatCard value={ov?.members || 0} label="Members" />
+            <StatCard value={ov?.leads || 0} label="Leads" />
+            <StatCard value={ov?.deals || 0} label="Deals closed" />
             <StatCard
-              value={(ov.links?.available || 0) + (ov.links?.claimed || 0) + (ov.links?.used || 0)}
+              value={(ov?.links?.available || 0) + (ov?.links?.claimed || 0) + (ov?.links?.used || 0)}
               label="Total links"
             />
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <StatCard value={ov.links?.available || 0} label="Available" sub="links" />
-            <StatCard value={ov.links?.claimed || 0} label="Claimed" sub="links" />
-            <StatCard value={ov.links?.used || 0} label="Used" sub="links" />
+            <StatCard value={ov?.links?.available || 0} label="Available" sub="links" />
+            <StatCard value={ov?.links?.claimed || 0} label="Claimed" sub="links" />
+            <StatCard value={ov?.links?.used || 0} label="Used" sub="links" />
           </div>
           <div className="card-dark p-5">
             <h3 className="font-bricolage font-bold mb-3">Today&apos;s activity</h3>
             <p className="text-sm text-mid">
-              {ov.today?.links || 0} links imported · {ov.today?.leads || 0} leads added
+              {ov?.today?.links || 0} links imported · {ov?.today?.leads || 0} leads added
             </p>
           </div>
         </div>
+        )
       )}
 
       {tab === "links" && (
@@ -558,6 +570,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
       {toast && (
         <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
-    </div>
+      </div>
+    </AdminShell>
   );
 }

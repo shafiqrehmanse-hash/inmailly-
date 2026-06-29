@@ -1,5 +1,4 @@
 import CtaSection from "@/components/landing/CtaSection";
-import DashPreview from "@/components/landing/DashPreview";
 import FeatureGrid from "@/components/landing/FeatureGrid";
 import Footer from "@/components/landing/Footer";
 import Hero from "@/components/landing/Hero";
@@ -19,7 +18,6 @@ export default function Home() {
         <PricingGrid />
         <FeatureGrid />
         <HowItWorks />
-        <DashPreview />
         <Testimonials />
         <CtaSection />
       </main>
