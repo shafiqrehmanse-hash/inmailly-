@@ -271,30 +271,30 @@ export default function LeadModal({
                 <p className="text-sm text-dimmer">No messages yet.</p>
               )}
               {messages.map((msg) => (
-                <div key={msg.id} className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.06]">
+                <div key={msg.id} className="bg-off rounded-xl p-3 border border-line">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant={msg.msg_type === "inmail" ? "linkedin" : "new"}>
                       {msg.msg_type}
                     </Badge>
-                    <span className="text-xs text-dim">{msg.sender_name}</span>
+                    <span className="text-xs text-mid">{msg.sender_name}</span>
                     <span className="text-xs text-dimmer ml-auto">
                       {formatDate(msg.created_at)}
                     </span>
                     {msg.sender === "team" && (
                       <button
                         onClick={() => handleDeleteMessage(msg.id)}
-                        className="text-xs text-red-400/70 hover:text-red-400"
+                        className="text-xs text-red-500/70 hover:text-red-500"
                       >
                         Delete
                       </button>
                     )}
                   </div>
-                  <p className="text-sm text-white/80 whitespace-pre-wrap">{msg.content}</p>
+                  <p className="text-sm text-ink whitespace-pre-wrap">{msg.content}</p>
                 </div>
               ))}
             </div>
 
-            <div className="space-y-3 border-t border-white/[0.06] pt-4">
+            <div className="space-y-3 border-t border-line pt-4">
               <textarea
                 className="input-field min-h-[80px]"
                 placeholder="Add a message…"
@@ -313,13 +313,13 @@ export default function LeadModal({
                     </option>
                   ))}
                 </select>
-                <div className="flex rounded-xl overflow-hidden border border-white/10">
+                <div className="flex rounded-xl overflow-hidden border border-line2">
                   {(["team", "lead"] as const).map((s) => (
                     <button
                       key={s}
                       onClick={() => setMsgSender(s)}
                       className={`px-4 py-2 text-sm capitalize ${
-                        msgSender === s ? "bg-indigo/20 text-white" : "text-dimmer"
+                        msgSender === s ? "bg-ind/10 text-ind font-semibold" : "text-dimmer hover:text-mid"
                       }`}
                     >
                       {s}
@@ -373,7 +373,7 @@ function Info({
     <div>
       <div className="text-xs text-dimmer">{label}</div>
       {link ? (
-        <a href={value} target="_blank" rel="noopener noreferrer" className="text-cyan2 text-sm truncate block">
+        <a href={value} target="_blank" rel="noopener noreferrer" className="text-ind text-sm truncate block hover:underline">
           {value}
         </a>
       ) : (

@@ -67,7 +67,7 @@ export default function ReferralsPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl">✦ Earn & Refer</h1>
-        <p className="text-dim text-sm mt-1">Share your code and earn when referrals convert</p>
+        <p className="text-mid text-sm mt-1">Share your code and earn when referrals convert</p>
       </div>
 
       <div className="card-dark p-6 space-y-4">
@@ -75,7 +75,7 @@ export default function ReferralsPage() {
           <div className="text-xs text-dimmer uppercase tracking-wide mb-2">
             Your referral code
           </div>
-          <div className="font-mono text-lg bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+          <div className="font-mono text-lg bg-off border border-line2 rounded-xl px-4 py-3 text-ink">
             {code}
           </div>
         </div>
@@ -100,13 +100,13 @@ export default function ReferralsPage() {
       </div>
 
       <div className="card-dark overflow-hidden">
-        <div className="px-5 py-4 border-b border-white/[0.06] font-bricolage font-bold">
+        <div className="px-5 py-4 border-b border-line font-bricolage font-bold">
           Recent referrals
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-dimmer text-xs uppercase border-b border-white/[0.06]">
+              <tr className="text-dimmer text-xs uppercase border-b border-line">
                 <th className="text-left px-5 py-3">Email</th>
                 <th className="text-left px-5 py-3">Name</th>
                 <th className="text-left px-5 py-3">Status</th>
@@ -116,13 +116,13 @@ export default function ReferralsPage() {
             <tbody>
               {referrals.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-8 text-center text-dim">
+                  <td colSpan={4} className="px-5 py-8 text-center text-mid">
                     No referrals yet
                   </td>
                 </tr>
               ) : (
                 referrals.map((r) => (
-                  <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                  <tr key={r.id} className="border-b border-line hover:bg-white/[0.02]">
                     <td className="px-5 py-3">{r.referred_email}</td>
                     <td className="px-5 py-3">{r.referred_name || "—"}</td>
                     <td className="px-5 py-3 capitalize">{r.status}</td>
@@ -136,13 +136,13 @@ export default function ReferralsPage() {
       </div>
 
       <div className="card-dark overflow-hidden">
-        <div className="px-5 py-4 border-b border-white/[0.06] font-bricolage font-bold">
+        <div className="px-5 py-4 border-b border-line font-bricolage font-bold">
           Earnings history
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-dimmer text-xs uppercase border-b border-white/[0.06]">
+              <tr className="text-dimmer text-xs uppercase border-b border-line">
                 <th className="text-left px-5 py-3">Amount</th>
                 <th className="text-left px-5 py-3">Note</th>
                 <th className="text-left px-5 py-3">Added by</th>
@@ -152,18 +152,18 @@ export default function ReferralsPage() {
             <tbody>
               {funds.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-8 text-center text-dim">
+                  <td colSpan={4} className="px-5 py-8 text-center text-mid">
                     No earnings yet
                   </td>
                 </tr>
               ) : (
                 funds.map((f) => (
-                  <tr key={f.id} className="border-b border-white/[0.04]">
+                  <tr key={f.id} className="border-b border-line">
                     <td className="px-5 py-3 font-semibold text-green-400">
                       +{Number(f.amount_pkr).toLocaleString()} PKR
                     </td>
-                    <td className="px-5 py-3 text-dim">{f.note || "—"}</td>
-                    <td className="px-5 py-3 text-dim">{f.added_by}</td>
+                    <td className="px-5 py-3 text-mid">{f.note || "—"}</td>
+                    <td className="px-5 py-3 text-mid">{f.added_by}</td>
                     <td className="px-5 py-3 text-dimmer">{formatDate(f.added_at)}</td>
                   </tr>
                 ))

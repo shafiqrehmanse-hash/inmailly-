@@ -33,7 +33,7 @@ export default function Modal({
   return createPortal(
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
@@ -43,11 +43,11 @@ export default function Modal({
         )}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
-            <h2 className="font-bricolage font-extrabold text-lg">{title}</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-line">
+            <h2 className="font-bricolage font-extrabold text-lg text-ink">{title}</h2>
             <button
               onClick={onClose}
-              className="text-dimmer hover:text-white text-xl leading-none"
+              className="text-dimmer hover:text-ink text-xl leading-none"
             >
               ×
             </button>

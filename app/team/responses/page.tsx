@@ -60,26 +60,26 @@ export default function ResponsesPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl">💬 Responses</h1>
-        <p className="text-dim text-sm mt-1">Leads who replied or showed interest</p>
+        <p className="text-mid text-sm mt-1">Leads who replied or showed interest</p>
       </div>
 
       <div className="space-y-3">
         {leads.length === 0 ? (
-          <p className="text-dim text-center py-12">No active responses yet.</p>
+          <p className="text-mid text-center py-12">No active responses yet.</p>
         ) : (
           leads.map((lead) => (
-            <div key={lead.id} className="card-dark p-4 hover:bg-card2 transition-colors">
+            <div key={lead.id} className="card-dark p-4 hover:shadow-card hover:border-ind/30 transition-all">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-bricolage font-bold">{lead.name}</div>
                   {lead.company && (
-                    <div className="text-sm text-dim">{lead.company}</div>
+                    <div className="text-sm text-mid">{lead.company}</div>
                   )}
                 </div>
                 <Badge variant={lead.status}>{lead.status}</Badge>
               </div>
               {lead.lastMessage && (
-                <p className="text-sm text-dim mt-3 line-clamp-2 italic">
+                <p className="text-sm text-mid mt-3 line-clamp-2 italic">
                   &ldquo;{lead.lastMessage}…&rdquo;
                 </p>
               )}

@@ -28,9 +28,9 @@ function animCount(
 
 export default function LiveCounter() {
   const ref = useRef<HTMLDivElement>(null);
-  const cnt1 = useRef<HTMLDivElement>(null);
-  const cnt2 = useRef<HTMLDivElement>(null);
-  const cnt3 = useRef<HTMLDivElement>(null);
+  const c1 = useRef<HTMLDivElement>(null);
+  const c2 = useRef<HTMLDivElement>(null);
+  const c3 = useRef<HTMLDivElement>(null);
   const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
@@ -38,18 +38,13 @@ export default function LiveCounter() {
     if (!el) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting && !animated) {
-            setAnimated(true);
-            if (cnt1.current)
-              animCount(cnt1.current, 2847, 2000, "", "", 0);
-            if (cnt2.current)
-              animCount(cnt2.current, 11.4, 1800, "", "%", 1);
-            if (cnt3.current)
-              animCount(cnt3.current, 0.275, 1600, "$", "", 3);
-            observer.disconnect();
-          }
-        });
+        if (entries[0].isIntersecting && !animated) {
+          setAnimated(true);
+          if (c1.current) animCount(c1.current, 2847, 2000, "", "", 0);
+          if (c2.current) animCount(c2.current, 11.4, 1800, "", "%", 1);
+          if (c3.current) animCount(c3.current, 0.275, 1600, "$", "", 3);
+          observer.disconnect();
+        }
       },
       { threshold: 0.3 }
     );
@@ -60,10 +55,9 @@ export default function LiveCounter() {
   useEffect(() => {
     if (!animated) return;
     const interval = setInterval(() => {
-      if (!cnt1.current) return;
-      const cur = parseInt(cnt1.current.textContent?.replace(/,/g, "") || "2847");
-      const bump = Math.floor(Math.random() * 3) + 1;
-      cnt1.current.textContent = (cur + bump).toLocaleString();
+      if (!c1.current) return;
+      const cur = parseInt(c1.current.textContent?.replace(/,/g, "") || "2847");
+      c1.current.textContent = (cur + Math.floor(Math.random() * 3) + 1).toLocaleString();
     }, 4000);
     return () => clearInterval(interval);
   }, [animated]);
@@ -71,30 +65,29 @@ export default function LiveCounter() {
   return (
     <div
       ref={ref}
-      className="relative w-full max-w-[760px] bg-card border border-border rounded-3xl px-6 lg:px-10 py-8 grid grid-cols-1 md:grid-cols-3 overflow-hidden"
+      className="relative grid grid-cols-1 md:grid-cols-3 max-w-[760px] mx-auto bg-white border-[1.5px] border-line rounded-[20px] shadow-card overflow-hidden"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo/[0.06] to-cyan/[0.04] pointer-events-none" />
-      <div className="absolute top-3 right-4 flex items-center gap-1.5 text-[0.6rem] font-bold uppercase tracking-widest text-green-400">
-        <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-breathe" />
-        Live
-      </div>
       {[
-        { ref: cnt1, label: "Messages sent today", sub: "across all campaigns" },
-        { ref: cnt2, label: "Average reply rate", sub: "vs 2% LinkedIn ads avg" },
-        { ref: cnt3, label: "Cost per message", sub: "vs $6.67 LinkedIn InMail" },
+        { ref: c1, label: "Messages sent today", sub: "across all active campaigns", live: true },
+        { ref: c2, label: "Average reply rate", sub: "vs 2% LinkedIn ads average", live: false },
+        { ref: c3, label: "Cost per message", sub: "vs $6.67 LinkedIn InMail credit", live: false },
       ].map((item, i) => (
         <div
           key={item.label}
-          className={`relative text-center py-3 md:py-0 px-6 ${
-            i > 0 ? "md:border-l border-white/[0.06] border-t md:border-t-0" : ""
-          }`}
+          className={`relative py-7 px-6 text-center ${i > 0 ? "md:border-l border-line border-t md:border-t-0" : ""}`}
         >
-          <div className="text-[0.65rem] font-semibold uppercase tracking-widest text-dimmer mb-2.5">
+          {item.live && (
+            <div className="absolute top-2.5 right-3 flex items-center gap-1 text-[0.58rem] font-bold uppercase tracking-widest text-green">
+              <div className="w-[5px] h-[5px] rounded-full bg-green animate-pulse" />
+              Live
+            </div>
+          )}
+          <div className="text-[0.65rem] font-bold uppercase tracking-widest text-dimmer mb-2.5">
             {item.label}
           </div>
           <div
             ref={item.ref}
-            className="font-bricolage font-extrabold text-[2.4rem] leading-none bg-gradient-to-br from-white to-cyan2 bg-clip-text text-transparent tracking-tight"
+            className="font-bricolage font-extrabold text-[2.2rem] tracking-tight text-ind leading-none"
           >
             0
           </div>

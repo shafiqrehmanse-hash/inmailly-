@@ -187,7 +187,7 @@ export default function LinksPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl">⛓ Work Links</h1>
-        <p className="text-dim text-sm mt-1">
+        <p className="text-mid text-sm mt-1">
           Claim a profile, run outreach, mark used when done
         </p>
       </div>
@@ -199,7 +199,7 @@ export default function LinksPage() {
         <StatCard value={stats.iUsed} label="I used" />
       </div>
 
-      <div className="flex gap-1 border-b border-white/[0.06]">
+      <div className="flex gap-1 border-b border-line">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -207,8 +207,8 @@ export default function LinksPage() {
             className={cn(
               "px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors",
               tab === t.id
-                ? "text-white border-indigo2"
-                : "text-dimmer border-transparent hover:text-white/60"
+                ? "text-ind border-ind"
+                : "text-dimmer border-transparent hover:text-mid"
             )}
           >
             {t.label} ({t.count})
@@ -217,9 +217,9 @@ export default function LinksPage() {
       </div>
 
       {loading ? (
-        <p className="text-dim text-center py-12">Loading links…</p>
+        <p className="text-mid text-center py-12">Loading links…</p>
       ) : links.length === 0 ? (
-        <p className="text-dim text-center py-12">No links in this tab.</p>
+        <p className="text-mid text-center py-12">No links in this tab.</p>
       ) : (
         <div className="space-y-3">
           {links.map((link) => (

@@ -41,10 +41,10 @@ export default async function HubPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       <div>
-        <h1 className="font-bricolage font-extrabold text-2xl tracking-tight">
+        <h1 className="font-bricolage font-extrabold text-2xl tracking-tight text-ink">
           Welcome back, {member.name.split(" ")[0]}
         </h1>
-        <p className="text-dim text-sm mt-1">Here&apos;s your outreach snapshot today.</p>
+        <p className="text-mid text-sm mt-1">Here&apos;s your outreach snapshot today.</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -54,15 +54,15 @@ export default async function HubPage() {
         <StatCard value={myLeads.count || 0} label="My leads" />
       </div>
 
-      <div className="card-dark p-6 bg-gradient-to-r from-indigo/10 to-cyan/5">
+      <div className="card-dark p-6 bg-ind-light border-ind/20">
         <h2 className="font-bricolage font-bold mb-4">Your workflow</h2>
         <div className="flex flex-wrap items-center gap-3 text-sm">
           {["Claim a link", "Send outreach", "Mark used", "Add as lead"].map((step, i) => (
             <div key={step} className="flex items-center gap-3">
-              <span className="w-7 h-7 rounded-full bg-indigo/20 border border-indigo/30 flex items-center justify-center text-xs font-bold text-indigo2">
+              <span className="w-7 h-7 rounded-full bg-ind/15 border border-ind/25 flex items-center justify-center text-xs font-bold text-ind">
                 {i + 1}
               </span>
-              <span className="text-white/70">{step}</span>
+              <span className="text-mid">{step}</span>
               {i < 3 && <span className="text-dimmer">→</span>}
             </div>
           ))}
@@ -74,13 +74,13 @@ export default async function HubPage() {
           <Link
             key={item.href}
             href={item.href}
-            className="card-dark p-5 hover:bg-card2 transition-colors group"
+            className="card-dark p-5 hover:shadow-card hover:border-ind/30 transition-all group"
           >
             <div className="text-2xl mb-2">{item.icon}</div>
-            <div className="font-bricolage font-bold group-hover:text-indigo2 transition-colors">
+            <div className="font-bricolage font-bold text-ink group-hover:text-ind transition-colors">
               {item.label}
             </div>
-            <div className="text-sm text-dim mt-1">{item.desc}</div>
+            <div className="text-sm text-mid mt-1">{item.desc}</div>
           </Link>
         ))}
       </div>

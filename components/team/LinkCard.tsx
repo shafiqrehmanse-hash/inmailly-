@@ -22,7 +22,7 @@ export default function LinkCard({
   onAddLead?: () => void;
 }) {
   return (
-    <div className="card-dark p-4 hover:bg-card2 transition-colors">
+    <div className="card-dark p-4 hover:shadow-card hover:border-ind/30 transition-all">
       <div className="flex flex-wrap items-center gap-2 mb-2">
         <span className="text-lg">{categoryIcon(link.category)}</span>
         <span className="font-bricolage font-bold text-sm">
@@ -30,7 +30,7 @@ export default function LinkCard({
         </span>
         <Badge variant={link.category}>{link.category}</Badge>
         {link.batch_name && (
-          <span className="text-[0.65rem] text-dimmer bg-white/5 px-2 py-0.5 rounded-full">
+          <span className="text-[0.65rem] text-dimmer bg-off border border-line px-2 py-0.5 rounded-full">
             {link.batch_name}
           </span>
         )}
@@ -43,13 +43,13 @@ export default function LinkCard({
         href={link.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-sm text-cyan2 hover:underline block truncate mb-3"
+        className="text-sm text-sky hover:underline block truncate mb-3"
       >
         {truncateUrl(link.url, 60)}
       </a>
 
       {link.ai_hint && (
-        <div className="text-xs text-dim bg-white/[0.03] border-l-2 border-indigo pl-3 py-2 mb-3 rounded-r-lg">
+        <div className="text-xs text-mid bg-ind-light border-l-2 border-ind pl-3 py-2 mb-3 rounded-r-lg">
           {link.ai_hint}
         </div>
       )}

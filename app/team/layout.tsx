@@ -19,7 +19,7 @@ export default async function TeamLayout({
     .is("member_id", null);
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-off">
       <Sidebar member={member} poolCount={count || 0} />
       <main className="lg:ml-[230px] min-h-screen p-6 pt-16 lg:pt-6">{children}</main>
     </div>

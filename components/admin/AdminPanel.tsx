@@ -233,14 +233,14 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
         <span className="text-xs text-dimmer">InMailly Admin</span>
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-white/[0.06] pb-0">
+      <div className="flex flex-wrap gap-1 border-b border-line pb-0">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={cn(
               "px-4 py-2 text-sm font-semibold capitalize border-b-2 -mb-px",
-              tab === t ? "text-white border-indigo2" : "text-dimmer border-transparent"
+              tab === t ? "text-ind border-ind" : "text-dimmer border-transparent hover:text-mid"
             )}
           >
             {t}
@@ -266,7 +266,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
           </div>
           <div className="card-dark p-5">
             <h3 className="font-bricolage font-bold mb-3">Today&apos;s activity</h3>
-            <p className="text-sm text-dim">
+            <p className="text-sm text-mid">
               {ov.today?.links || 0} links imported · {ov.today?.leads || 0} leads added
             </p>
           </div>
@@ -294,7 +294,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               <Button onClick={handleImport}>Import</Button>
             </div>
             {preview && (
-              <p className="text-sm text-dim">
+              <p className="text-sm text-mid">
                 {preview.new} new · {preview.duplicates} duplicates · {preview.invalid} invalid lines
               </p>
             )}
@@ -313,7 +313,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
           <div className="card-dark overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-dimmer text-xs uppercase border-b border-white/[0.06]">
+                <tr className="text-dimmer text-xs uppercase border-b border-line">
                   <th className="text-left px-4 py-3">URL</th>
                   <th className="text-left px-4 py-3">Label</th>
                   <th className="text-left px-4 py-3">Status</th>
@@ -323,8 +323,8 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               </thead>
               <tbody>
                 {adminLinks.map((link) => (
-                  <tr key={link.id} className="border-b border-white/[0.04]">
-                    <td className="px-4 py-3 max-w-[200px] truncate text-cyan2">{truncateUrl(link.url, 40)}</td>
+                  <tr key={link.id} className="border-b border-line">
+                    <td className="px-4 py-3 max-w-[200px] truncate text-ind">{truncateUrl(link.url, 40)}</td>
                     <td className="px-4 py-3">{link.smart_label}</td>
                     <td className="px-4 py-3"><Badge variant={link.status}>{link.status}</Badge></td>
                     <td className="px-4 py-3 text-dimmer text-xs">{formatDate(link.claimed_at)}</td>
@@ -346,7 +346,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
           <div className="card-dark overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-dimmer text-xs uppercase border-b border-white/[0.06]">
+                <tr className="text-dimmer text-xs uppercase border-b border-line">
                   <th className="text-left px-4 py-3">Name</th>
                   <th className="text-left px-4 py-3">Email</th>
                   <th className="text-left px-4 py-3">Role</th>
@@ -358,7 +358,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               </thead>
               <tbody>
                 {members.map((m) => (
-                  <tr key={m.id} className="border-b border-white/[0.04]">
+                  <tr key={m.id} className="border-b border-line">
                     <td className="px-4 py-3">{m.name}</td>
                     <td className="px-4 py-3">{m.email}</td>
                     <td className="px-4 py-3 capitalize">{m.role}</td>
@@ -393,7 +393,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               <input className="input-field" placeholder="Label" value={inviteLabel} onChange={(e) => setInviteLabel(e.target.value)} />
               <input className="input-field" type="number" placeholder="Uses" value={inviteUses} onChange={(e) => setInviteUses(parseInt(e.target.value))} />
               <Button onClick={generateInvite} className="w-full">Generate</Button>
-              {generatedCode && <p className="font-mono text-cyan2 text-center">{generatedCode}</p>}
+              {generatedCode && <p className="font-mono text-ind text-center">{generatedCode}</p>}
             </div>
             <div className="card-dark p-5 space-y-3 lg:col-span-2">
               <h3 className="font-bricolage font-bold">Add funds</h3>
@@ -429,7 +429,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
           <div className="card-dark overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-dimmer text-xs uppercase border-b border-white/[0.06]">
+                <tr className="text-dimmer text-xs uppercase border-b border-line">
                   <th className="text-left px-4 py-3">Name</th>
                   <th className="text-left px-4 py-3">Member</th>
                   <th className="text-left px-4 py-3">Company</th>
@@ -441,11 +441,11 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
                 {adminLeads.map((lead) => (
                   <tr
                     key={lead.id}
-                    className="border-b border-white/[0.04] hover:bg-white/[0.02] cursor-pointer"
+                    className="border-b border-line hover:bg-off cursor-pointer"
                     onClick={() => { setSelectedLead(lead); setLeadModalOpen(true); }}
                   >
                     <td className="px-4 py-3">{lead.name}</td>
-                    <td className="px-4 py-3 text-dim">{lead.team_members?.name}</td>
+                    <td className="px-4 py-3 text-mid">{lead.team_members?.name}</td>
                     <td className="px-4 py-3">{lead.company || "—"}</td>
                     <td className="px-4 py-3"><Badge variant={lead.status}>{lead.status}</Badge></td>
                     <td className="px-4 py-3 text-dimmer text-xs">{formatDate(lead.updated_at)}</td>
@@ -486,7 +486,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
         <div className="card-dark overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-dimmer text-xs uppercase border-b border-white/[0.06]">
+              <tr className="text-dimmer text-xs uppercase border-b border-line">
                 <th className="text-left px-4 py-3">Referrer</th>
                 <th className="text-left px-4 py-3">Email</th>
                 <th className="text-left px-4 py-3">Status</th>
@@ -496,7 +496,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
             </thead>
             <tbody>
               {referrals.map((r) => (
-                <tr key={r.id as string} className="border-b border-white/[0.04]">
+                <tr key={r.id as string} className="border-b border-line">
                   <td className="px-4 py-3">{(r.team_members as { name: string })?.name}</td>
                   <td className="px-4 py-3">{r.referred_email as string}</td>
                   <td className="px-4 py-3 capitalize">{r.status as string}</td>
@@ -533,7 +533,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
           <div className="card-dark overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-dimmer text-xs uppercase border-b border-white/[0.06]">
+                <tr className="text-dimmer text-xs uppercase border-b border-line">
                   <th className="text-left px-4 py-3">Member</th>
                   <th className="text-left px-4 py-3">Amount</th>
                   <th className="text-left px-4 py-3">Note</th>
@@ -542,10 +542,10 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               </thead>
               <tbody>
                 {funds.map((f) => (
-                  <tr key={f.id as string} className="border-b border-white/[0.04]">
+                  <tr key={f.id as string} className="border-b border-line">
                     <td className="px-4 py-3">{(f.team_members as { name: string })?.name}</td>
                     <td className="px-4 py-3 text-green-400">+{f.amount_pkr as number} PKR</td>
-                    <td className="px-4 py-3 text-dim">{f.note as string}</td>
+                    <td className="px-4 py-3 text-mid">{f.note as string}</td>
                     <td className="px-4 py-3 text-dimmer">{formatDate(f.added_at as string)}</td>
                   </tr>
                 ))}

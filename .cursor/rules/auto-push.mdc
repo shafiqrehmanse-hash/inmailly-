@@ -1,0 +1,13 @@
+---
+description: Auto-commit and push after completing work without asking
+alwaysApply: true
+---
+
+# Auto push
+
+After completing code changes in this project:
+
+- Commit with a clear message when there are meaningful changes
+- Push to `origin` immediately without asking the user for confirmation
+- Do not prompt "want me to push?" — just push
+- Still never commit secrets (`.env`, credentials, API keys)

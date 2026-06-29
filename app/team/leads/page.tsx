@@ -105,7 +105,7 @@ function LeadsContent() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-bricolage font-extrabold text-2xl">◫ My Leads</h1>
-          <p className="text-dim text-sm mt-1">Track conversations and deal status</p>
+          <p className="text-mid text-sm mt-1">Track conversations and deal status</p>
         </div>
         <Button onClick={openAdd}>+ Add lead</Button>
       </div>
@@ -129,7 +129,7 @@ function LeadsContent() {
 
       <div className="space-y-3">
         {leads.length === 0 ? (
-          <p className="text-dim text-center py-12">No leads yet.</p>
+          <p className="text-mid text-center py-12">No leads yet.</p>
         ) : (
           leads.map((lead) => (
             <LeadCard
@@ -152,7 +152,7 @@ function LeadsContent() {
           >
             Previous
           </Button>
-          <span className="text-sm text-dim">
+          <span className="text-sm text-mid">
             Page {page + 1} of {totalPages}
           </span>
           <Button

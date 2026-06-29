@@ -16,13 +16,13 @@ export default function LeadCard({
   return (
     <button
       onClick={onClick}
-      className="card-dark p-4 w-full text-left hover:bg-card2 transition-colors"
+      className="card-dark p-4 w-full text-left hover:shadow-card hover:border-ind/30 transition-all"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="font-bricolage font-bold">{lead.name}</div>
           {lead.company && (
-            <div className="text-sm text-dim mt-0.5">{lead.company}</div>
+            <div className="text-sm text-mid mt-0.5">{lead.company}</div>
           )}
         </div>
         <Badge variant={lead.status}>{lead.status}</Badge>

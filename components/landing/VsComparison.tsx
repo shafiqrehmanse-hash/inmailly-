@@ -1,68 +1,66 @@
-const theirs = [
-  { label: "Budget", val: "$100" },
-  { label: "Messages sent", val: "15 credits" },
-  { label: "Cost per message", val: "$6.67" },
-  { label: "Reply tracking", val: "None" },
-  { label: "Setup time", val: "3–5 days" },
-  { label: "Lead pipeline", val: "No" },
-];
-
-const ours = [
-  { label: "Budget", val: "$275" },
-  { label: "Messages sent", val: "1,000 sends" },
-  { label: "Cost per message", val: "$0.275" },
-  { label: "Reply tracking", val: "Full dashboard" },
-  { label: "Setup time", val: "48 hours" },
-  { label: "Lead pipeline", val: "Built-in CRM" },
+const rows = [
+  { label: "Budget spent", bad: "$100", good: "$275" },
+  { label: "Messages sent", bad: "15 InMail credits", good: "1,000 sends" },
+  { label: "Cost per message", bad: "$6.67", good: "$0.275" },
+  { label: "Reply tracking", bad: "None", good: "Full dashboard" },
+  { label: "Setup time", bad: "3–5 days approval", good: "48 hours" },
+  { label: "Lead pipeline", bad: "No", good: "Built-in CRM" },
+  { label: "Account restrictions", bad: "Platform limits apply", good: "None — human operated" },
 ];
 
 export default function VsComparison() {
   return (
-    <div className="relative z-[1] px-5 lg:px-10 pt-10">
-      <div className="max-w-[900px] mx-auto grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] rounded-3xl overflow-hidden border border-white/[0.07]">
-        <div className="p-8 bg-gradient-to-br from-red-500/[0.08] to-red-500/[0.03]">
-          <div className="text-[0.68rem] font-bold uppercase tracking-widest text-red-400/70 mb-5">
-            ❌ &nbsp;LinkedIn Ads / InMail
+    <section className="py-20 px-5 lg:px-12 bg-white">
+      <div className="max-w-[900px] mx-auto">
+        <div className="text-center mb-12">
+          <div className="text-[0.65rem] font-bold uppercase tracking-widest text-ind mb-3 flex items-center justify-center gap-2">
+            <span className="w-6 h-px bg-ind" />
+            The honest comparison
+            <span className="w-6 h-px bg-ind" />
           </div>
-          <div className="flex flex-col gap-3.5">
-            {theirs.map((row) => (
-              <div
-                key={row.label}
-                className="flex justify-between items-baseline pb-3.5 border-b border-white/[0.05] text-sm last:border-0 last:pb-0"
-              >
-                <span className="text-dimmer text-[0.78rem]">{row.label}</span>
-                <span className="font-bricolage font-bold text-red-400/85">{row.val}</span>
-              </div>
-            ))}
-          </div>
+          <h2 className="font-bricolage font-extrabold text-[clamp(1.8rem,4vw,2.8rem)] tracking-tight text-ink">
+            Stop overpaying for 15 InMail credits.
+          </h2>
         </div>
-        <div className="hidden md:flex items-center justify-center bg-white/[0.02] border-x border-white/[0.05] px-5">
-          <div className="w-11 h-11 rounded-full bg-card2 border border-white/10 flex items-center justify-center text-[0.72rem] font-extrabold text-dimmer">
-            vs
+
+        <div className="border-[1.5px] border-line2 rounded-[20px] overflow-hidden shadow-sm">
+          <div className="grid grid-cols-[2fr_1.5fr_1.5fr] bg-off border-b-[1.5px] border-line2">
+            <div className="p-4 text-[0.72rem] font-bold uppercase tracking-wide text-dim">
+              What you&apos;re comparing
+            </div>
+            <div className="p-4 text-[0.72rem] font-bold uppercase tracking-wide text-red border-l border-line2 bg-red/[0.03]">
+              ❌ LinkedIn Ads / InMail
+            </div>
+            <div className="p-4 text-[0.72rem] font-bold uppercase tracking-wide text-ind border-l border-line2 bg-ind/[0.04]">
+              ✓ InMailly
+            </div>
           </div>
-        </div>
-        <div className="p-8 bg-gradient-to-br from-indigo/[0.12] to-cyan/[0.06]">
-          <div className="text-[0.68rem] font-bold uppercase tracking-widest text-cyan2 mb-5">
-            ✓ &nbsp;InMailly
-          </div>
-          <div className="flex flex-col gap-3.5">
-            {ours.map((row) => (
-              <div
-                key={row.label}
-                className="flex justify-between items-baseline pb-3.5 border-b border-white/[0.05] text-sm last:border-0 last:pb-0"
-              >
-                <span className="text-dimmer text-[0.78rem]">{row.label}</span>
-                <span className="font-bricolage font-bold bg-gradient-to-r from-indigo2 to-cyan2 bg-clip-text text-transparent">
-                  {row.val}
-                </span>
+          {rows.map((row) => (
+            <div
+              key={row.label}
+              className="grid grid-cols-[2fr_1.5fr_1.5fr] border-b border-line last:border-0 hover:bg-off transition-colors"
+            >
+              <div className="p-4 text-[0.88rem] font-medium text-mid flex items-center">
+                {row.label}
               </div>
-            ))}
-          </div>
-          <div className="mt-5 pt-4 border-t border-cyan/15 flex items-center gap-2 text-[0.82rem] font-semibold text-cyan2">
-            <span>⚡</span> 24× more messages for less money
+              <div className="p-4 text-[0.88rem] font-bold font-bricolage text-red border-l border-line bg-red/[0.02] flex items-center">
+                {row.bad}
+              </div>
+              <div className="p-4 text-[0.88rem] font-bold font-bricolage text-ind border-l border-line bg-ind/[0.02] flex items-center">
+                {row.good}
+              </div>
+            </div>
+          ))}
+          <div className="grid grid-cols-[2fr_3fr] bg-gradient-to-r from-ind/[0.04] to-sky/[0.04] border-t-[1.5px] border-ind/15">
+            <div className="p-4 text-[0.85rem] text-mid font-medium border-r border-line flex items-center">
+              Bottom line
+            </div>
+            <div className="p-4 text-[0.85rem] text-ind font-bold flex items-center gap-2">
+              ⚡ InMailly delivers <strong>24× more messages</strong> for less money — with a full pipeline to track every reply.
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

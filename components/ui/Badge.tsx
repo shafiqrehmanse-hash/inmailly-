@@ -16,19 +16,19 @@ type BadgeVariant =
   | "general";
 
 const variants: Record<BadgeVariant, string> = {
-  new: "bg-indigo/20 text-indigo2 border-indigo/30",
-  available: "bg-green-500/15 text-green-400 border-green-500/30",
-  claimed: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  used: "bg-white/5 text-dimmer border-white/10",
-  replied: "bg-green-500/15 text-green-400 border-green-500/30",
-  interested: "bg-indigo/20 text-indigo2 border-indigo/30",
-  closed: "bg-green-400/20 text-green-300 border-green-400/40 font-bold",
-  dead: "bg-red-500/10 text-red-400/70 border-red-500/20",
-  contacted: "bg-cyan/15 text-cyan2 border-cyan/25",
-  linkedin: "bg-indigo/20 text-indigo2 border-indigo/30",
-  salesnav: "bg-cyan/15 text-cyan2 border-cyan/25",
-  email: "bg-white/10 text-white/60 border-white/15",
-  general: "bg-white/5 text-dimmer border-white/10",
+  new: "bg-ind/10 text-ind border-ind/20",
+  available: "bg-green-50 text-green-700 border-green-200",
+  claimed: "bg-amber-50 text-amber-700 border-amber-200",
+  used: "bg-off text-dimmer border-line",
+  replied: "bg-green-50 text-green-700 border-green-200",
+  interested: "bg-ind/10 text-ind border-ind/20",
+  closed: "bg-green-100 text-green-800 border-green-300 font-bold",
+  dead: "bg-red-50 text-red-600 border-red-200",
+  contacted: "bg-sky/10 text-sky border-sky/25",
+  linkedin: "bg-ind/10 text-ind border-ind/20",
+  salesnav: "bg-sky/10 text-sky border-sky/25",
+  email: "bg-off text-mid border-line2",
+  general: "bg-off text-dimmer border-line",
 };
 
 export default function Badge({
