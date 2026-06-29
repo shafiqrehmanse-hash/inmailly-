@@ -51,12 +51,35 @@ export async function GET(request: NextRequest) {
     .eq("visible_to_client", true)
     .in("status", ["interested", "replied"]);
 
+  const { data: proofRows } = await admin
+    .from("send_proofs")
+    .select("id, display_path, created_at")
+    .eq("project_id", project.id)
+    .eq("visible_to_client", true)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  const proofs = await Promise.all(
+    (proofRows || []).map(async (p) => {
+      const { data } = await admin.storage
+        .from("proof-screenshots")
+        .createSignedUrl(p.display_path, 3600);
+      return {
+        id: p.id,
+        image_url: data?.signedUrl || null,
+        created_at: p.created_at,
+      };
+    })
+  );
+
   return NextResponse.json({
     project,
     stats: {
       total: total || 0,
       interested: interested || 0,
+      sends: proofs.length,
     },
     responses: responses || [],
+    proofs: proofs.filter((p) => p.image_url),
   });
 }

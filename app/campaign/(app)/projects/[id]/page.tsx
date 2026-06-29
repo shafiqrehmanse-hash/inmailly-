@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ProjectProofUploader from "@/components/campaign/ProjectProofUploader";
 import ProjectClientWorkspace from "@/components/team/ProjectClientWorkspace";
 import { getCurrentMember } from "@/lib/team";
 import { getMemberProject } from "@/lib/team-projects";
@@ -23,7 +24,7 @@ export default async function CampaignProjectPage({ params }: { params: { id: st
   ].filter((s) => s.text);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div>
         <Link href="/campaign/hub" className="text-sm text-lux-muted hover:text-lux-violet">
           ← Back to campaigns
@@ -48,6 +49,8 @@ export default async function CampaignProjectPage({ params }: { params: { id: st
           </code>
         </div>
       )}
+
+      <ProjectProofUploader projectId={project.id} />
 
       <ProjectClientWorkspace project={project} memberId={member.id} />
 

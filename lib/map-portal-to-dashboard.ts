@@ -11,6 +11,7 @@ export type ClientDashboardLiveData = {
     interested: number;
     replied: number;
     replyRate: number;
+    sends: number;
   };
   responses: {
     id: string;
@@ -24,6 +25,7 @@ export type ClientDashboardLiveData = {
   pipeline: { label: string; count: number; value: number }[];
   velocity: number[];
   latestActivity: { name: string; action: string; time: string } | null;
+  proofs: { id: string; image_url: string; time: string }[];
 };
 
 type PortalResponse = {
@@ -36,6 +38,12 @@ type PortalResponse = {
   created_at: string;
 };
 
+type PortalProof = {
+  id: string;
+  image_url: string | null;
+  created_at: string;
+};
+
 type PortalPayload = {
   project: {
     name: string;
@@ -44,8 +52,9 @@ type PortalPayload = {
     target_titles: string | null;
     clients: { name: string; company_name: string | null } | { name: string; company_name: string | null }[] | null;
   };
-  stats: { total: number; interested: number };
+  stats: { total: number; interested: number; sends?: number };
   responses: PortalResponse[];
+  proofs?: PortalProof[];
 };
 
 function clientLabel(clients: PortalPayload["project"]["clients"]) {
@@ -107,6 +116,7 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
   }));
 
   const latest = responses[0];
+  const proofList = (data.proofs || []).filter((p) => p.image_url);
 
   return {
     projectName: data.project.name,
@@ -114,7 +124,13 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
     status: data.project.status,
     audienceBrief: data.project.audience_brief,
     targetTitles: data.project.target_titles,
-    stats: { total, interested: hot, replied, replyRate },
+    stats: {
+      total,
+      interested: hot,
+      replied,
+      replyRate,
+      sends: data.stats.sends ?? proofList.length,
+    },
     responses: mappedResponses,
     pipeline,
     velocity: bucketVelocity(responses),
@@ -124,6 +140,17 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
           action: latest.notes?.slice(0, 60) || `Status: ${latest.status}`,
           time: formatRelative(latest.created_at),
         }
-      : null,
+      : proofList[0]
+        ? {
+            name: "InMail sent",
+            action: "Verified send proof uploaded",
+            time: formatRelative(proofList[0].created_at),
+          }
+        : null,
+    proofs: proofList.map((p) => ({
+      id: p.id,
+      image_url: p.image_url!,
+      time: formatDate(p.created_at),
+    })),
   };
 }

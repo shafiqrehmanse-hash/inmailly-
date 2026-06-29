@@ -10,20 +10,23 @@ import {
   PIPELINE_STAGES,
 } from "@/lib/client-demo";
 import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
+import ProofLightbox, { ProofThumb } from "@/components/proof/ProofLightbox";
 import {
   HiArrowTrendingUp,
   HiBolt,
   HiChartBar,
   HiEnvelope,
   HiInbox,
+  HiPaperAirplane,
   HiSquares2X2,
 } from "react-icons/hi2";
 
-type Tab = "overview" | "responses" | "campaigns" | "analytics";
+type Tab = "overview" | "responses" | "sends" | "campaigns" | "analytics";
 
 const TABS: { id: Tab; label: string; icon: typeof HiSquares2X2 }[] = [
   { id: "overview", label: "Overview", icon: HiSquares2X2 },
   { id: "responses", label: "Responses", icon: HiInbox },
+  { id: "sends", label: "Send proofs", icon: HiPaperAirplane },
   { id: "campaigns", label: "Campaigns", icon: HiEnvelope },
   { id: "analytics", label: "Analytics", icon: HiChartBar },
 ];
@@ -40,6 +43,7 @@ export default function ClientDashboard({
   const [tab, setTab] = useState<Tab>("overview");
   const [activityIdx, setActivityIdx] = useState(0);
   const [sent, setSent] = useState(DEMO_CAMPAIGN.sent);
+  const [proofLightbox, setProofLightbox] = useState<string | null>(null);
   const isHero = mode === "hero";
   const isLive = Boolean(live);
 
@@ -126,7 +130,8 @@ export default function ClientDashboard({
                 Live campaign · {live!.projectName}
               </span>
               <span className="text-[0.65rem] text-lux-muted">
-                {live!.stats.total} response{live!.stats.total !== 1 ? "s" : ""} logged
+                {live!.stats.total} response{live!.stats.total !== 1 ? "s" : ""} · {live!.stats.sends}{" "}
+                send proof{live!.stats.sends !== 1 ? "s" : ""}
               </span>
             </div>
           ) : (
@@ -162,6 +167,13 @@ export default function ClientDashboard({
           {!isHero && tab === "responses" && (
             <ResponsesPanel responses={isLive ? live!.responses : DEMO_RESPONSES} />
           )}
+          {!isHero && tab === "sends" && (
+            <SendsProofPanel
+              proofs={isLive ? live!.proofs : []}
+              onView={setProofLightbox}
+              isLive={isLive}
+            />
+          )}
           {!isHero && tab === "campaigns" && (
             <CampaignsPanel
               name={isLive ? live!.projectName : DEMO_CAMPAIGN.name}
@@ -172,7 +184,7 @@ export default function ClientDashboard({
                 isLive
                   ? [
                       { l: "Responses", v: live!.stats.total },
-                      { l: "Replied", v: live!.stats.replied },
+                      { l: "Sends", v: live!.stats.sends },
                       { l: "Hot", v: live!.stats.interested },
                       { l: "Rate", v: `${live!.stats.replyRate}%` },
                     ]
@@ -190,6 +202,9 @@ export default function ClientDashboard({
           )}
         </div>
       </div>
+      {proofLightbox && (
+        <ProofLightbox src={proofLightbox} alt="InMail send proof" onClose={() => setProofLightbox(null)} />
+      )}
     </div>
   );
 }
@@ -300,6 +315,61 @@ function OverviewPanel({
         </div>
       </div>
     </>
+  );
+}
+
+function SendsProofPanel({
+  proofs,
+  onView,
+  isLive,
+}: {
+  proofs: { id: string; image_url: string; time: string }[];
+  onView: (url: string) => void;
+  isLive: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[0.65rem] uppercase tracking-wider text-lux-muted">
+          Verified InMail sends · {proofs.length}
+        </div>
+        <span className="text-[0.6rem] text-lux-cyan border border-lux-cyan/25 px-2 py-0.5">
+          HD proof
+        </span>
+      </div>
+      {!isLive ? (
+        <div className="border border-white/[0.06] bg-lux-bg2/30 p-6 text-center text-sm text-lux-muted">
+          Send proofs appear on live client campaigns after your team uploads screenshots.
+        </div>
+      ) : proofs.length === 0 ? (
+        <div className="border border-white/[0.06] bg-lux-bg2/30 p-6 text-center text-sm text-lux-muted">
+          No send proofs yet. Your campaign manager uploads Print Screen captures as they send InMails.
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-3">
+          {proofs.map((p, i) => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="space-y-2"
+            >
+              <ProofThumb
+                src={p.image_url}
+                alt={`InMail send proof ${i + 1}`}
+                onClick={() => onView(p.image_url)}
+                className="w-full"
+              />
+              <div className="flex items-center justify-between text-[0.6rem] text-lux-muted px-0.5">
+                <span>InMail sent</span>
+                <span>{p.time}</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

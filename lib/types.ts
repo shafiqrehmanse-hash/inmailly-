@@ -128,6 +128,17 @@ export type ProjectAssignment = {
   assigned_by: string;
 };
 
+export type SendProof = {
+  id: string;
+  project_id: string;
+  uploaded_by: string;
+  original_path: string;
+  display_path: string;
+  visible_to_client: boolean;
+  caption: string | null;
+  created_at: string;
+};
+
 export type ProjectWithClient = Project & {
   clients: Pick<Client, "id" | "name" | "company_name" | "email" | "logo_url"> | null;
 };
