@@ -28,35 +28,31 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-ws-bg flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-ws-card border border-ws-border rounded-2xl p-8">
+    <div className="min-h-screen bg-off flex items-center justify-center p-6">
+      <div className="w-full max-w-md admin-card p-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-ws-ind flex items-center justify-center font-bricolage font-extrabold text-white">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ind to-ind2 flex items-center justify-center font-bricolage font-extrabold text-white">
             I
           </div>
           <div>
-            <div className="font-bricolage font-extrabold text-lg text-white">InMailly Admin</div>
-            <div className="text-xs text-white/40">Private access only</div>
+            <div className="font-bricolage font-extrabold text-lg text-ink">InMailly Admin</div>
+            <div className="text-xs text-dim">Private access only</div>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-bold uppercase tracking-wide text-white/50">Secret key</label>
+            <label className="text-xs font-bold uppercase tracking-wide text-mid">Secret key</label>
             <input
               type="password"
               required
-              className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-ws-ind/40"
+              className="input-field mt-1.5"
               value={key}
               onChange={(e) => setKey(e.target.value)}
               placeholder="Enter admin key"
             />
           </div>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-ws-ind text-white font-bold hover:bg-indigo-500 transition-colors disabled:opacity-50"
-          >
+          {error && <p className="text-sm text-red">{error}</p>}
+          <button type="submit" disabled={loading} className="btn-primary w-full py-3 disabled:opacity-50">
             {loading ? "Checking…" : "Enter admin →"}
           </button>
         </form>

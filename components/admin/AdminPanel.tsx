@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import LeadModal from "@/components/team/LeadModal";
-import StatCard from "@/components/team/StatCard";
+import AdminStatCard from "@/components/admin/AdminStatCard";
 import Toast, { ToastType } from "@/components/team/Toast";
 import type { Lead, OutreachLink, TeamMember } from "@/lib/types";
 import { formatDate, truncateUrl } from "@/lib/utils";
@@ -246,37 +246,37 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
 
   return (
     <AdminShell tab={tab} onTab={setTab} onLogout={handleLogout}>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         <div>
-          <h1 className="font-bricolage font-extrabold text-2xl text-white capitalize">{tab}</h1>
-          <p className="text-sm text-white/40 mt-1">InMailly operations</p>
+          <h1 className="font-bricolage font-extrabold text-2xl text-ink capitalize">{tab}</h1>
+          <p className="text-sm text-dim mt-1">InMailly operations</p>
         </div>
 
       {tab === "overview" && (
         overviewLoading ? (
-          <p className="text-white/50">Loading overview…</p>
+          <p className="text-dim">Loading overview…</p>
         ) : overviewError ? (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm">
+          <div className="bg-red-50 border border-red-200 text-red rounded-xl px-4 py-3 text-sm">
             {overviewError}
           </div>
         ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard value={ov?.members || 0} label="Members" />
-            <StatCard value={ov?.leads || 0} label="Leads" />
-            <StatCard value={ov?.deals || 0} label="Deals closed" />
-            <StatCard
+            <AdminStatCard value={ov?.members || 0} label="Members" />
+            <AdminStatCard value={ov?.leads || 0} label="Leads" />
+            <AdminStatCard value={ov?.deals || 0} label="Deals closed" />
+            <AdminStatCard
               value={(ov?.links?.available || 0) + (ov?.links?.claimed || 0) + (ov?.links?.used || 0)}
               label="Total links"
             />
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <StatCard value={ov?.links?.available || 0} label="Available" sub="links" />
-            <StatCard value={ov?.links?.claimed || 0} label="Claimed" sub="links" />
-            <StatCard value={ov?.links?.used || 0} label="Used" sub="links" />
+            <AdminStatCard value={ov?.links?.available || 0} label="Available" sub="links" />
+            <AdminStatCard value={ov?.links?.claimed || 0} label="Claimed" sub="links" />
+            <AdminStatCard value={ov?.links?.used || 0} label="Used" sub="links" />
           </div>
-          <div className="card-dark p-5">
-            <h3 className="font-bricolage font-bold mb-3">Today&apos;s activity</h3>
+          <div className="admin-card p-5">
+            <h3 className="font-bricolage font-bold text-ink mb-2">Today&apos;s activity</h3>
             <p className="text-sm text-mid">
               {ov?.today?.links || 0} links imported · {ov?.today?.leads || 0} leads added
             </p>
@@ -287,7 +287,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
 
       {tab === "links" && (
         <div className="space-y-6">
-          <div className="card-dark p-5 space-y-4">
+          <div className="admin-card p-5 space-y-4">
             <h3 className="font-bricolage font-bold">Import links</h3>
             <textarea
               className="input-field min-h-[120px] font-mono text-sm"
@@ -322,10 +322,10 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               ))}
             </select>
           </div>
-          <div className="card-dark overflow-x-auto">
+          <div className="admin-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-dimmer text-xs uppercase border-b border-line">
+                <tr className="text-dim text-xs uppercase bg-off border-b border-line">
                   <th className="text-left px-4 py-3">URL</th>
                   <th className="text-left px-4 py-3">Label</th>
                   <th className="text-left px-4 py-3">Status</th>
@@ -354,72 +354,99 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
       )}
 
       {tab === "team" && (
-        <div className="space-y-6">
-          <div className="card-dark overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-dimmer text-xs uppercase border-b border-line">
-                  <th className="text-left px-4 py-3">Name</th>
-                  <th className="text-left px-4 py-3">Email</th>
-                  <th className="text-left px-4 py-3">Role</th>
-                  <th className="text-left px-4 py-3">Links</th>
-                  <th className="text-left px-4 py-3">Leads</th>
-                  <th className="text-left px-4 py-3">Active</th>
-                  <th className="text-left px-4 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((m) => (
-                  <tr key={m.id} className="border-b border-line">
-                    <td className="px-4 py-3">{m.name}</td>
-                    <td className="px-4 py-3">{m.email}</td>
-                    <td className="px-4 py-3 capitalize">{m.role}</td>
-                    <td className="px-4 py-3">{m.active_links}</td>
-                    <td className="px-4 py-3">{m.leads_count}</td>
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={m.is_active}
-                        onChange={(e) => toggleActive(m.id, e.target.checked)}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <Button variant="ghost" size="sm" onClick={() => resetPassword(m.email)}>Reset pwd</Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-8">
+          <section>
+            <p className="admin-section-title mb-4">Quick actions</p>
+            <div className="grid lg:grid-cols-2 gap-4">
+              <div className="admin-card p-5 space-y-3">
+                <h3 className="font-bricolage font-bold text-ink">Add member</h3>
+                <p className="text-xs text-dim -mt-1">Create account with email and temp password</p>
+                <input className="input-field" placeholder="Full name" value={newMember.name} onChange={(e) => setNewMember({ ...newMember, name: e.target.value })} />
+                <input className="input-field" placeholder="Email" type="email" value={newMember.email} onChange={(e) => setNewMember({ ...newMember, email: e.target.value })} />
+                <input className="input-field" type="password" placeholder="Temporary password" value={newMember.password} onChange={(e) => setNewMember({ ...newMember, password: e.target.value })} />
+                <Button onClick={addMember} className="w-full">Add member</Button>
+              </div>
+              <div className="admin-card p-5 space-y-3">
+                <h3 className="font-bricolage font-bold text-ink">Invite code</h3>
+                <p className="text-xs text-dim -mt-1">For team self-registration at /team/register</p>
+                <input className="input-field" placeholder="Label (e.g. March batch)" value={inviteLabel} onChange={(e) => setInviteLabel(e.target.value)} />
+                <input className="input-field" type="number" min={1} placeholder="Number of uses" value={inviteUses} onChange={(e) => setInviteUses(parseInt(e.target.value) || 1)} />
+                <Button onClick={generateInvite} className="w-full">Generate code</Button>
+                {generatedCode && (
+                  <div className="bg-ind-light border border-ind/20 rounded-xl px-4 py-3 text-center">
+                    <p className="text-[0.65rem] uppercase tracking-wide text-dim mb-1">Share this code</p>
+                    <p className="font-mono font-bold text-ind text-lg">{generatedCode}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="admin-card p-5 space-y-3 mt-4">
+              <h3 className="font-bricolage font-bold text-ink">Add funds</h3>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <select className="input-field sm:col-span-2" value={fundMemberId} onChange={(e) => setFundMemberId(e.target.value)}>
+                  <option value="">Select member</option>
+                  {members.map((m) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+                <input className="input-field" type="number" placeholder="Amount PKR" value={fundAmount} onChange={(e) => setFundAmount(e.target.value)} />
+                <input className="input-field" placeholder="Note" value={fundNote} onChange={(e) => setFundNote(e.target.value)} />
+              </div>
+              <Button onClick={addFunds} className="w-full sm:w-auto">Add funds</Button>
+            </div>
+          </section>
 
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="card-dark p-5 space-y-3">
-              <h3 className="font-bricolage font-bold">Add member</h3>
-              <input className="input-field" placeholder="Name" value={newMember.name} onChange={(e) => setNewMember({ ...newMember, name: e.target.value })} />
-              <input className="input-field" placeholder="Email" value={newMember.email} onChange={(e) => setNewMember({ ...newMember, email: e.target.value })} />
-              <input className="input-field" type="password" placeholder="Password" value={newMember.password} onChange={(e) => setNewMember({ ...newMember, password: e.target.value })} />
-              <Button onClick={addMember} className="w-full">Add member</Button>
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <p className="admin-section-title">Team members</p>
+              <span className="text-xs text-dim">{members.length} total</span>
             </div>
-            <div className="card-dark p-5 space-y-3">
-              <h3 className="font-bricolage font-bold">Generate invite code</h3>
-              <input className="input-field" placeholder="Label" value={inviteLabel} onChange={(e) => setInviteLabel(e.target.value)} />
-              <input className="input-field" type="number" placeholder="Uses" value={inviteUses} onChange={(e) => setInviteUses(parseInt(e.target.value))} />
-              <Button onClick={generateInvite} className="w-full">Generate</Button>
-              {generatedCode && <p className="font-mono text-ind text-center">{generatedCode}</p>}
+            <div className="admin-card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-dim text-xs uppercase bg-off border-b border-line">
+                    <th className="text-left px-4 py-3 font-semibold">Name</th>
+                    <th className="text-left px-4 py-3 font-semibold">Email</th>
+                    <th className="text-left px-4 py-3 font-semibold">Role</th>
+                    <th className="text-left px-4 py-3 font-semibold">Links</th>
+                    <th className="text-left px-4 py-3 font-semibold">Leads</th>
+                    <th className="text-left px-4 py-3 font-semibold">Active</th>
+                    <th className="text-left px-4 py-3 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-12 text-center text-dim">
+                        No team members yet. Add one above or share an invite code.
+                      </td>
+                    </tr>
+                  ) : (
+                    members.map((m) => (
+                      <tr key={m.id} className="border-b border-line last:border-0 hover:bg-off/50">
+                        <td className="px-4 py-3 font-medium text-ink">{m.name}</td>
+                        <td className="px-4 py-3 text-mid">{m.email}</td>
+                        <td className="px-4 py-3 capitalize text-mid">{m.role}</td>
+                        <td className="px-4 py-3">{m.active_links}</td>
+                        <td className="px-4 py-3">{m.leads_count}</td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            className="rounded border-line2 text-ind focus:ring-ind"
+                            checked={m.is_active}
+                            onChange={(e) => toggleActive(m.id, e.target.checked)}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Button variant="ghost" size="sm" onClick={() => resetPassword(m.email)}>Reset pwd</Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-            <div className="card-dark p-5 space-y-3 lg:col-span-2">
-              <h3 className="font-bricolage font-bold">Add funds</h3>
-              <select className="input-field" value={fundMemberId} onChange={(e) => setFundMemberId(e.target.value)}>
-                <option value="" className="bg-card">Select member</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id} className="bg-card">{m.name}</option>
-                ))}
-              </select>
-              <input className="input-field" type="number" placeholder="Amount PKR" value={fundAmount} onChange={(e) => setFundAmount(e.target.value)} />
-              <input className="input-field" placeholder="Note" value={fundNote} onChange={(e) => setFundNote(e.target.value)} />
-              <Button onClick={addFunds} className="w-full">Add funds</Button>
-            </div>
-          </div>
+          </section>
         </div>
       )}
 
@@ -438,10 +465,10 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               ))}
             </select>
           </div>
-          <div className="card-dark overflow-x-auto">
+          <div className="admin-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-dimmer text-xs uppercase border-b border-line">
+                <tr className="text-dim text-xs uppercase bg-off border-b border-line">
                   <th className="text-left px-4 py-3">Name</th>
                   <th className="text-left px-4 py-3">Member</th>
                   <th className="text-left px-4 py-3">Company</th>
@@ -482,7 +509,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
       )}
 
       {tab === "scripts" && (
-        <div className="card-dark p-5 space-y-4">
+        <div className="admin-card p-5 space-y-4">
           <h3 className="font-bricolage font-bold">Daily script template</h3>
           <textarea
             className="input-field min-h-[200px]"
@@ -495,7 +522,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
       )}
 
       {tab === "referrals" && (
-        <div className="card-dark overflow-x-auto">
+        <div className="admin-card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-dimmer text-xs uppercase border-b border-line">
@@ -542,10 +569,10 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               <option key={m.id} value={m.id} className="bg-card">{m.name}</option>
             ))}
           </select>
-          <div className="card-dark overflow-x-auto">
+          <div className="admin-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-dimmer text-xs uppercase border-b border-line">
+                <tr className="text-dim text-xs uppercase bg-off border-b border-line">
                   <th className="text-left px-4 py-3">Member</th>
                   <th className="text-left px-4 py-3">Amount</th>
                   <th className="text-left px-4 py-3">Note</th>
@@ -556,7 +583,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
                 {funds.map((f) => (
                   <tr key={f.id as string} className="border-b border-line">
                     <td className="px-4 py-3">{(f.team_members as { name: string })?.name}</td>
-                    <td className="px-4 py-3 text-green-400">+{f.amount_pkr as number} PKR</td>
+                    <td className="px-4 py-3 text-green font-medium">+{f.amount_pkr as number} PKR</td>
                     <td className="px-4 py-3 text-mid">{f.note as string}</td>
                     <td className="px-4 py-3 text-dimmer">{formatDate(f.added_at as string)}</td>
                   </tr>

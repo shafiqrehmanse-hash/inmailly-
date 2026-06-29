@@ -26,11 +26,18 @@ export default function AdminShell({
   onLogout: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-ws-bg flex">
-      <aside className="hidden lg:flex w-[220px] flex-col bg-[#060818] border-r border-ws-border shrink-0">
-        <div className="px-5 py-6 border-b border-white/[0.06]">
-          <div className="font-bricolage font-extrabold text-white">InMailly</div>
-          <div className="text-[0.58rem] text-white/35 uppercase tracking-widest mt-0.5">Admin panel</div>
+    <div className="min-h-screen bg-off flex">
+      <aside className="hidden lg:flex w-[230px] flex-col bg-white border-r border-line shrink-0">
+        <div className="px-5 py-6 border-b border-line">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-ind to-ind2 flex items-center justify-center font-bricolage font-extrabold text-sm text-white">
+              I
+            </div>
+            <div>
+              <div className="font-bricolage font-extrabold text-ink text-sm">InMailly</div>
+              <div className="text-[0.58rem] text-dim uppercase tracking-widest">Admin</div>
+            </div>
+          </div>
         </div>
         <nav className="flex-1 p-3 space-y-0.5">
           {NAV.map((item) => (
@@ -41,31 +48,27 @@ export default function AdminShell({
               className={cn(
                 "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-left transition-colors",
                 tab === item.id
-                  ? "bg-ws-ind/20 text-white border-l-2 border-ws-ind -ml-px pl-[11px]"
-                  : "text-white/45 hover:text-white/75 hover:bg-white/[0.04]"
+                  ? "bg-ind-light text-ind font-semibold"
+                  : "text-mid hover:text-ink hover:bg-off"
               )}
             >
-              <span>{item.icon}</span>
+              <span className="w-5 text-center">{item.icon}</span>
               <span>{item.label}</span>
             </button>
           ))}
         </nav>
-        <div className="p-4 border-t border-white/[0.06]">
-          <button
-            type="button"
-            onClick={onLogout}
-            className="text-sm text-white/40 hover:text-white/70"
-          >
+        <div className="p-4 border-t border-line">
+          <button type="button" onClick={onLogout} className="text-sm text-dim hover:text-ink">
             Log out
           </button>
         </div>
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-ws-border bg-ws-card">
-          <span className="font-bricolage font-bold text-white">Admin</span>
+        <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-line bg-white">
+          <span className="font-bricolage font-bold text-ink">Admin</span>
           <select
-            className="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-2 py-1"
+            className="input-field w-auto text-sm py-2"
             value={tab}
             onChange={(e) => onTab(e.target.value as AdminTab)}
           >
@@ -76,7 +79,7 @@ export default function AdminShell({
             ))}
           </select>
         </header>
-        <main className="flex-1 p-5 sm:p-6 overflow-auto">{children}</main>
+        <main className="flex-1 p-5 sm:p-8 overflow-auto">{children}</main>
       </div>
     </div>
   );
