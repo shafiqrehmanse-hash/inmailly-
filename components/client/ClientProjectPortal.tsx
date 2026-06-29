@@ -2,36 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Badge from "@/components/ui/Badge";
-import { formatDate } from "@/lib/utils";
-
-type PortalData = {
-  project: {
-    id: string;
-    name: string;
-    status: string;
-    audience_brief: string | null;
-    clients: { name: string; company_name: string | null } | { name: string; company_name: string | null }[] | null;
-  };
-  stats: { total: number; interested: number };
-  responses: {
-    id: string;
-    name: string;
-    company: string | null;
-    status: string;
-    notes: string | null;
-    created_at: string;
-  }[];
-};
-
-function clientLabel(clients: PortalData["project"]["clients"]) {
-  if (!clients) return "Client";
-  const c = Array.isArray(clients) ? clients[0] : clients;
-  return c?.company_name || c?.name || "Client";
-}
+import ClientDashboard from "@/components/client/ClientDashboard";
+import LuxBackground from "@/components/home/LuxBackground";
+import { mapPortalToDashboard } from "@/lib/map-portal-to-dashboard";
+import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 
 export default function ClientProjectPortal({ token }: { token: string }) {
-  const [data, setData] = useState<PortalData | null>(null);
+  const [live, setLive] = useState<ClientDashboardLiveData | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -39,7 +16,7 @@ export default function ClientProjectPortal({ token }: { token: string }) {
       .then((r) => r.json())
       .then((d) => {
         if (d.error) setError(d.error);
-        else setData(d);
+        else setLive(mapPortalToDashboard(d));
       })
       .catch(() => setError("Failed to load dashboard"));
   }, [token]);
@@ -57,7 +34,7 @@ export default function ClientProjectPortal({ token }: { token: string }) {
     );
   }
 
-  if (!data) {
+  if (!live) {
     return (
       <div className="min-h-screen bg-lux-bg flex items-center justify-center text-lux-muted">
         Loading your dashboard…
@@ -65,67 +42,37 @@ export default function ClientProjectPortal({ token }: { token: string }) {
     );
   }
 
-  const label = clientLabel(data.project.clients);
-
   return (
-    <div className="min-h-screen bg-lux-bg text-lux-text">
-      <header className="border-b border-white/[0.08] bg-lux-bg2/80 backdrop-blur-md sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[0.6rem] uppercase tracking-[0.2em] text-lux-cyan font-semibold">{label}</p>
-            <h1 className="font-bricolage font-extrabold text-xl">{data.project.name}</h1>
-          </div>
+    <div className="relative min-h-screen bg-lux-bg text-lux-text">
+      <LuxBackground />
+      <header className="border-b border-white/[0.06] bg-lux-bg/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 h-[64px] flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 border border-lux-blue/40 bg-lux-blue/10 flex items-center justify-center font-bricolage font-extrabold text-sm text-lux-blue">
+              I
+            </div>
+            <span className="font-bricolage font-extrabold text-lux-text">InMailly</span>
+            <span className="text-[0.6rem] uppercase tracking-wider text-lux-muted border border-white/[0.08] px-2 py-0.5">
+              Client
+            </span>
+          </Link>
           <div className="flex items-center gap-1.5 text-emerald-400 text-[0.65rem] font-semibold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Live
           </div>
         </div>
       </header>
-
-      <main className="max-w-5xl mx-auto px-5 py-8 space-y-8">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="lux-card p-5 text-center">
-            <div className="font-bricolage font-extrabold text-3xl text-lux-cyan tabular-nums">
-              {data.stats.total}
-            </div>
-            <div className="text-[0.65rem] uppercase tracking-widest text-lux-muted mt-1">Total responses</div>
-          </div>
-          <div className="lux-card p-5 text-center">
-            <div className="font-bricolage font-extrabold text-3xl text-emerald-400 tabular-nums">
-              {data.stats.interested}
-            </div>
-            <div className="text-[0.65rem] uppercase tracking-widest text-lux-muted mt-1">Hot / interested</div>
-          </div>
+      <main className="max-w-[1400px] mx-auto px-6 lg:px-10 py-8">
+        <div className="mb-8">
+          <p className="text-[0.65rem] uppercase tracking-[0.2em] text-lux-cyan font-semibold mb-1">
+            {live.clientLabel}
+          </p>
+          <h1 className="font-bricolage font-extrabold text-3xl text-lux-text">Campaign dashboard</h1>
+          <p className="text-lux-muted mt-2 text-sm">
+            {live.projectName} — real-time responses from your outreach team.
+          </p>
         </div>
-
-        <section>
-          <h2 className="font-bricolage font-extrabold text-lg mb-4">Live responses</h2>
-          {data.responses.length === 0 ? (
-            <div className="lux-card p-10 text-center text-lux-muted text-sm">
-              Your outreach team hasn&apos;t logged any responses yet. Check back soon.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {data.responses.map((r) => (
-                <div key={r.id} className="lux-card p-5">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div>
-                      <div className="font-bricolage font-bold text-lux-text">{r.name}</div>
-                      {r.company && <div className="text-sm text-lux-muted">{r.company}</div>}
-                    </div>
-                    <Badge variant={r.status as Parameters<typeof Badge>[0]["variant"]}>{r.status}</Badge>
-                  </div>
-                  {r.notes && (
-                    <p className="text-sm text-lux-muted leading-relaxed border-l-2 border-lux-cyan/40 pl-4 my-3">
-                      {r.notes}
-                    </p>
-                  )}
-                  <div className="text-xs text-lux-muted/70">{formatDate(r.created_at)}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        <ClientDashboard mode="full" live={live} />
       </main>
     </div>
   );

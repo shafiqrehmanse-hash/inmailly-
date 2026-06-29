@@ -9,6 +9,7 @@ import {
   DEMO_RESPONSES,
   PIPELINE_STAGES,
 } from "@/lib/client-demo";
+import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 import {
   HiArrowTrendingUp,
   HiBolt,
@@ -30,25 +31,34 @@ const TABS: { id: Tab; label: string; icon: typeof HiSquares2X2 }[] = [
 export default function ClientDashboard({
   mode = "full",
   className = "",
+  live,
 }: {
   mode?: "hero" | "full";
   className?: string;
+  live?: ClientDashboardLiveData;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [activityIdx, setActivityIdx] = useState(0);
   const [sent, setSent] = useState(DEMO_CAMPAIGN.sent);
   const isHero = mode === "hero";
+  const isLive = Boolean(live);
 
   useEffect(() => {
+    if (isLive) return;
     const t1 = setInterval(() => setActivityIdx((i) => (i + 1) % DEMO_ACTIVITY.length), 3200);
     const t2 = setInterval(() => setSent((s) => s + (Math.random() > 0.6 ? 1 : 0)), 2800);
     return () => {
       clearInterval(t1);
       clearInterval(t2);
     };
-  }, []);
+  }, [isLive]);
 
-  const activity = DEMO_ACTIVITY[activityIdx];
+  const activity = isLive
+    ? live!.latestActivity || { name: "—", action: "Waiting for first response", time: "—" }
+    : DEMO_ACTIVITY[activityIdx];
+
+  const trialRemaining = DEMO_CAMPAIGN.trialRemaining;
+  const trialTotal = DEMO_CAMPAIGN.trialTotal;
 
   return (
     <div
@@ -88,39 +98,96 @@ export default function ClientDashboard({
               </button>
             ))}
             <div className="hidden lg:block mt-auto p-3 border-t border-white/[0.06]">
-              <div className="text-[0.55rem] uppercase tracking-wider text-lux-muted">Free trial</div>
-              <div className="font-bricolage font-bold text-lux-cyan text-lg mt-0.5">
-                {DEMO_CAMPAIGN.trialRemaining}/{DEMO_CAMPAIGN.trialTotal}
-              </div>
-              <div className="text-[0.6rem] text-lux-muted">InMails remaining</div>
+              {isLive ? (
+                <>
+                  <div className="text-[0.55rem] uppercase tracking-wider text-lux-muted">Campaign</div>
+                  <div className="font-bricolage font-bold text-lux-cyan text-sm mt-0.5 capitalize">
+                    {live!.status}
+                  </div>
+                  <div className="text-[0.6rem] text-lux-muted truncate">{live!.clientLabel}</div>
+                </>
+              ) : (
+                <>
+                  <div className="text-[0.55rem] uppercase tracking-wider text-lux-muted">Free trial</div>
+                  <div className="font-bricolage font-bold text-lux-cyan text-lg mt-0.5">
+                    {trialRemaining}/{trialTotal}
+                  </div>
+                  <div className="text-[0.6rem] text-lux-muted">InMails remaining</div>
+                </>
+              )}
             </div>
           </aside>
         )}
 
         <div className="flex-1 p-4 lg:p-5 space-y-4 min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-2 border border-lux-cyan/20 bg-lux-cyan/5 px-3 py-2">
-            <span className="text-[0.65rem] text-lux-cyan font-semibold uppercase tracking-wider">
-              Free trial · 200 InMails
-            </span>
-            <div className="flex items-center gap-2">
-              <div className="w-24 h-1 bg-white/[0.08] overflow-hidden">
-                <motion.div
-                  className="h-full bg-lux-cyan"
-                  animate={{
-                    width: `${((DEMO_CAMPAIGN.trialTotal - DEMO_CAMPAIGN.trialRemaining) / DEMO_CAMPAIGN.trialTotal) * 100}%`,
-                  }}
-                />
-              </div>
-              <span className="text-[0.65rem] text-lux-muted tabular-nums">
-                {DEMO_CAMPAIGN.trialRemaining} left
+          {isLive ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 border border-emerald-500/25 bg-emerald-500/5 px-3 py-2">
+              <span className="text-[0.65rem] text-emerald-400 font-semibold uppercase tracking-wider">
+                Live campaign · {live!.projectName}
+              </span>
+              <span className="text-[0.65rem] text-lux-muted">
+                {live!.stats.total} response{live!.stats.total !== 1 ? "s" : ""} logged
               </span>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-2 border border-lux-cyan/20 bg-lux-cyan/5 px-3 py-2">
+              <span className="text-[0.65rem] text-lux-cyan font-semibold uppercase tracking-wider">
+                Free trial · 200 InMails
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-1 bg-white/[0.08] overflow-hidden">
+                  <motion.div
+                    className="h-full bg-lux-cyan"
+                    animate={{
+                      width: `${((trialTotal - trialRemaining) / trialTotal) * 100}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-[0.65rem] text-lux-muted tabular-nums">{trialRemaining} left</span>
+              </div>
+            </div>
+          )}
 
-          {(isHero || tab === "overview") && <OverviewPanel sent={sent} activity={activity} />}
-          {!isHero && tab === "responses" && <ResponsesPanel />}
-          {!isHero && tab === "campaigns" && <CampaignsPanel sent={sent} />}
-          {!isHero && tab === "analytics" && <AnalyticsPanel />}
+          {(isHero || tab === "overview") && (
+            <OverviewPanel
+              sent={isLive ? live!.stats.total : sent}
+              replyRate={isLive ? live!.stats.replyRate : DEMO_CAMPAIGN.replyRate}
+              costPerMsg={DEMO_CAMPAIGN.costPerMsg}
+              sentLabel={isLive ? "Responses" : "Sent"}
+              activity={activity}
+              pipeline={isLive ? live!.pipeline : PIPELINE_STAGES}
+              velocity={isLive ? live!.velocity : undefined}
+            />
+          )}
+          {!isHero && tab === "responses" && (
+            <ResponsesPanel responses={isLive ? live!.responses : DEMO_RESPONSES} />
+          )}
+          {!isHero && tab === "campaigns" && (
+            <CampaignsPanel
+              name={isLive ? live!.projectName : DEMO_CAMPAIGN.name}
+              status={isLive ? live!.status : DEMO_CAMPAIGN.status}
+              audienceBrief={isLive ? live!.audienceBrief : null}
+              targetTitles={isLive ? live!.targetTitles : null}
+              stats={
+                isLive
+                  ? [
+                      { l: "Responses", v: live!.stats.total },
+                      { l: "Replied", v: live!.stats.replied },
+                      { l: "Hot", v: live!.stats.interested },
+                      { l: "Rate", v: `${live!.stats.replyRate}%` },
+                    ]
+                  : [
+                      { l: "Sent", v: sent },
+                      { l: "Opened", v: DEMO_CAMPAIGN.opened },
+                      { l: "Replied", v: DEMO_CAMPAIGN.replied },
+                      { l: "Meetings", v: DEMO_CAMPAIGN.meetings },
+                    ]
+              }
+            />
+          )}
+          {!isHero && tab === "analytics" && (
+            <AnalyticsPanel live={isLive ? live! : undefined} />
+          )}
         </div>
       </div>
     </div>
@@ -129,18 +196,38 @@ export default function ClientDashboard({
 
 function OverviewPanel({
   sent,
+  replyRate,
+  costPerMsg,
+  sentLabel,
   activity,
+  pipeline,
+  velocity,
 }: {
   sent: number;
-  activity: (typeof DEMO_ACTIVITY)[0];
+  replyRate: number;
+  costPerMsg: number;
+  sentLabel: string;
+  activity: { name: string; action: string; time: string };
+  pipeline: { label: string; count: number; value: number }[];
+  velocity?: number[];
 }) {
+  const points = velocity || [20, 35, 30, 55, 45, 70, 60, 85];
+  const pathPoints = points
+    .map((p, i) => {
+      const x = (i / (points.length - 1)) * 300;
+      const y = 70 - (p / 100) * 62;
+      return `${i === 0 ? "M" : "L"}${x},${y}`;
+    })
+    .join(" ");
+  const areaPath = `${pathPoints} L300,70 L0,70 Z`;
+
   return (
     <>
       <div className="grid grid-cols-3 gap-2 lg:gap-3">
         {[
-          { label: "Sent", value: sent.toLocaleString(), icon: HiEnvelope },
-          { label: "Reply rate", value: `${DEMO_CAMPAIGN.replyRate}%`, icon: HiArrowTrendingUp },
-          { label: "Cost / msg", value: `$${DEMO_CAMPAIGN.costPerMsg}`, icon: HiBolt },
+          { label: sentLabel, value: typeof sent === "number" ? sent.toLocaleString() : sent, icon: HiEnvelope },
+          { label: "Reply rate", value: `${replyRate}%`, icon: HiArrowTrendingUp },
+          { label: "Cost / msg", value: `$${costPerMsg}`, icon: HiBolt },
         ].map((m) => (
           <div key={m.label} className="border border-white/[0.06] bg-lux-bg2/60 p-2.5 lg:p-3">
             <m.icon className="w-3.5 h-3.5 text-lux-cyan mb-1.5 opacity-70" />
@@ -161,13 +248,13 @@ function OverviewPanel({
             </linearGradient>
           </defs>
           <motion.path
-            d="M0,60 L40,48 L80,52 L120,30 L160,35 L200,18 L240,22 L280,12 L300,8 L300,70 L0,70 Z"
+            d={areaPath}
             fill="url(#clientChart)"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           />
           <motion.polyline
-            points="0,60 40,48 80,52 120,30 160,35 200,18 240,22 280,12 300,8"
+            points={points.map((p, i) => `${(i / (points.length - 1)) * 300},${70 - (p / 100) * 62}`).join(" ")}
             fill="none"
             stroke="rgba(34,211,238,0.85)"
             strokeWidth="2"
@@ -180,9 +267,9 @@ function OverviewPanel({
       <div className="grid grid-cols-2 gap-2 lg:gap-3">
         <div className="border border-white/[0.06] bg-lux-bg2/40 p-2.5 space-y-1.5">
           <div className="text-[0.55rem] uppercase tracking-wider text-lux-muted">Pipeline</div>
-          {PIPELINE_STAGES.map((p) => (
+          {pipeline.map((p) => (
             <div key={p.label} className="flex items-center gap-2">
-              <span className="text-[0.6rem] text-lux-muted w-10">{p.label}</span>
+              <span className="text-[0.6rem] text-lux-muted w-12">{p.label}</span>
               <div className="flex-1 h-1 bg-white/[0.06]">
                 <motion.div
                   className="h-full bg-gradient-to-r from-lux-blue to-lux-cyan"
@@ -199,14 +286,14 @@ function OverviewPanel({
           <div className="text-[0.55rem] uppercase tracking-wider text-lux-muted mb-2">Live</div>
           <AnimatePresence mode="wait">
             <motion.div
-              key={activity.id}
+              key={activity.name + activity.time}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               className="text-[0.7rem]"
             >
               <div className="font-semibold text-lux-text">{activity.name}</div>
-              <div className="text-lux-muted text-[0.65rem]">{activity.action}</div>
+              <div className="text-lux-muted text-[0.65rem] line-clamp-2">{activity.action}</div>
               <div className="text-lux-cyan text-[0.6rem] mt-0.5">{activity.time}</div>
             </motion.div>
           </AnimatePresence>
@@ -216,58 +303,84 @@ function OverviewPanel({
   );
 }
 
-function ResponsesPanel() {
+function ResponsesPanel({
+  responses,
+}: {
+  responses: {
+    id: string;
+    name: string;
+    title?: string;
+    preview: string;
+    time: string;
+    status: string;
+    unread?: boolean;
+  }[];
+}) {
+  const unread = responses.filter((r) => r.unread).length;
   return (
     <div className="space-y-2">
       <div className="text-[0.65rem] uppercase tracking-wider text-lux-muted mb-2">
-        Inbox · {DEMO_RESPONSES.filter((r) => r.unread).length} unread
+        Inbox · {unread} unread
       </div>
-      {DEMO_RESPONSES.map((r, i) => (
-        <motion.div
-          key={r.id}
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * 0.08 }}
-          className={`border p-3 ${
-            r.unread ? "border-lux-cyan/30 bg-lux-cyan/5" : "border-white/[0.06] bg-lux-bg2/30"
-          }`}
-        >
-          <div className="flex justify-between gap-2">
-            <div>
-              <div className="font-semibold text-sm text-lux-text">{r.name}</div>
-              <div className="text-[0.65rem] text-lux-muted">{r.title}</div>
+      {responses.length === 0 ? (
+        <div className="border border-white/[0.06] bg-lux-bg2/30 p-6 text-center text-sm text-lux-muted">
+          No responses yet. Your team will log them here as they come in.
+        </div>
+      ) : (
+        responses.map((r, i) => (
+          <motion.div
+            key={r.id}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.08 }}
+            className={`border p-3 ${
+              r.unread ? "border-lux-cyan/30 bg-lux-cyan/5" : "border-white/[0.06] bg-lux-bg2/30"
+            }`}
+          >
+            <div className="flex justify-between gap-2">
+              <div>
+                <div className="font-semibold text-sm text-lux-text">{r.name}</div>
+                {r.title && <div className="text-[0.65rem] text-lux-muted">{r.title}</div>}
+              </div>
+              <span className="text-[0.55rem] uppercase tracking-wider px-2 py-0.5 h-fit bg-lux-blue/15 text-lux-cyan">
+                {r.status}
+              </span>
             </div>
-            <span className="text-[0.55rem] uppercase tracking-wider px-2 py-0.5 h-fit bg-lux-blue/15 text-lux-cyan">
-              {r.status}
-            </span>
-          </div>
-          <p className="text-[0.75rem] text-lux-muted mt-2">{r.preview}</p>
-          <div className="text-[0.6rem] text-lux-muted/70 mt-1">{r.time}</div>
-        </motion.div>
-      ))}
+            <p className="text-[0.75rem] text-lux-muted mt-2">{r.preview}</p>
+            <div className="text-[0.6rem] text-lux-muted/70 mt-1">{r.time}</div>
+          </motion.div>
+        ))
+      )}
     </div>
   );
 }
 
-function CampaignsPanel({ sent }: { sent: number }) {
+function CampaignsPanel({
+  name,
+  status,
+  audienceBrief,
+  targetTitles,
+  stats,
+}: {
+  name: string;
+  status: string;
+  audienceBrief: string | null;
+  targetTitles: string | null;
+  stats: { l: string; v: number | string }[];
+}) {
   return (
     <div className="border border-white/[0.06] bg-lux-bg2/40 p-4">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="font-bricolage font-bold text-lux-text">{DEMO_CAMPAIGN.name}</h3>
+          <h3 className="font-bricolage font-bold text-lux-text">{name}</h3>
           <p className="text-[0.7rem] text-lux-muted mt-1">Verified Sales Nav · Human-operated</p>
         </div>
-        <span className="text-[0.6rem] uppercase text-emerald-400 border border-emerald-400/30 px-2 py-1">
-          {DEMO_CAMPAIGN.status}
+        <span className="text-[0.6rem] uppercase text-emerald-400 border border-emerald-400/30 px-2 py-1 capitalize">
+          {status}
         </span>
       </div>
       <div className="grid grid-cols-4 gap-3 mt-6">
-        {[
-          { l: "Sent", v: sent },
-          { l: "Opened", v: DEMO_CAMPAIGN.opened },
-          { l: "Replied", v: DEMO_CAMPAIGN.replied },
-          { l: "Meetings", v: DEMO_CAMPAIGN.meetings },
-        ].map((s) => (
+        {stats.map((s) => (
           <div key={s.l} className="text-center border border-white/[0.06] py-3">
             <div className="font-bricolage font-extrabold text-xl text-lux-text">{s.v}</div>
             <div className="text-[0.55rem] uppercase text-lux-muted mt-1">{s.l}</div>
@@ -275,27 +388,53 @@ function CampaignsPanel({ sent }: { sent: number }) {
         ))}
       </div>
       <p className="text-[0.7rem] text-lux-muted mt-4 border-t border-white/[0.06] pt-4">
-        You provide target audience + InMail script. We deliver on verified LinkedIn accounts with
-        Sales Navigator activated.
+        {audienceBrief ||
+          (targetTitles
+            ? `Targeting: ${targetTitles}`
+            : "You provide target audience + InMail script. We deliver on verified LinkedIn accounts with Sales Navigator activated.")}
       </p>
     </div>
   );
 }
 
-function AnalyticsPanel() {
-  const items = [
-    { label: "Best day", value: "Tuesday", sub: "14.2% reply rate" },
-    { label: "Avg open time", value: "2.4h", sub: "From send to open" },
-    { label: "Top industry", value: "B2B SaaS", sub: "38% of replies" },
-    { label: "Meeting rate", value: "16%", sub: "From interested leads" },
-  ];
+function AnalyticsPanel({ live }: { live?: ClientDashboardLiveData }) {
+  const items = live
+    ? [
+        {
+          label: "Total responses",
+          value: String(live.stats.total),
+          sub: "Logged by your team",
+        },
+        {
+          label: "Hot leads",
+          value: String(live.stats.interested),
+          sub: "Interested or replied",
+        },
+        {
+          label: "Reply rate",
+          value: `${live.stats.replyRate}%`,
+          sub: "Of all responses",
+        },
+        {
+          label: "Target",
+          value: live.targetTitles?.split(",")[0]?.trim() || "—",
+          sub: live.targetTitles || "Audience from brief",
+        },
+      ]
+    : [
+        { label: "Best day", value: "Tuesday", sub: "14.2% reply rate" },
+        { label: "Avg open time", value: "2.4h", sub: "From send to open" },
+        { label: "Top industry", value: "B2B SaaS", sub: "38% of replies" },
+        { label: "Meeting rate", value: "16%", sub: "From interested leads" },
+      ];
+
   return (
     <div className="grid grid-cols-2 gap-3">
       {items.map((a) => (
         <div key={a.label} className="border border-white/[0.06] bg-lux-bg2/40 p-4">
           <div className="text-[0.55rem] uppercase tracking-wider text-lux-muted">{a.label}</div>
-          <div className="font-bricolage font-extrabold text-2xl text-lux-text mt-1">{a.value}</div>
-          <div className="text-[0.65rem] text-lux-cyan mt-1">{a.sub}</div>
+          <div className="font-bricolage font-extrabold text-2xl text-lux-text mt-1 truncate">{a.value}</div>
+          <div className="text-[0.65rem] text-lux-cyan mt-1 line-clamp-2">{a.sub}</div>
         </div>
       ))}
     </div>

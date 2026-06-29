@@ -28,7 +28,7 @@ export default function ClientPortalPage() {
         <div className="mb-8">
           <h1 className="font-bricolage font-extrabold text-3xl text-lux-text">Campaign dashboard</h1>
           <p className="text-lux-muted mt-2 text-sm">
-            Live demo — same interface your team sees after onboarding.
+            Preview with sample data — your live dashboard uses the same layout at your private project link.
           </p>
         </div>
         <ClientDashboard mode="full" />
