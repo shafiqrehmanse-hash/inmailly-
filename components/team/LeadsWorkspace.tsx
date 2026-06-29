@@ -30,7 +30,7 @@ function splitName(full: string) {
 
 function LeadsWorkspaceInner() {
   const searchParams = useSearchParams();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [member, setMember] = useState<TeamMember | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [msgCounts, setMsgCounts] = useState<Record<string, number>>({});

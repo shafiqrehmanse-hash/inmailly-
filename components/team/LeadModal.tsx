@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -53,7 +53,7 @@ export default function LeadModal({
   onSaved?: () => void;
   isAdmin?: boolean;
 }) {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [form, setForm] = useState<LeadForm>({
     name: "",
     profile_url: "",
@@ -201,9 +201,9 @@ export default function LeadModal({
             <Field label="Phone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
           </div>
           <div>
-            <label className="text-xs text-dimmer uppercase tracking-wide">Status</label>
+            <label className="text-xs text-lux-muted uppercase tracking-wide">Status</label>
             <select
-              className="input-field mt-1"
+              className="lux-input mt-1"
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value as Lead["status"] })}
             >
@@ -215,14 +215,14 @@ export default function LeadModal({
             </select>
           </div>
           <div>
-            <label className="text-xs text-dimmer uppercase tracking-wide">Notes</label>
+            <label className="text-xs text-lux-muted uppercase tracking-wide">Notes</label>
             <textarea
-              className="input-field mt-1 min-h-[80px]"
+              className="lux-input mt-1 min-h-[80px]"
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
           </div>
-          <Button onClick={handleAddLead} disabled={loading} className="w-full">
+          <Button variant="lux" onClick={handleAddLead} disabled={loading} className="w-full">
             {loading ? "Saving…" : "Add Lead"}
           </Button>
         </div>
@@ -251,7 +251,7 @@ export default function LeadModal({
             </label>
             {!isAdmin && (
               <select
-                className="input-field text-sm py-1.5 ml-auto w-auto"
+                className="lux-input text-sm py-1.5 ml-auto w-auto"
                 value={currentLead.status}
                 onChange={(e) =>
                   handleUpdateLead({ status: e.target.value as Lead["status"] })
@@ -267,45 +267,45 @@ export default function LeadModal({
           </div>
 
           <div>
-            <h3 className="font-bricolage font-bold mb-3">Conversation</h3>
+            <h3 className="font-bricolage font-bold mb-3 text-lux-text">Conversation</h3>
             <div className="max-h-64 overflow-y-auto space-y-3 mb-4">
               {messages.length === 0 && (
-                <p className="text-sm text-dimmer">No messages yet.</p>
+                <p className="text-sm text-lux-muted">No messages yet.</p>
               )}
               {messages.map((msg) => (
-                <div key={msg.id} className="bg-off rounded-xl p-3 border border-line">
+                <div key={msg.id} className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.08]">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant={msg.msg_type === "inmail" ? "linkedin" : "new"}>
                       {msg.msg_type}
                     </Badge>
-                    <span className="text-xs text-mid">{msg.sender_name}</span>
-                    <span className="text-xs text-dimmer ml-auto">
+                    <span className="text-xs text-lux-muted">{msg.sender_name}</span>
+                    <span className="text-xs text-lux-muted/70 ml-auto">
                       {formatDate(msg.created_at)}
                     </span>
                     {msg.sender === "team" && (
                       <button
                         onClick={() => handleDeleteMessage(msg.id)}
-                        className="text-xs text-red-500/70 hover:text-red-500"
+                        className="text-xs text-red-400/70 hover:text-red-400"
                       >
                         Delete
                       </button>
                     )}
                   </div>
-                  <p className="text-sm text-ink whitespace-pre-wrap">{msg.content}</p>
+                  <p className="text-sm text-lux-text whitespace-pre-wrap">{msg.content}</p>
                 </div>
               ))}
             </div>
 
-            <div className="space-y-3 border-t border-line pt-4">
+            <div className="space-y-3 border-t border-white/[0.08] pt-4">
               <textarea
-                className="input-field min-h-[80px]"
+                className="lux-input min-h-[80px]"
                 placeholder="Add a message…"
                 value={msgContent}
                 onChange={(e) => setMsgContent(e.target.value)}
               />
               <div className="flex flex-wrap gap-3">
                 <select
-                  className="input-field w-auto text-sm py-2"
+                  className="lux-input w-auto text-sm py-2"
                   value={msgType}
                   onChange={(e) => setMsgType(e.target.value as LeadMessage["msg_type"])}
                 >
@@ -315,20 +315,22 @@ export default function LeadModal({
                     </option>
                   ))}
                 </select>
-                <div className="flex rounded-xl overflow-hidden border border-line2">
+                <div className="flex rounded-xl overflow-hidden border border-white/[0.08]">
                   {(["team", "lead"] as const).map((s) => (
                     <button
                       key={s}
                       onClick={() => setMsgSender(s)}
                       className={`px-4 py-2 text-sm capitalize ${
-                        msgSender === s ? "bg-ind/10 text-ind font-semibold" : "text-dimmer hover:text-mid"
+                        msgSender === s
+                          ? "bg-lux-cyan/15 text-lux-cyan font-semibold"
+                          : "text-lux-muted hover:text-lux-text"
                       }`}
                     >
                       {s}
                     </button>
                   ))}
                 </div>
-                <Button onClick={handleAddMessage} className="ml-auto">
+                <Button variant="lux" onClick={handleAddMessage} className="ml-auto">
                   Send
                 </Button>
               </div>
@@ -351,9 +353,9 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-xs text-dimmer uppercase tracking-wide">{label}</label>
+      <label className="text-xs text-lux-muted uppercase tracking-wide">{label}</label>
       <input
-        className="input-field mt-1"
+        className="lux-input mt-1"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -373,13 +375,13 @@ function Info({
   if (!value) return null;
   return (
     <div>
-      <div className="text-xs text-dimmer">{label}</div>
+      <div className="text-xs text-lux-muted">{label}</div>
       {link ? (
-        <a href={value} target="_blank" rel="noopener noreferrer" className="text-ind text-sm truncate block hover:underline">
+        <a href={value} target="_blank" rel="noopener noreferrer" className="text-lux-cyan text-sm truncate block hover:underline">
           {value}
         </a>
       ) : (
-        <div className="text-sm">{value}</div>
+        <div className="text-sm text-lux-text">{value}</div>
       )}
     </div>
   );

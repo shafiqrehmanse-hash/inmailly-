@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import StatCard from "@/components/team/StatCard";
 import { createClient } from "@/lib/supabase/client";
@@ -8,7 +8,7 @@ import type { MemberFund, Referral, TeamMember } from "@/lib/types";
 import { formatDate, getReferralCode } from "@/lib/utils";
 
 export default function ReferralsPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [member, setMember] = useState<TeamMember | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [funds, setFunds] = useState<MemberFund[]>([]);
@@ -66,26 +66,22 @@ export default function ReferralsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="font-bricolage font-extrabold text-2xl">✦ Earn & Refer</h1>
-        <p className="text-mid text-sm mt-1">Share your code and earn when referrals convert</p>
+        <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">✦ Earn & Refer</h1>
+        <p className="text-lux-muted text-sm mt-1">Share your code and earn when referrals convert</p>
       </div>
 
-      <div className="card-dark p-6 space-y-4">
+      <div className="lux-card p-6 space-y-4">
         <div>
-          <div className="text-xs text-dimmer uppercase tracking-wide mb-2">
-            Your referral code
-          </div>
-          <div className="font-mono text-lg bg-off border border-line2 rounded-xl px-4 py-3 text-ink">
+          <div className="text-xs text-lux-muted uppercase tracking-wide mb-2">Your referral code</div>
+          <div className="font-mono text-lg bg-lux-bg2 border border-white/[0.08] rounded-xl px-4 py-3 text-lux-text">
             {code}
           </div>
         </div>
         <div>
-          <div className="text-xs text-dimmer uppercase tracking-wide mb-2">
-            Shareable link
-          </div>
+          <div className="text-xs text-lux-muted uppercase tracking-wide mb-2">Shareable link</div>
           <div className="flex gap-2">
-            <input readOnly className="input-field text-sm" value={shareLink} />
-            <Button onClick={copyLink} size="sm">
+            <input readOnly className="lux-input text-sm flex-1" value={shareLink} />
+            <Button variant="lux" onClick={copyLink} size="sm">
               {copied ? "Copied!" : "Copy"}
             </Button>
           </div>
@@ -99,14 +95,14 @@ export default function ReferralsPage() {
         <StatCard value={`${totalEarned.toLocaleString()} PKR`} label="Total earned" />
       </div>
 
-      <div className="card-dark overflow-hidden">
-        <div className="px-5 py-4 border-b border-line font-bricolage font-bold">
+      <div className="lux-card overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/[0.08] font-bricolage font-bold text-lux-text">
           Recent referrals
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-dimmer text-xs uppercase border-b border-line">
+              <tr className="text-lux-muted text-xs uppercase border-b border-white/[0.08]">
                 <th className="text-left px-5 py-3">Email</th>
                 <th className="text-left px-5 py-3">Name</th>
                 <th className="text-left px-5 py-3">Status</th>
@@ -116,17 +112,17 @@ export default function ReferralsPage() {
             <tbody>
               {referrals.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-8 text-center text-mid">
+                  <td colSpan={4} className="px-5 py-8 text-center text-lux-muted">
                     No referrals yet
                   </td>
                 </tr>
               ) : (
                 referrals.map((r) => (
-                  <tr key={r.id} className="border-b border-line hover:bg-white/[0.02]">
-                    <td className="px-5 py-3">{r.referred_email}</td>
-                    <td className="px-5 py-3">{r.referred_name || "—"}</td>
-                    <td className="px-5 py-3 capitalize">{r.status}</td>
-                    <td className="px-5 py-3 text-dimmer">{formatDate(r.created_at)}</td>
+                  <tr key={r.id} className="border-b border-white/[0.06] hover:bg-white/[0.03]">
+                    <td className="px-5 py-3 text-lux-text">{r.referred_email}</td>
+                    <td className="px-5 py-3 text-lux-text">{r.referred_name || "—"}</td>
+                    <td className="px-5 py-3 capitalize text-lux-muted">{r.status}</td>
+                    <td className="px-5 py-3 text-lux-muted/70">{formatDate(r.created_at)}</td>
                   </tr>
                 ))
               )}
@@ -135,14 +131,14 @@ export default function ReferralsPage() {
         </div>
       </div>
 
-      <div className="card-dark overflow-hidden">
-        <div className="px-5 py-4 border-b border-line font-bricolage font-bold">
+      <div className="lux-card overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/[0.08] font-bricolage font-bold text-lux-text">
           Earnings history
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-dimmer text-xs uppercase border-b border-line">
+              <tr className="text-lux-muted text-xs uppercase border-b border-white/[0.08]">
                 <th className="text-left px-5 py-3">Amount</th>
                 <th className="text-left px-5 py-3">Note</th>
                 <th className="text-left px-5 py-3">Added by</th>
@@ -152,19 +148,19 @@ export default function ReferralsPage() {
             <tbody>
               {funds.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-8 text-center text-mid">
+                  <td colSpan={4} className="px-5 py-8 text-center text-lux-muted">
                     No earnings yet
                   </td>
                 </tr>
               ) : (
                 funds.map((f) => (
-                  <tr key={f.id} className="border-b border-line">
-                    <td className="px-5 py-3 font-semibold text-green-400">
+                  <tr key={f.id} className="border-b border-white/[0.06]">
+                    <td className="px-5 py-3 font-semibold text-emerald-400">
                       +{Number(f.amount_pkr).toLocaleString()} PKR
                     </td>
-                    <td className="px-5 py-3 text-mid">{f.note || "—"}</td>
-                    <td className="px-5 py-3 text-mid">{f.added_by}</td>
-                    <td className="px-5 py-3 text-dimmer">{formatDate(f.added_at)}</td>
+                    <td className="px-5 py-3 text-lux-muted">{f.note || "—"}</td>
+                    <td className="px-5 py-3 text-lux-muted">{f.added_by}</td>
+                    <td className="px-5 py-3 text-lux-muted/70">{formatDate(f.added_at)}</td>
                   </tr>
                 ))
               )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import LinkCard from "@/components/team/LinkCard";
 import StatCard from "@/components/team/StatCard";
@@ -13,18 +13,20 @@ type Tab = "pool" | "mine" | "used";
 
 export default function LinksPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [tab, setTab] = useState<Tab>("pool");
   const [member, setMember] = useState<TeamMember | null>(null);
   const [links, setLinks] = useState<OutreachLink[]>([]);
   const [stats, setStats] = useState({ pool: 0, claimed: 0, myActive: 0, iUsed: 0 });
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const memberRef = useRef<TeamMember | null>(null);
 
   const showToast = (message: string, type: ToastType = "success") =>
     setToast({ message, type });
 
-  const loadMember = useCallback(async () => {
+  const ensureMember = useCallback(async () => {
+    if (memberRef.current) return memberRef.current;
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -34,88 +36,105 @@ export default function LinksPage() {
       .select("*")
       .eq("user_id", user.id)
       .single();
-    return data as TeamMember | null;
+    const m = data as TeamMember | null;
+    if (m) {
+      memberRef.current = m;
+      setMember(m);
+    }
+    return m;
   }, [supabase]);
 
-  const fetchLinks = useCallback(async () => {
-    const m = member || (await loadMember());
-    if (!m) return;
-    if (!member) setMember(m);
+  const fetchStats = useCallback(
+    async (memberId: string) => {
+      const [pool, claimed, myActive, iUsed] = await Promise.all([
+        supabase
+          .from("outreach_links")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "available")
+          .is("member_id", null),
+        supabase
+          .from("outreach_links")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "claimed"),
+        supabase
+          .from("outreach_links")
+          .select("*", { count: "exact", head: true })
+          .eq("member_id", memberId)
+          .eq("status", "claimed"),
+        supabase
+          .from("outreach_links")
+          .select("*", { count: "exact", head: true })
+          .eq("used_by_member_id", memberId)
+          .eq("status", "used"),
+      ]);
+      setStats({
+        pool: pool.count || 0,
+        claimed: claimed.count || 0,
+        myActive: myActive.count || 0,
+        iUsed: iUsed.count || 0,
+      });
+    },
+    [supabase]
+  );
 
-    let query = supabase.from("outreach_links").select("*");
+  const fetchLinks = useCallback(
+    async (activeTab: Tab, memberId: string) => {
+      let query = supabase.from("outreach_links").select("*");
 
-    if (tab === "pool") {
-      query = query
-        .eq("status", "available")
-        .is("member_id", null)
-        .order("created_at", { ascending: true })
-        .limit(200);
-    } else if (tab === "mine") {
-      query = query
-        .eq("member_id", m.id)
-        .eq("status", "claimed")
-        .order("claimed_at", { ascending: false });
-    } else {
-      query = query
-        .eq("used_by_member_id", m.id)
-        .eq("status", "used")
-        .order("used_at", { ascending: false })
-        .limit(80);
-    }
+      if (activeTab === "pool") {
+        query = query
+          .eq("status", "available")
+          .is("member_id", null)
+          .order("created_at", { ascending: true })
+          .limit(200);
+      } else if (activeTab === "mine") {
+        query = query
+          .eq("member_id", memberId)
+          .eq("status", "claimed")
+          .order("claimed_at", { ascending: false });
+      } else {
+        query = query
+          .eq("used_by_member_id", memberId)
+          .eq("status", "used")
+          .order("used_at", { ascending: false })
+          .limit(80);
+      }
 
-    const { data } = await query;
-    setLinks((data as OutreachLink[]) || []);
+      const { data } = await query;
+      setLinks((data as OutreachLink[]) || []);
+    },
+    [supabase]
+  );
 
-    const [pool, claimed, myActive, iUsed] = await Promise.all([
-      supabase
-        .from("outreach_links")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "available")
-        .is("member_id", null),
-      supabase
-        .from("outreach_links")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "claimed"),
-      supabase
-        .from("outreach_links")
-        .select("*", { count: "exact", head: true })
-        .eq("member_id", m.id)
-        .eq("status", "claimed"),
-      supabase
-        .from("outreach_links")
-        .select("*", { count: "exact", head: true })
-        .eq("used_by_member_id", m.id)
-        .eq("status", "used"),
-    ]);
-
-    setStats({
-      pool: pool.count || 0,
-      claimed: claimed.count || 0,
-      myActive: myActive.count || 0,
-      iUsed: iUsed.count || 0,
-    });
-    setLoading(false);
-  }, [tab, member, loadMember, supabase]);
+  const refresh = useCallback(
+    async (activeTab = tab) => {
+      const m = await ensureMember();
+      if (!m) return;
+      await Promise.all([fetchLinks(activeTab, m.id), fetchStats(m.id)]);
+      setLoading(false);
+    },
+    [ensureMember, fetchLinks, fetchStats, tab]
+  );
 
   useEffect(() => {
-    fetchLinks();
-  }, [fetchLinks]);
+    setLoading(true);
+    refresh(tab);
+  }, [tab, refresh]);
 
   useEffect(() => {
+    let debounce: ReturnType<typeof setTimeout>;
     const channel = supabase
       .channel("links-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "outreach_links" },
-        () => {
-          fetchLinks();
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "outreach_links" }, () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(() => refresh(tab), 400);
+      })
       .subscribe();
     return () => {
+      clearTimeout(debounce);
       supabase.removeChannel(channel);
     };
-  }, [supabase, fetchLinks]);
+  }, [supabase, refresh, tab]);
 
   async function handleClaim(link: OutreachLink) {
     if (!member) return;
@@ -137,7 +156,7 @@ export default function LinksPage() {
     } else {
       showToast("Link already claimed by someone else", "error");
     }
-    fetchLinks();
+    refresh(tab);
   }
 
   async function handleMarkUsed(link: OutreachLink) {
@@ -153,7 +172,7 @@ export default function LinksPage() {
       .eq("id", link.id)
       .eq("member_id", member.id);
     showToast("Marked as used");
-    fetchLinks();
+    refresh(tab);
   }
 
   async function handleRelease(link: OutreachLink) {
@@ -165,7 +184,7 @@ export default function LinksPage() {
       .eq("id", link.id)
       .eq("member_id", member.id);
     showToast("Link released to pool");
-    fetchLinks();
+    refresh(tab);
   }
 
   function handleAddLead(link: OutreachLink) {
@@ -186,19 +205,19 @@ export default function LinksPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="font-bricolage font-extrabold text-2xl">🔗 Outreach Links</h1>
-        <p className="text-mid text-[0.88rem] mt-2 leading-relaxed max-w-2xl">
+        <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">🔗 Outreach Links</h1>
+        <p className="text-lux-muted text-[0.88rem] mt-2 leading-relaxed max-w-2xl">
           Pick a profile link from the pool admin shared — claim it, run outreach on LinkedIn,
-          mark <strong className="text-ink">Used</strong>, then add as a Lead when they reply.
+          mark <strong className="text-lux-text">Used</strong>, then add as a Lead when they reply.
         </p>
       </div>
 
-      <div className="rounded-xl bg-gradient-to-br from-[#0a150d] to-[#152018] border border-green-500/25 p-4 text-white/75 text-[0.84rem] leading-relaxed">
-        <strong className="text-green-400 text-[0.7rem] uppercase tracking-wide block mb-1.5">
+      <div className="lux-card p-4 text-lux-muted text-[0.84rem] leading-relaxed">
+        <strong className="text-lux-cyan text-[0.7rem] uppercase tracking-wide block mb-1.5">
           ✨ Smart workflow tips
         </strong>
         LinkedIn profiles are auto-labeled from the URL. Sales Nav links get a different playbook.
-        Always mark <strong className="text-white">Used</strong> after outreach so admin can track
+        Always mark <strong className="text-lux-text">Used</strong> after outreach so admin can track
         progress.
       </div>
 
@@ -215,10 +234,10 @@ export default function LinksPage() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "px-4 py-2 rounded-full border-[1.5px] text-[0.8rem] font-bold transition-colors",
+              "px-4 py-2 rounded-full border text-[0.8rem] font-bold transition-colors",
               tab === t.id
-                ? "bg-ink text-green-400 border-ink"
-                : "bg-white text-mid border-line hover:border-green-500/40"
+                ? "bg-lux-cyan/15 text-lux-cyan border-lux-cyan/40"
+                : "bg-white/[0.03] text-lux-muted border-white/[0.08] hover:border-lux-cyan/25"
             )}
           >
             {t.id === "pool" && "📥 "}
@@ -229,18 +248,18 @@ export default function LinksPage() {
         ))}
         <a
           href="/team/leads"
-          className="ml-auto text-sm font-bold text-mid border border-dashed border-line rounded-full px-4 py-2 hover:border-green-500/40"
+          className="ml-auto text-sm font-bold text-lux-muted border border-dashed border-white/[0.12] rounded-full px-4 py-2 hover:border-lux-cyan/30 hover:text-lux-cyan"
         >
           ← Back to leads
         </a>
       </div>
 
       {loading ? (
-        <p className="text-mid text-center py-12">Loading links…</p>
+        <p className="text-lux-muted text-center py-12">Loading links…</p>
       ) : links.length === 0 ? (
-        <div className="card-dark text-center py-12 px-6 border-dashed">
+        <div className="lux-card text-center py-12 px-6 border-dashed border-white/[0.12]">
           <div className="text-4xl mb-3">{tab === "pool" ? "📭" : "✨"}</div>
-          <p className="text-mid text-sm">
+          <p className="text-lux-muted text-sm">
             {tab === "pool"
               ? "No links in the pool right now — ask admin to import more in Team Admin."
               : tab === "mine"
@@ -265,11 +284,7 @@ export default function LinksPage() {
       )}
 
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onDismiss={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
     </div>
   );
