@@ -99,18 +99,47 @@ export default function ClientDashboardPage() {
       </header>
       <main className="max-w-[1400px] mx-auto px-6 lg:px-10 py-8">
         {isPreview && (
-          <div className="mb-6 lux-card p-4 border-lux-cyan/25 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-[0.65rem] uppercase tracking-widest text-lux-cyan font-semibold mb-1">
-                Preview dashboard
-              </p>
-              <p className="text-sm text-lux-muted">
-                This is your real dashboard layout. Book a call to go live — we&apos;ll connect your audience, scripts, and team.
-              </p>
+          <div className="mb-6 space-y-4">
+            <div className="lux-card p-4 border-lux-cyan/25 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[0.65rem] uppercase tracking-widest text-lux-cyan font-semibold mb-1">
+                  Preview dashboard
+                </p>
+                <p className="text-sm text-lux-muted">
+                  You&apos;re seeing the real layout. Data fills in once InMailly launches your campaign.
+                </p>
+              </div>
+              <Link href="/contact" className="lux-btn-primary text-sm px-4 py-2.5 shrink-0">
+                Book launch call →
+              </Link>
             </div>
-            <Link href="/contact" className="lux-btn-primary text-sm px-4 py-2.5 shrink-0">
-              Book launch call →
-            </Link>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {[
+                {
+                  step: "1",
+                  title: "Book a call",
+                  desc: "Share your target audience and InMail script with our team.",
+                },
+                {
+                  step: "2",
+                  title: "We configure",
+                  desc: "Campaign managers get assigned and outreach starts on verified Sales Nav profiles.",
+                },
+                {
+                  step: "3",
+                  title: "Live data here",
+                  desc: "Responses, send proofs, and pipeline stats appear in this dashboard automatically.",
+                },
+              ].map((s) => (
+                <div key={s.step} className="lux-card p-4 border-white/[0.06]">
+                  <span className="text-[0.6rem] font-bold text-lux-cyan uppercase tracking-widest">
+                    Step {s.step}
+                  </span>
+                  <p className="font-bricolage font-bold text-lux-text mt-2">{s.title}</p>
+                  <p className="text-xs text-lux-muted mt-1 leading-relaxed">{s.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
         <div className="mb-6">

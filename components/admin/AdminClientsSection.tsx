@@ -13,7 +13,17 @@ export default function AdminClientsSection({
   onToast: (msg: string, type?: "success" | "error") => void;
 }) {
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
-  const [clients, setClients] = useState<(Client & { project_count?: number })[]>([]);
+  const [clients, setClients] = useState<
+    (Client & {
+      project_count?: number;
+      latest_project?: {
+        id: string;
+        name: string;
+        status: string;
+        portal_token: string | null;
+      } | null;
+    })[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", company_name: "", email: "", notes: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -78,6 +88,18 @@ export default function AdminClientsSection({
     }
     onToast("Client removed");
     load();
+  }
+
+  async function copyPortalLink(token: string) {
+    const url = `${window.location.origin}/client/p/${token}`;
+    await navigator.clipboard.writeText(url);
+    onToast("Token portal link copied (no login required)");
+  }
+
+  async function copyLoginHint() {
+    const url = `${window.location.origin}/client/login`;
+    await navigator.clipboard.writeText(url);
+    onToast("Client login URL copied");
   }
 
   async function toggleActive(client: Client) {
@@ -222,9 +244,27 @@ export default function AdminClientsSection({
                         </Button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-4 mt-3 text-xs text-lux-muted">
+                    <div className="flex flex-wrap gap-4 mt-3 text-xs text-lux-muted items-center">
                       <span>{c.project_count || 0} projects</span>
                       <span>Added {formatDate(c.created_at)}</span>
+                      {c.signup_source === "self" && c.latest_project?.portal_token && (
+                        <>
+                          <button
+                            type="button"
+                            className="text-lux-cyan hover:underline"
+                            onClick={() => copyPortalLink(c.latest_project!.portal_token!)}
+                          >
+                            Copy portal link
+                          </button>
+                          <button
+                            type="button"
+                            className="text-lux-cyan hover:underline"
+                            onClick={copyLoginHint}
+                          >
+                            Copy login URL
+                          </button>
+                        </>
+                      )}
                       <button
                         type="button"
                         className="text-lux-cyan hover:underline"
@@ -233,6 +273,15 @@ export default function AdminClientsSection({
                         {c.is_active ? "Deactivate" : "Activate"}
                       </button>
                     </div>
+                    {c.signup_source === "self" && (
+                      <p className="text-xs text-lux-muted mt-3 border-t border-white/[0.06] pt-3 leading-relaxed">
+                        <strong className="text-lux-cyan">Self signup</strong> — client sees an empty preview until you
+                        open <strong className="text-lux-text">Projects</strong>, edit their campaign (scripts,
+                        audience), assign a campaign manager, and set status to{" "}
+                        <strong className="text-lux-text">Active</strong>. Same project powers{" "}
+                        <code className="text-lux-cyan/80">/client/dashboard</code> and the token portal link.
+                      </p>
+                    )}
                     {c.notes && (
                       <p className="text-sm text-lux-muted mt-2 line-clamp-2">{c.notes}</p>
                     )}

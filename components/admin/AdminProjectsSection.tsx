@@ -158,7 +158,13 @@ export default function AdminProjectsSection({
     if (!token) return;
     const url = `${window.location.origin}/client/p/${token}`;
     await navigator.clipboard.writeText(url);
-    onToast("Client dashboard link copied");
+    onToast("Token link copied — /client/p/… (share without login)");
+  }
+
+  async function copyLoginLink() {
+    const url = `${window.location.origin}/client/login`;
+    await navigator.clipboard.writeText(url);
+    onToast("Client login URL copied — for accounts with email/password");
   }
 
   if (loading) {
@@ -212,7 +218,7 @@ export default function AdminProjectsSection({
               onChange={(status) =>
                 setProjectForm({ ...projectForm, status: status as ProjectStatus })
               }
-              options={(["draft", "active", "paused", "completed"] as const).map((s) => ({
+              options={(["draft", "preview", "active", "paused", "completed"] as const).map((s) => ({
                 value: s,
                 label: s.charAt(0).toUpperCase() + s.slice(1),
               }))}
@@ -340,17 +346,28 @@ export default function AdminProjectsSection({
                       {p.status}
                     </span>
                     {p.portal_token && (
-                      <Button variant="lux-ghost" size="sm" onClick={() => copyClientLink(p.portal_token)}>
-                        Copy client link
-                      </Button>
+                      <>
+                        <Button variant="lux-ghost" size="sm" onClick={() => copyClientLink(p.portal_token)}>
+                          Copy portal link
+                        </Button>
+                        <Button variant="lux-ghost" size="sm" onClick={copyLoginLink}>
+                          Copy login URL
+                        </Button>
+                      </>
                     )}
                     <Button variant="lux-ghost" size="sm" onClick={() => startEdit(p)}>
                       Edit
                     </Button>
                   </div>
                 </div>
+                {p.status === "preview" && (
+                  <p className="text-xs text-amber-300/90 mt-3 border border-amber-500/20 bg-amber-500/5 px-3 py-2 leading-relaxed">
+                    Preview — client dashboard is empty until you add scripts, assign a campaign manager, and set
+                    status to <strong>Active</strong>. Responses and send proofs appear after the team logs them.
+                  </p>
+                )}
                 {p.audience_brief && (
-                  <p className="text-sm text-lux-muted line-clamp-2 mb-3">{p.audience_brief}</p>
+                  <p className="text-sm text-lux-muted line-clamp-2 mb-3 mt-3">{p.audience_brief}</p>
                 )}
                 <div className="flex flex-wrap gap-4 text-xs text-lux-muted/80">
                   <span>{p.assignee_count} assigned</span>

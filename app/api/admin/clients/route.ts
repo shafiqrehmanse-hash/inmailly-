@@ -14,18 +14,26 @@ export async function GET(request: NextRequest) {
   const admin = createAdminClient();
   const { data: clients, error } = await admin
     .from("clients")
-    .select("*, projects(id)")
+    .select("*, projects(id, name, status, portal_token, created_at)")
     .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const enriched = (clients || []).map((c) => ({
-    ...c,
-    project_count: Array.isArray(c.projects) ? c.projects.length : 0,
-    projects: undefined,
-  }));
+  const enriched = (clients || []).map((c) => {
+    const projectRows = Array.isArray(c.projects) ? c.projects : [];
+    const sorted = [...projectRows].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    const latest_project = sorted[0] || null;
+    return {
+      ...c,
+      project_count: projectRows.length,
+      latest_project,
+      projects: undefined,
+    };
+  });
 
   return NextResponse.json({ clients: enriched });
 }
