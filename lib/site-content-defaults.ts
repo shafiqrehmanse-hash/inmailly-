@@ -71,6 +71,13 @@ export type ContactContent = {
   subline: string;
 };
 
+export type TrialContent = {
+  enabled: boolean;
+  inmailCount: number;
+  name: string;
+  subtitle: string;
+};
+
 export type SiteContent = {
   hero: HeroContent;
   stats: StatsContent;
@@ -79,6 +86,7 @@ export type SiteContent = {
   testimonials: TestimonialsContent;
   finalCta: FinalCtaContent;
   contact: ContactContent;
+  trial: TrialContent;
 };
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
@@ -214,6 +222,12 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     headline: "Start your campaign",
     subline: "Tell us about your outreach goals. We respond within 24 hours.",
   },
+  trial: {
+    enabled: false,
+    inmailCount: 200,
+    name: "Free trial",
+    subtitle: "200 InMails · preview your dashboard",
+  },
 };
 
 export const SITE_SECTIONS = [
@@ -224,6 +238,7 @@ export const SITE_SECTIONS = [
   "testimonials",
   "finalCta",
   "contact",
+  "trial",
 ] as const;
 
 export type SiteSection = (typeof SITE_SECTIONS)[number];

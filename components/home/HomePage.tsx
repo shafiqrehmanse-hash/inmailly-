@@ -31,7 +31,7 @@ export default function HomePage({ content }: { content: SiteContent }) {
         <LuxTimeline />
         <LuxFeatures />
         <LuxStats content={content.stats} />
-        <LuxPricing content={content.pricing} />
+        <LuxPricing content={content.pricing} trial={content.trial} />
         <LuxTestimonials content={content.testimonials} />
         <LuxFAQ content={content.faq} />
         <LuxFinalCTA content={content.finalCta} />

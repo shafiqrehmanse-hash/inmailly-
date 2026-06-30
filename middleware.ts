@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+function isEmailVerified(user: { email_confirmed_at?: string | null }) {
+  return Boolean(user.email_confirmed_at);
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
   const { pathname } = request.nextUrl;
@@ -51,7 +55,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/client/login", request.url));
   }
 
+  if (pathname.startsWith("/client/dashboard") && user && !isEmailVerified(user)) {
+    return NextResponse.redirect(new URL("/client/login?verify=required", request.url));
+  }
+
   if (isClientAuth && user) {
+    if (!isEmailVerified(user)) {
+      return response;
+    }
     const { data: client } = await supabase
       .from("clients")
       .select("id")
@@ -62,8 +73,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (pathname === "/admin" && request.cookies.get("admin_authed")?.value !== "1") {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+    if (request.cookies.get("admin_authed")?.value !== "1") {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
   }
 
   if (pathname === "/admin/login" && request.cookies.get("admin_authed")?.value === "1") {
@@ -79,8 +92,7 @@ export const config = {
     "/client/dashboard",
     "/client/login",
     "/client/register",
-    "/admin",
-    "/admin/login",
+    "/admin/:path*",
     "/login",
     "/register",
   ],

@@ -15,6 +15,7 @@ const SECTION_LABELS: Record<SiteSection, string> = {
   testimonials: "Testimonials",
   finalCta: "Final CTA",
   contact: "Contact page",
+  trial: "Free trial toggle",
 };
 
 export default function AdminWebsiteSection({

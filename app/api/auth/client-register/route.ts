@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { notifyAdminClientSignup, sendClientVerificationEmail } from "@/lib/email";
-import { getSiteUrl } from "@/lib/site-url";
 import { ensureClientHasProject } from "@/lib/ensure-client-project";
+import { getSiteContent } from "@/lib/site-content-server";
+import { getSiteUrl } from "@/lib/site-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 async function createClientProfile(
@@ -10,7 +11,8 @@ async function createClientProfile(
   userId: string,
   name: string,
   normalizedEmail: string,
-  companyName: string | null
+  companyName: string | null,
+  trialPackageSize?: number
 ) {
   const { data: orphan } = await admin
     .from("clients")
@@ -56,12 +58,16 @@ async function createClientProfile(
     clientId = client.id;
   }
 
-  const project = await ensureClientHasProject(admin, {
-    id: clientId!,
-    name: name.trim(),
-    email: normalizedEmail,
-    company_name: companyName,
-  });
+  const project = await ensureClientHasProject(
+    admin,
+    {
+      id: clientId!,
+      name: name.trim(),
+      email: normalizedEmail,
+      company_name: companyName,
+    },
+    { inmailPackageSize: trialPackageSize }
+  );
   if (!project) {
     if (!orphan) await admin.from("clients").delete().eq("id", clientId!);
     return { error: "Failed to create preview project" };
@@ -192,7 +198,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to create account" }, { status: 400 });
     }
 
-    const profile = await createClientProfile(admin, userId, name.trim(), normalizedEmail, companyName);
+    const site = await getSiteContent();
+    const trialPackageSize = site.trial.enabled ? site.trial.inmailCount : undefined;
+
+    const profile = await createClientProfile(admin, userId, name.trim(), normalizedEmail, companyName, trialPackageSize);
     if ("error" in profile) {
       if (isNewAuthUser && authData.user) {
         await admin.auth.admin.deleteUser(authData.user.id);

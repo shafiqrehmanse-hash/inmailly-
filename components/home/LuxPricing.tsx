@@ -2,12 +2,31 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import type { PricingContent } from "@/lib/site-content-defaults";
+import type { PricingContent, TrialContent } from "@/lib/site-content-defaults";
 import { DEFAULT_SITE_CONTENT } from "@/lib/site-content-defaults";
 import MagneticButton from "./MagneticButton";
 
-export default function LuxPricing({ content }: { content?: PricingContent }) {
+export default function LuxPricing({
+  content,
+  trial,
+}: {
+  content?: PricingContent;
+  trial?: TrialContent;
+}) {
   const c = content ?? DEFAULT_SITE_CONTENT.pricing;
+  const trialPlan = trial?.enabled
+    ? {
+        name: trial.name,
+        price: String(trial.inmailCount),
+        unit: "InMails included",
+        per: trial.subtitle,
+        featured: true,
+        trial: true as const,
+      }
+    : null;
+  const plans = trialPlan
+    ? [trialPlan, ...c.plans.map((p) => ({ ...p, featured: false }))]
+    : c.plans;
 
   return (
     <section id="pricing" className="relative py-32 lg:py-48 border-t border-white/[0.04]">
@@ -25,7 +44,7 @@ export default function LuxPricing({ content }: { content?: PricingContent }) {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 items-end">
-          {c.plans.map((plan, i) => (
+          {plans.map((plan, i) => (
             <motion.div
               key={plan.name}
               initial={{ opacity: 0, y: 40 }}
@@ -62,7 +81,7 @@ export default function LuxPricing({ content }: { content?: PricingContent }) {
                 </div>
                 <div className="mt-auto">
                   <Link
-                    href="/contact"
+                    href={plan.trial ? "/client/register" : "/contact"}
                     className={`block text-center py-3 text-[0.8rem] font-semibold uppercase tracking-wider transition-all ${
                       plan.featured
                         ? "bg-lux-cyan text-lux-bg hover:bg-lux-cyan/90"

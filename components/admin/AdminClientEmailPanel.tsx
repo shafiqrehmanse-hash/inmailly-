@@ -17,14 +17,16 @@ export default function AdminClientEmailPanel({
   adminKey,
   onToast,
   onProjectUpdated,
+  defaultOpen = false,
 }: {
   client: ClientRow;
   adminKey: string;
   onToast: (msg: string, type?: "success" | "error") => void;
   onProjectUpdated?: () => void;
+  defaultOpen?: boolean;
 }) {
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [emailReady, setEmailReady] = useState<boolean | null>(null);
   const [notifyEmail, setNotifyEmail] = useState("");
   const [sending, setSending] = useState<string | null>(null);

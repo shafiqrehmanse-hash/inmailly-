@@ -55,7 +55,8 @@ async function reconcileDuplicateClientProjects(admin: SupabaseClient, client: C
 /** Ensures the client has at least one project (preview if needed). Reassigns projects from duplicate email rows. */
 export async function ensureClientHasProject(
   admin: SupabaseClient,
-  client: ClientRef
+  client: ClientRef,
+  options?: { inmailPackageSize?: number }
 ): Promise<ClientProjectRow | null> {
   let project = await fetchLatestProject(admin, client.id);
   if (project) return project;
@@ -76,6 +77,7 @@ export async function ensureClientHasProject(
       status: "preview",
       audience_brief: PREVIEW_BRIEF,
       portal_token: randomToken(),
+      inmail_package_size: options?.inmailPackageSize ?? null,
     })
     .select(PROJECT_SELECT)
     .single();

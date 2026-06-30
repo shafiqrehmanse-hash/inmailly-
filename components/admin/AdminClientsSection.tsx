@@ -13,10 +13,14 @@ export default function AdminClientsSection({
   adminKey,
   onToast,
   onOpenProjects,
+  setupOnly = false,
+  emailFocus = false,
 }: {
   adminKey: string;
   onToast: (msg: string, type?: "success" | "error") => void;
   onOpenProjects?: (clientId: string) => void;
+  setupOnly?: boolean;
+  emailFocus?: boolean;
 }) {
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const [clients, setClients] = useState<
@@ -143,8 +147,20 @@ export default function AdminClientsSection({
 
   if (loading) return <p className="text-lux-muted">Loading clients…</p>;
 
+  const visibleClients = setupOnly
+    ? clients.filter((c) => {
+        if (c.signup_source !== "self") return false;
+        const lp = c.latest_project;
+        if (!lp) return true;
+        const assignees = lp.assignee_count ?? 0;
+        const ready = lp.status === "active" && assignees > 0 && Boolean(lp.inmail_package_size);
+        return !ready;
+      })
+    : clients;
+
   return (
     <div className="space-y-8">
+      {!setupOnly && !emailFocus && (
       <section>
         <p className="admin-section-title mb-4">Add client</p>
         <div className="lux-card p-5 grid sm:grid-cols-2 gap-3">
@@ -178,20 +194,27 @@ export default function AdminClientsSection({
           </Button>
         </div>
       </section>
+      )}
 
       <section>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <p className="admin-section-title">All clients</p>
+          <p className="admin-section-title">
+            {setupOnly ? "Clients needing setup" : emailFocus ? "Send campaign email" : "All clients"}
+          </p>
+          {!setupOnly && (
           <div className="flex items-center gap-3">
             <PageSizeSelect value={pageSize} onChange={handlePageSizeChange} />
             <span className="text-xs text-lux-muted tabular-nums">{total} total · page {page} of {totalPages}</span>
           </div>
+          )}
         </div>
         <div className="space-y-3">
-          {clients.length === 0 ? (
-            <div className="lux-card p-8 text-center text-lux-muted text-sm">No clients yet.</div>
+          {visibleClients.length === 0 ? (
+            <div className="lux-card p-8 text-center text-lux-muted text-sm">
+              {setupOnly ? "No clients need setup right now." : "No clients yet."}
+            </div>
           ) : (
-            clients.map((c) => (
+            visibleClients.map((c) => (
               <div key={c.id} className="lux-card p-5">
                 {editingId === c.id ? (
                   <div className="space-y-3">
@@ -332,6 +355,7 @@ export default function AdminClientsSection({
                       <p className="text-sm text-lux-muted mt-2 line-clamp-2">{c.notes}</p>
                     )}
                     <AdminClientEmailPanel
+                      defaultOpen={emailFocus}
                       client={{
                         id: c.id,
                         name: c.name,

@@ -10,6 +10,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const verified = searchParams.get("verified");
+  const verifyRequired = searchParams.get("verify") === "required";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -74,6 +75,11 @@ function LoginForm() {
 
   return (
     <TeamAuthLayout title="Client login" subtitle="Your campaign dashboard">
+      {verifyRequired && (
+        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl px-4 py-3 text-sm mb-5">
+          Verify your email before opening the dashboard. Check your inbox or resend below.
+        </div>
+      )}
       {verified && (
         <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-xl px-4 py-3 text-sm mb-5">
           Email verified — log in to open your dashboard.

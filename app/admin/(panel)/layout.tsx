@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import AdminPanel from "@/components/admin/AdminPanel";
+import { AdminKeyProvider, AdminToastProvider } from "@/lib/admin-context";
 
-export default function AdminPage() {
+export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const authed = cookies().get("admin_authed")?.value === "1";
   if (!authed) redirect("/admin/login");
 
@@ -15,5 +15,9 @@ export default function AdminPage() {
     );
   }
 
-  return <AdminPanel adminKey={adminKey} />;
+  return (
+    <AdminKeyProvider adminKey={adminKey}>
+      <AdminToastProvider>{children}</AdminToastProvider>
+    </AdminKeyProvider>
+  );
 }

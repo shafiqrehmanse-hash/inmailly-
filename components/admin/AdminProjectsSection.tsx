@@ -56,11 +56,17 @@ export default function AdminProjectsSection({
   members,
   onToast,
   initialClientFilter,
+  initialStatusFilter,
+  initialPackageFilter,
+  pageTitle = "Projects",
 }: {
   adminKey: string;
   members: TeamMember[];
   onToast: (msg: string, type?: "success" | "error") => void;
   initialClientFilter?: string;
+  initialStatusFilter?: string;
+  initialPackageFilter?: string;
+  pageTitle?: string;
 }) {
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const [clients, setClients] = useState<Client[]>([]);
@@ -203,8 +209,29 @@ export default function AdminProjectsSection({
     return <p className="text-lux-muted">Loading projects…</p>;
   }
 
+  const filteredProjects = projects.filter((p) => {
+    if (initialStatusFilter === "preview") {
+      if (!["preview", "draft"].includes(p.status)) return false;
+    } else if (initialStatusFilter && initialStatusFilter !== "all") {
+      if (p.status !== initialStatusFilter) return false;
+    }
+    if (initialPackageFilter) {
+      const pkg = parseInt(initialPackageFilter, 10);
+      if (p.inmail_package_size !== pkg) return false;
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-8">
+      <div>
+        <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">{pageTitle}</h1>
+        <p className="text-sm text-lux-muted mt-1">
+          {filteredProjects.length} project{filteredProjects.length === 1 ? "" : "s"}
+          {initialPackageFilter ? ` · ${Number(initialPackageFilter).toLocaleString()} InMail package` : ""}
+          {initialStatusFilter ? ` · ${initialStatusFilter}` : ""}
+        </p>
+      </div>
       {clients.length === 0 && (
         <div className="lux-card p-4 text-sm text-amber-300 border-amber-500/25">
           Add clients first in the <strong>Clients</strong> sidebar tab, then create projects here.
@@ -385,7 +412,7 @@ export default function AdminProjectsSection({
           {projects.length === 0 ? (
             <div className="lux-card p-8 text-center text-lux-muted text-sm">No projects found.</div>
           ) : (
-            projects.map((p) => (
+            filteredProjects.map((p) => (
               <div key={p.id} className="lux-card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                   <div>
