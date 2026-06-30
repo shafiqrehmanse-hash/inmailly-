@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentClient } from "@/lib/client-auth-server";
 import { ensureClientHasProject } from "@/lib/ensure-client-project";
+import { signedProofUrls } from "@/lib/proof-signed-urls";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
@@ -47,39 +48,30 @@ export async function GET() {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  const proofs = await Promise.all(
-    (proofRows || []).map(async (p) => {
-      const { data } = await admin.storage.from("proof-screenshots").createSignedUrl(p.display_path, 3600);
-      return {
-        id: p.id,
-        image_url: data?.signedUrl || null,
-        created_at: p.created_at,
-      };
-    })
-  );
+  const proofs = await signedProofUrls(admin, proofRows || []);
 
-  const { count: total } = await admin
-    .from("leads")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true);
-
-  const { count: interested } = await admin
-    .from("leads")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true)
-    .in("status", ["interested", "replied"]);
-
-  const { count: teamResponses } = await admin
-    .from("leads")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project.id);
-
-  const { count: teamProofs } = await admin
-    .from("send_proofs")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project.id);
+  const [{ count: total }, { count: interested }, { count: teamResponses }, { count: teamProofs }] =
+    await Promise.all([
+      admin
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .eq("project_id", project.id)
+        .eq("visible_to_client", true),
+      admin
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .eq("project_id", project.id)
+        .eq("visible_to_client", true)
+        .in("status", ["interested", "replied"]),
+      admin
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .eq("project_id", project.id),
+      admin
+        .from("send_proofs")
+        .select("*", { count: "exact", head: true })
+        .eq("project_id", project.id),
+    ]);
 
   const clients = project.clients as { name: string; company_name: string | null } | { name: string; company_name: string | null }[] | null;
   const clientRow = Array.isArray(clients) ? clients[0] : clients;

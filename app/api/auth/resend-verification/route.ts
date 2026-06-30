@@ -20,8 +20,14 @@ export async function POST(request: Request) {
 
     const account = client?.user_id
       ? { type: "client" as const, name: client.name || "there", userId: client.user_id, redirect: "/client/dashboard" }
-      : teamMember?.user_id && teamMember.role !== "campaign_manager"
-        ? { type: "team" as const, name: teamMember.name || "there", userId: teamMember.user_id, redirect: "/team/hub" }
+      : teamMember?.user_id
+        ? {
+            type: "team" as const,
+            name: teamMember.name || "there",
+            userId: teamMember.user_id,
+            redirect:
+              teamMember.role === "campaign_manager" ? "/campaign/hub" : "/team/hub",
+          }
         : null;
 
     if (!account) {

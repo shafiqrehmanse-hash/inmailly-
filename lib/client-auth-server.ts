@@ -1,8 +1,9 @@
+import { cache } from "react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import type { Client } from "@/lib/types";
 
-export async function getCurrentClient(): Promise<Client | null> {
+export const getCurrentClient = cache(async (): Promise<Client | null> => {
   const supabase = createServerSupabase();
   const {
     data: { user },
@@ -26,7 +27,7 @@ export async function getCurrentClient(): Promise<Client | null> {
     .maybeSingle();
 
   return (viaAdmin as Client | null) ?? null;
-}
+});
 
 export async function isTeamMemberUser(userId: string): Promise<boolean> {
   const supabase = createServerSupabase();

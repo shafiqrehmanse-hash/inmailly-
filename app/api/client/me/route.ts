@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { getCurrentClient, isTeamMemberUser } from "@/lib/client-auth-server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getLoginRedirect } from "@/lib/roles";
+import { getCurrentClient } from "@/lib/client-auth-server";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -17,8 +19,19 @@ export async function GET() {
     return NextResponse.json({ client: { id: client.id, name: client.name, email: client.email } });
   }
 
-  const isTeam = await isTeamMemberUser(user.id);
-  return NextResponse.json({
-    error: isTeam ? "team_account" : "no_client",
-  }, { status: 404 });
+  const admin = createAdminClient();
+  const { data: member } = await admin
+    .from("team_members")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (member) {
+    return NextResponse.json(
+      { error: "team_account", role: member.role, redirect: getLoginRedirect(member.role) },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({ error: "no_client" }, { status: 404 });
 }

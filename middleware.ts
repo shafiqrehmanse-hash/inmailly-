@@ -44,6 +44,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/login" ||
     pathname === "/register";
 
+  const isCampaignAuth = pathname === "/campaign/login";
   const isClientAuth = pathname === "/client/login" || pathname === "/client/register";
 
   if (pathname.startsWith("/team") && !isTeamAuth && !user) {
@@ -54,8 +55,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/team/login?verify=required", request.url));
   }
 
-  if (isTeamAuth && user && verified) {
-    return NextResponse.redirect(new URL("/team/hub", request.url));
+  if (pathname.startsWith("/campaign") && !isCampaignAuth && !user) {
+    return NextResponse.redirect(new URL("/campaign/login", request.url));
+  }
+
+  if (pathname.startsWith("/campaign") && !isCampaignAuth && user && !verified) {
+    return NextResponse.redirect(new URL("/campaign/login?verify=required", request.url));
+  }
+
+  if ((isTeamAuth || isCampaignAuth || isClientAuth) && user && verified) {
+    const home = await resolveVerifiedHome(user.id);
+    if (home) {
+      return NextResponse.redirect(new URL(home, request.url));
+    }
   }
 
   if (pathname.startsWith("/client/dashboard") && !user) {
@@ -64,30 +76,6 @@ export async function middleware(request: NextRequest) {
 
   if (pathname.startsWith("/client/dashboard") && user && !verified) {
     return NextResponse.redirect(new URL("/client/login?verify=required", request.url));
-  }
-
-  if (user && verified) {
-    const isClientArea =
-      pathname.startsWith("/client/dashboard") ||
-      pathname === "/client/login" ||
-      pathname === "/client/register";
-    if (isClientArea) {
-      const home = await resolveVerifiedHome(user.id);
-      if (home && !home.startsWith("/client")) {
-        return NextResponse.redirect(new URL(home, request.url));
-      }
-    }
-  }
-
-  if (isClientAuth && user && verified) {
-    const { data: client } = await supabase
-      .from("clients")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (client) {
-      return NextResponse.redirect(new URL("/client/dashboard", request.url));
-    }
   }
 
   if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
@@ -106,6 +94,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/team/:path*",
+    "/campaign/:path*",
+    "/client",
     "/client/dashboard",
     "/client/login",
     "/client/register",

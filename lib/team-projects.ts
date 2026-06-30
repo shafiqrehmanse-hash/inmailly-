@@ -117,6 +117,23 @@ export async function getMemberProject(
   memberId: string,
   projectId: string
 ): Promise<AssignedProject | null> {
-  const projects = await getMemberAssignedProjects(memberId);
-  return projects.find((p) => p.id === projectId) ?? null;
+  const supabase = createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  if (!(await assertMemberBelongsToUser(memberId, user.id))) return null;
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("project_assignments")
+    .select(ASSIGNMENT_SELECT)
+    .eq("member_id", memberId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  const mapped = mapAssignmentRows([data as AssignmentRow]);
+  return mapped[0] ?? null;
 }

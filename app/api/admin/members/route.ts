@@ -12,15 +12,35 @@ export async function GET(request: NextRequest) {
   }
   const admin = createAdminClient();
   const { data: members } = await admin.from("team_members").select("*").order("joined_at", { ascending: false });
-  const enriched = [];
-  for (const m of members || []) {
-    const [{ count: activeLinks }, { count: leadsCount }, { count: dealsCount }] = await Promise.all([
-      admin.from("outreach_links").select("*", { count: "exact", head: true }).eq("member_id", m.id).eq("status", "claimed"),
-      admin.from("leads").select("*", { count: "exact", head: true }).eq("member_id", m.id).is("project_id", null),
-      admin.from("leads").select("*", { count: "exact", head: true }).eq("member_id", m.id).is("project_id", null).eq("deal_closed", true),
-    ]);
-    enriched.push({ ...m, active_links: activeLinks || 0, leads_count: leadsCount || 0, deals_closed: dealsCount || 0 });
+  const memberIds = (members || []).map((m) => m.id);
+
+  const countsByMember = new Map<string, { active_links: number; leads_count: number; deals_closed: number }>();
+  for (const id of memberIds) {
+    countsByMember.set(id, { active_links: 0, leads_count: 0, deals_closed: 0 });
   }
+
+  if (memberIds.length > 0) {
+    const [{ data: claimedLinks }, { data: outreachLeads }] = await Promise.all([
+      admin.from("outreach_links").select("member_id").eq("status", "claimed").in("member_id", memberIds),
+      admin.from("leads").select("member_id, deal_closed").is("project_id", null).in("member_id", memberIds),
+    ]);
+
+    for (const row of claimedLinks || []) {
+      const bucket = countsByMember.get(row.member_id);
+      if (bucket) bucket.active_links += 1;
+    }
+    for (const row of outreachLeads || []) {
+      const bucket = countsByMember.get(row.member_id);
+      if (!bucket) continue;
+      bucket.leads_count += 1;
+      if (row.deal_closed) bucket.deals_closed += 1;
+    }
+  }
+
+  const enriched = (members || []).map((m) => {
+    const stats = countsByMember.get(m.id) || { active_links: 0, leads_count: 0, deals_closed: 0 };
+    return { ...m, ...stats };
+  });
   return NextResponse.json({ members: enriched });
 }
 

@@ -3,6 +3,12 @@ import { createServerClient } from "@supabase/ssr";
 import { resolvePostVerifyRedirect } from "@/lib/account-redirect";
 import { handlePostEmailVerification } from "@/lib/post-verification";
 
+function verifyErrorLogin(nextParam?: string | null) {
+  if (nextParam?.startsWith("/client")) return "/client/login";
+  if (nextParam?.startsWith("/campaign")) return "/campaign/login";
+  return "/team/login";
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
@@ -37,9 +43,8 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      const isTeam = nextParam?.startsWith("/team") || nextParam?.startsWith("/campaign");
       return NextResponse.redirect(
-        new URL(`${isTeam ? "/team" : "/client"}/login?error=verify_failed`, origin)
+        new URL(`${verifyErrorLogin(nextParam)}?error=verify_failed`, origin)
       );
     }
     verified = true;
@@ -49,14 +54,15 @@ export async function GET(request: NextRequest) {
       type: type as "signup" | "email" | "recovery" | "email_change" | "magiclink",
     });
     if (error) {
-      const isTeam = nextParam?.startsWith("/team") || nextParam?.startsWith("/campaign");
       return NextResponse.redirect(
-        new URL(`${isTeam ? "/team" : "/client"}/login?error=verify_failed`, origin)
+        new URL(`${verifyErrorLogin(nextParam)}?error=verify_failed`, origin)
       );
     }
     verified = true;
   } else {
-    return NextResponse.redirect(new URL("/team/login?error=missing_token", origin));
+    return NextResponse.redirect(
+      new URL(`${verifyErrorLogin(nextParam)}?error=missing_token`, origin)
+    );
   }
 
   if (verified) {

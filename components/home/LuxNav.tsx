@@ -8,7 +8,7 @@ import MagneticButton from "./MagneticButton";
 const LINKS = [
   { href: "#story", label: "Story" },
   { href: "#responses", label: "Responses" },
-  { href: "/client/register", label: "Dashboard" },
+  { href: "/client/register", label: "Get started" },
   { href: "#pricing", label: "Pricing" },
   { href: "/contact", label: "Contact" },
 ];

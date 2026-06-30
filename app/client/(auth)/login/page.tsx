@@ -5,6 +5,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import TeamAuthLayout from "@/components/team/TeamAuthLayout";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { getLoginRedirect } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
@@ -73,7 +74,7 @@ function LoginForm() {
 
     const meData = await meRes.json().catch(() => ({}));
     if (meData.error === "team_account") {
-      router.push("/team/hub");
+      router.push(meData.redirect || getLoginRedirect(meData.role || "member"));
       router.refresh();
       return;
     }

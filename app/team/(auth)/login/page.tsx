@@ -91,8 +91,9 @@ function LoginForm() {
         return;
       }
     }
-    router.push("/team/hub");
-    router.refresh();
+    await supabase.auth.signOut();
+    setLoading(false);
+    setError("No team account found for this email. Register with an invite code first.");
   }
 
   return (

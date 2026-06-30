@@ -78,7 +78,7 @@ export default function AdminProjectsSection({
 
   const load = useCallback(async () => {
     setLoading(true);
-    const clientsRes = await fetch(`/api/admin/clients?key=${adminKey}`);
+    const clientsRes = await fetch(`/api/admin/clients?key=${adminKey}&limit=500`);
     const clientsData = await clientsRes.json();
     setClients(clientsData.clients || []);
 
