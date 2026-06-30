@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import DailyScriptBar from "@/components/team/DailyScriptBar";
 import Sidebar from "@/components/team/Sidebar";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import { isCampaignManager } from "@/lib/roles";
@@ -31,9 +30,8 @@ export default async function TeamAppLayout({
   return (
     <div className="min-h-screen bg-lux-bg text-lux-text relative">
       <WorkspaceAmbient />
-      <Sidebar member={member} poolCount={poolCount} />
+      <Sidebar member={member} poolCount={poolCount} scripts={scripts} />
       <div className="lg:ml-[240px] min-h-screen flex flex-col relative">
-        <DailyScriptBar scripts={scripts} />
         <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-[1200px] mx-auto w-full">{children}</main>
       </div>
     </div>

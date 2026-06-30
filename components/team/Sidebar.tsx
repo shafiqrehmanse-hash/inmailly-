@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import SidebarScripts from "@/components/team/SidebarScripts";
 import { createClient } from "@/lib/supabase/client";
+import type { ScriptPayload } from "@/lib/scripts";
 import type { TeamMember } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -52,9 +54,11 @@ const activeStyles: Record<NonNullable<NavItem["accent"]>, string> = {
 export default function Sidebar({
   member,
   poolCount,
+  scripts,
 }: {
   member: TeamMember;
   poolCount: number;
+  scripts: Record<string, ScriptPayload>;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -73,25 +77,25 @@ export default function Sidebar({
 
   const NavContent = () => (
     <>
-      <div className="px-5 pt-5 pb-5 border-b border-white/[0.06] bg-gradient-to-br from-cyan-500/[0.06] to-violet-600/[0.04]">
+      <div className="px-5 pt-5 pb-5 border-b border-lux-violet/15 bg-gradient-to-br from-lux-violet/[0.08] via-lux-cyan/[0.04] to-transparent">
         <Link href="/team/hub" className="flex items-center gap-3" onClick={() => setOpen(false)}>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-600 flex items-center justify-center font-bricolage font-extrabold text-sm text-white shadow-lg shadow-cyan-500/20 ring-1 ring-white/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-lux-violet via-lux-blue to-lux-cyan flex items-center justify-center font-bricolage font-extrabold text-sm text-white shadow-lg shadow-lux-violet/25 ring-1 ring-lux-violet/30">
             I
           </div>
           <div>
             <div className="font-bricolage font-extrabold text-[0.95rem] text-white tracking-tight">
               InMailly
             </div>
-            <div className="text-[0.58rem] text-cyan-300/60 uppercase tracking-[0.2em] font-semibold">
+            <div className="text-[0.58rem] text-lux-violet/70 uppercase tracking-[0.2em] font-semibold">
               Team workspace
             </div>
           </div>
         </Link>
       </div>
 
-      <nav className="flex-1 py-4 overflow-y-auto px-2">
+      <nav className="flex-1 py-3 overflow-y-auto px-2 min-h-0">
         {sections.map((section) => (
-          <div key={section.label} className="mb-3">
+          <div key={section.label} className="mb-2">
             <div
               className={cn(
                 "text-[0.55rem] font-bold uppercase tracking-[0.18em] px-3 py-2",
@@ -112,13 +116,13 @@ export default function Sidebar({
                     "flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all mb-0.5 border-l-[3px]",
                     active
                       ? activeStyles[accent]
-                      : "border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]"
+                      : "border-transparent text-slate-400 hover:text-white hover:bg-lux-violet/[0.06]"
                   )}
                 >
                   <span className="w-[18px] text-center shrink-0 text-base">{item.icon}</span>
                   <span className="flex-1 font-medium">{item.label}</span>
                   {item.badge && poolCount > 0 && (
-                    <span className="bg-gradient-to-r from-cyan-500/25 to-blue-500/20 text-cyan-300 text-[0.58rem] font-bold px-2 py-0.5 rounded-full border border-cyan-400/25">
+                    <span className="min-w-[1.4rem] h-[1.4rem] px-1 flex items-center justify-center rounded-full bg-red-500/15 text-red-400 text-[0.62rem] font-bold border border-red-500/45 shadow-[0_0_14px_rgba(239,68,68,0.22)] tabular-nums">
                       {poolCount}
                     </span>
                   )}
@@ -127,16 +131,19 @@ export default function Sidebar({
             })}
           </div>
         ))}
+
+        <div className="my-2 mx-2 border-t border-lux-violet/15" />
+        <SidebarScripts scripts={scripts} />
       </nav>
 
-      <div className="mx-3 mb-4 p-3 rounded-xl border border-white/[0.08] bg-gradient-to-br from-slate-800/50 to-violet-950/30">
+      <div className="mx-3 mb-4 p-3 rounded-xl border border-lux-violet/20 bg-gradient-to-br from-lux-violet/10 via-slate-900/40 to-lux-bg2/60 shrink-0">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-white shadow-md">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-lux-violet to-lux-cyan flex items-center justify-center text-xs font-bold text-white shadow-md shadow-lux-violet/20">
             {initials}
           </div>
           <div className="min-w-0">
             <div className="text-sm text-white font-medium truncate">{member.name}</div>
-            <div className="text-[0.65rem] text-cyan-300/50">Outreach member</div>
+            <div className="text-[0.65rem] text-lux-violet/60">Outreach member</div>
           </div>
         </div>
         <button
@@ -153,7 +160,7 @@ export default function Sidebar({
   return (
     <>
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-slate-900/90 border border-cyan-500/20 flex items-center justify-center text-lg text-white shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-slate-900/90 border border-lux-violet/25 flex items-center justify-center text-lg text-white shadow-lg"
         onClick={() => setOpen(true)}
         aria-label="Open menu"
       >
@@ -167,8 +174,8 @@ export default function Sidebar({
       <aside
         className={cn(
           "fixed top-0 left-0 h-full w-[240px] flex flex-col z-50 transition-transform duration-300",
-          "bg-gradient-to-b from-[#080d18] via-[#0c1222] to-[#0f0a1a]",
-          "border-r border-cyan-500/10 shadow-[4px_0_32px_rgba(0,0,0,0.45)]",
+          "bg-gradient-to-b from-[#08091a] via-[#0c0f24] to-[#100a1c]",
+          "border-r border-lux-violet/20 shadow-[4px_0_32px_rgba(139,92,246,0.08)]",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >

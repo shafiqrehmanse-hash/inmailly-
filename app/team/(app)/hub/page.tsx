@@ -96,7 +96,7 @@ export default async function HubPage() {
   return (
     <div className="space-y-7">
       <div>
-        <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-lux-cyan mb-2">
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-lux-violet/80 mb-2">
           Team workspace
         </p>
         <h1 className="font-bricolage font-extrabold text-[clamp(1.6rem,4vw,2.15rem)] tracking-tight">
@@ -104,15 +104,33 @@ export default async function HubPage() {
           <span className="text-lux-text"> 👋</span>
         </h1>
         <p className="text-lux-muted text-[0.92rem] mt-2 max-w-xl leading-relaxed">
-          Use the <strong className="text-lux-cyan font-semibold">Scripts</strong> bar above to copy
-          outreach copy — then claim links, run outreach, and log leads.
+          Copy scripts from the sidebar, jump into a section below, then claim links and log leads.
         </p>
       </div>
 
-      <TeamProgressChart leadDates={leadDates} linkDates={linkDates} />
+      <div className="grid sm:grid-cols-2 gap-3.5">
+        {quickNav.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`p-5 flex flex-col gap-2 min-h-[130px] transition-all duration-300 group ${
+              item.featured
+                ? "lux-card-featured hover:shadow-[0_0_56px_rgba(34,211,238,0.1)]"
+                : "lux-card-elite hover:border-lux-violet/30 hover:shadow-[0_0_32px_rgba(139,92,246,0.08)]"
+            }`}
+          >
+            <div className="text-2xl">{item.icon}</div>
+            <div className="font-bricolage font-extrabold text-lux-text group-hover:text-lux-cyan transition-colors">
+              {item.label}
+            </div>
+            <p className="text-[0.8rem] text-lux-muted leading-relaxed flex-1">{item.desc}</p>
+            <span className="text-[0.72rem] font-bold text-lux-cyan">{item.go}</span>
+          </Link>
+        ))}
+      </div>
 
-      <div className="lux-card-elite p-5 sm:p-6">
-        <div className="text-[0.68rem] font-bold uppercase tracking-widest text-lux-cyan mb-2">
+      <div className="lux-card-elite p-5 sm:p-6 border-lux-violet/15">
+        <div className="text-[0.68rem] font-bold uppercase tracking-widest text-lux-violet mb-2">
           Recommended workflow
         </div>
         <p className="text-[0.9rem] text-lux-muted leading-relaxed">
@@ -131,26 +149,7 @@ export default async function HubPage() {
         <StatCard value={leads} label="Your leads" />
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-3.5">
-        {quickNav.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`p-5 flex flex-col gap-2 min-h-[130px] transition-all duration-300 group ${
-              item.featured
-                ? "lux-card-featured hover:shadow-[0_0_56px_rgba(34,211,238,0.1)]"
-                : "lux-card-elite hover:border-lux-cyan/30 hover:shadow-[0_0_32px_rgba(34,211,238,0.06)]"
-            }`}
-          >
-            <div className="text-2xl">{item.icon}</div>
-            <div className="font-bricolage font-extrabold text-lux-text group-hover:text-lux-cyan transition-colors">
-              {item.label}
-            </div>
-            <p className="text-[0.8rem] text-lux-muted leading-relaxed flex-1">{item.desc}</p>
-            <span className="text-[0.72rem] font-bold text-lux-cyan">{item.go}</span>
-          </Link>
-        ))}
-      </div>
+      <TeamProgressChart leadDates={leadDates} linkDates={linkDates} />
     </div>
   );
 }
