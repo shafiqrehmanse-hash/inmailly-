@@ -104,12 +104,9 @@ export default function LeadModal({
       setMessages((data.messages as LeadMessage[]) || []);
       return;
     }
-    const { data } = await supabase
-      .from("lead_messages")
-      .select("*")
-      .eq("lead_id", leadId)
-      .order("created_at", { ascending: true });
-    setMessages((data as LeadMessage[]) || []);
+    const res = await fetch(`/api/team/leads/messages?leadId=${leadId}`);
+    const data = await res.json();
+    setMessages((data.messages as LeadMessage[]) || []);
   }
 
   async function handleAddLead() {
@@ -160,14 +157,14 @@ export default function LeadModal({
       }
       return;
     }
-    const { data } = await supabase
-      .from("leads")
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq("id", currentLead.id)
-      .select()
-      .single();
-    if (data) {
-      setCurrentLead(data as Lead);
+    const res = await fetch("/api/team/leads", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: currentLead.id, ...updates }),
+    });
+    const data = await res.json();
+    if (res.ok && data.lead) {
+      setCurrentLead(data.lead as Lead);
       onSaved?.();
     }
   }
@@ -192,28 +189,33 @@ export default function LeadModal({
       if (data.message) {
         setMessages((m) => [...m, data.message as LeadMessage]);
         setMsgContent("");
+        if (msgSender === "lead") {
+          setCurrentLead((prev) => (prev ? { ...prev, status: "replied" } : prev));
+        }
         onSaved?.();
       }
       return;
     }
 
-    const { data } = await supabase
-      .from("lead_messages")
-      .insert({
+    const res = await fetch("/api/team/leads/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         lead_id: currentLead.id,
         sender: msgSender,
-        sender_name: msgSender === "team" ? (isAdmin ? `Admin → ${memberName}` : memberName) : currentLead.name,
+        sender_name: msgSender === "team" ? memberName : currentLead.name,
         msg_type: msgType,
         content: msgContent.trim(),
-      })
-      .select()
-      .single();
-    if (data) {
-      setMessages((m) => [...m, data as LeadMessage]);
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.message) {
+      setMessages((m) => [...m, data.message as LeadMessage]);
       setMsgContent("");
-      if (msgSender === "lead" && currentLead.status === "contacted") {
-        await handleUpdateLead({ status: "replied" });
+      if (data.promotedToReplied) {
+        setCurrentLead((prev) => (prev ? { ...prev, status: "replied" } : prev));
       }
+      onSaved?.();
     }
   }
 

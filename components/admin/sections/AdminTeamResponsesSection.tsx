@@ -5,6 +5,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
 import LeadModal from "@/components/team/LeadModal";
+import { isTeamResponseLead, TEAM_RESPONSE_STATUSES } from "@/lib/team-responses";
 import type { Lead, TeamMember } from "@/lib/types";
 import { useAdminKey } from "@/lib/admin-context";
 
@@ -38,25 +39,38 @@ export default function AdminTeamResponsesSection() {
     });
     const res = await fetch(`/api/admin/leads?${params}`);
     const data = await res.json();
-    const rows = ((data.leads || []) as LeadRow[]).filter((l) =>
-      ["replied", "interested"].includes(l.status)
-    );
+    const allRows = (data.leads || []) as LeadRow[];
+
+    if (allRows.length === 0) {
+      setLeads([]);
+      return;
+    }
+
+    const leadIds = allRows.map((l) => l.id).join(",");
+    const msgRes = await fetch(`/api/admin/leads/messages?key=${adminKey}&leadIds=${leadIds}`);
+    const msgData = await msgRes.json();
+    const inbound = new Set<string>();
+    const latest = new Map<string, string>();
+    for (const msg of (msgData.messages || []) as { lead_id: string; sender: string; content?: string }[]) {
+      if (msg.sender === "lead") inbound.add(msg.lead_id);
+      if (!latest.has(msg.lead_id)) {
+        latest.set(msg.lead_id, msg.content?.slice(0, 140) || "");
+      }
+    }
+
+    const rows = allRows.filter((l) => isTeamResponseLead(l, inbound.has(l.id)));
 
     if (rows.length === 0) {
       setLeads([]);
       return;
     }
 
-    const snippets = await Promise.all(
-      rows.map(async (lead) => {
-        const msgRes = await fetch(`/api/admin/leads/messages?key=${adminKey}&leadId=${lead.id}`);
-        const msgData = await msgRes.json();
-        const msgs = (msgData.messages || []) as { content?: string }[];
-        const last = msgs[msgs.length - 1];
-        return { ...lead, lastMessage: last?.content?.slice(0, 140) };
-      })
+    setLeads(
+      rows.map((lead) => ({
+        ...lead,
+        lastMessage: latest.get(lead.id),
+      }))
     );
-    setLeads(snippets);
   }, [adminKey, memberFilter]);
 
   useEffect(() => {
@@ -72,7 +86,8 @@ export default function AdminTeamResponsesSection() {
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">Team responses</h1>
         <p className="text-sm text-lux-muted mt-1">
-          Outreach leads who replied — reply here and your team member sees it on their lead thread.
+          Outreach leads who replied or have an inbound thread — reply here and your team member sees it on
+          their lead thread. Statuses: {TEAM_RESPONSE_STATUSES.join(", ").replace(/_/g, " ")}.
         </p>
       </div>
 

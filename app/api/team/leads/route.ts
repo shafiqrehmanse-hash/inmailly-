@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest) {
   const admin = createAdminClient();
   const { data: existing } = await admin
     .from("leads")
-    .select("id")
+    .select("id, name")
     .eq("id", id)
     .eq("member_id", member.id)
     .is("project_id", null)
@@ -99,6 +99,12 @@ export async function PATCH(request: NextRequest) {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (updates.status && VALID_STATUSES.has(updates.status)) patch.status = updates.status;
   if (updates.notes !== undefined) patch.notes = updates.notes;
+  if (updates.name !== undefined) patch.name = updates.name?.trim() || existing.name;
+  if (updates.profile_url !== undefined) patch.profile_url = updates.profile_url;
+  if (updates.company !== undefined) patch.company = updates.company;
+  if (updates.position !== undefined) patch.position = updates.position;
+  if (updates.email !== undefined) patch.email = updates.email;
+  if (updates.phone !== undefined) patch.phone = updates.phone;
   if (updates.deal_closed !== undefined) {
     patch.deal_closed = Boolean(updates.deal_closed);
     patch.closed_at = updates.deal_closed ? new Date().toISOString() : null;

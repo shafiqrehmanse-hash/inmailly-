@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { shouldPromoteLeadToReplied } from "@/lib/team-responses";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
+import type { Lead } from "@/lib/types";
 
 function checkKey(request: NextRequest) {
   const key = request.headers.get("x-admin-key") || request.nextUrl.searchParams.get("key");
@@ -11,9 +13,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const leadId = request.nextUrl.searchParams.get("leadId");
-  if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
+  const leadIdsParam = request.nextUrl.searchParams.get("leadIds");
 
   const admin = createAdminClient();
+
+  if (leadIdsParam) {
+    const ids = leadIdsParam.split(",").map((s) => s.trim()).filter(Boolean);
+    if (ids.length === 0) return NextResponse.json({ messages: [] });
+    const { data, error } = await admin
+      .from("lead_messages")
+      .select("lead_id, sender, content, created_at")
+      .in("lead_id", ids)
+      .order("created_at", { ascending: false });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ messages: data || [] });
+  }
+
+  if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
   const { data, error } = await admin
     .from("lead_messages")
     .select("*")
@@ -51,7 +67,9 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (sender === "lead" && lead.status === "contacted") updates.status = "replied";
+  if (sender === "lead" && shouldPromoteLeadToReplied(lead.status as Lead["status"])) {
+    updates.status = "replied";
+  }
 
   await admin.from("leads").update(updates).eq("id", lead_id);
 

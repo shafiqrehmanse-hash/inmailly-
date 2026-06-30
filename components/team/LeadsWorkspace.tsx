@@ -144,6 +144,12 @@ function LeadsWorkspaceInner() {
       return;
     }
     setFormMsg({ text: "Lead added successfully!", type: "success" });
+    if (form.status === "new") {
+      setFormMsg({
+        text: "Lead saved. Log their reply in Thread or set status to Replied to show on Responses.",
+        type: "success",
+      });
+    }
     setForm({
       first_name: "",
       last_name: "",
