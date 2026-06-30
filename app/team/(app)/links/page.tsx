@@ -9,6 +9,7 @@ import Pagination from "@/components/ui/Pagination";
 import { createClient } from "@/lib/supabase/client";
 import type { OutreachLink, TeamMember } from "@/lib/types";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
+import { useFetchGeneration } from "@/lib/use-fetch-generation";
 import { cn } from "@/lib/utils";
 
 type Tab = "pool" | "mine" | "used";
@@ -27,6 +28,7 @@ export default function LinksPage() {
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const memberRef = useRef<TeamMember | null>(null);
   const pageSize = DEFAULT_PAGE_SIZE;
+  const { nextGeneration, isLatest } = useFetchGeneration();
 
   const showToast = (message: string, type: ToastType = "success") =>
     setToast({ message, type });
@@ -85,6 +87,7 @@ export default function LinksPage() {
 
   const fetchLinks = useCallback(
     async (activeTab: Tab, memberId: string, activePage: number) => {
+      const gen = nextGeneration();
       const from = (activePage - 1) * pageSize;
       const to = from + pageSize - 1;
       let query = supabase.from("outreach_links").select("*", { count: "exact" });
@@ -106,13 +109,25 @@ export default function LinksPage() {
           .order("used_at", { ascending: false });
       }
 
-      const { data, count } = await query.range(from, to);
+      const { data, count, error } = await query.range(from, to);
+      if (!isLatest(gen)) return;
+      if (error) {
+        setLinks([]);
+        setListTotal(0);
+        setTotalPages(1);
+        return;
+      }
       const total = count || 0;
+      const pages = Math.max(1, Math.ceil(total / pageSize));
+      if (activePage > pages && total > 0) {
+        setPage(pages);
+        return;
+      }
       setLinks((data as OutreachLink[]) || []);
       setListTotal(total);
-      setTotalPages(Math.max(1, Math.ceil(total / pageSize)));
+      setTotalPages(pages);
     },
-    [supabase, pageSize]
+    [supabase, pageSize, nextGeneration, isLatest]
   );
 
   const refresh = useCallback(
@@ -130,9 +145,10 @@ export default function LinksPage() {
     refresh(tab, page);
   }, [tab, page, refresh]);
 
-  useEffect(() => {
+  function selectTab(next: Tab) {
+    setTab(next);
     setPage(1);
-  }, [tab]);
+  }
 
   useEffect(() => {
     let debounce: ReturnType<typeof setTimeout>;
@@ -244,7 +260,7 @@ export default function LinksPage() {
         {tabs.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => selectTab(t.id)}
             className={cn(
               "px-4 py-2 rounded-full border text-[0.8rem] font-bold transition-colors",
               tab === t.id
@@ -270,7 +286,9 @@ export default function LinksPage() {
           <div className="text-4xl mb-3">{tab === "pool" ? "📭" : "✨"}</div>
           <p className="text-lux-muted text-sm">
             {tab === "pool"
-              ? "No links in the pool right now — ask admin to import more in Team Admin."
+              ? stats.pool > 0
+                ? `Links are in the pool (${stats.pool} total) — try page 1 or refresh.`
+                : "No links in the pool right now — ask admin to import more in Team Admin."
               : tab === "mine"
                 ? "You have no active links. Claim one from Available."
                 : "You have not marked any links used yet."}

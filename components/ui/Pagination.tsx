@@ -18,7 +18,7 @@ export default function Pagination({
   onPage: (page: number) => void;
   className?: string;
 }) {
-  if (total <= pageSize) return null;
+  if (total === 0) return null;
 
   const from = (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);

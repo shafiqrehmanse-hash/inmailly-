@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   const admin = createAdminClient();
   let query = admin
     .from("outreach_links")
-    .select("*, team_members(name)", { count: "exact" })
+    .select("*", { count: "exact" })
     .order("created_at", { ascending: false });
   if (status && status !== "all") query = query.eq("status", status);
   if (memberId && memberId !== "all") query = query.eq("member_id", memberId);

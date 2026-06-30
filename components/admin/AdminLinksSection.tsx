@@ -7,6 +7,7 @@ import LuxSelect from "@/components/ui/LuxSelect";
 import Pagination from "@/components/ui/Pagination";
 import type { OutreachLink, TeamMember } from "@/lib/types";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
+import { useFetchGeneration } from "@/lib/use-fetch-generation";
 import { formatDate, truncateUrl } from "@/lib/utils";
 
 type LinkRow = OutreachLink & {
@@ -38,26 +39,52 @@ export default function AdminLinksSection({
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const pageSize = DEFAULT_PAGE_SIZE;
+  const { nextGeneration, isLatest } = useFetchGeneration();
 
   const outreachMembers = members.filter((m) => m.role !== "campaign_manager" && m.is_active);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const params = new URLSearchParams({
-      key: adminKey,
-      status: statusFilter,
-      page: String(page),
-      limit: String(pageSize),
-    });
-    if (memberFilter !== "all") params.set("memberId", memberFilter);
-    const res = await fetch(`/api/admin/links?${params}`);
-    const data = await res.json();
-    setLinks(data.links || []);
-    setTotal(data.pagination?.total ?? 0);
-    setTotalPages(data.pagination?.totalPages ?? 1);
-    setLoading(false);
-  }, [adminKey, statusFilter, memberFilter, page, pageSize]);
+  const load = useCallback(
+    async (overrides?: { page?: number; status?: string; memberId?: string }) => {
+      const activePage = overrides?.page ?? page;
+      const activeStatus = overrides?.status ?? statusFilter;
+      const activeMember = overrides?.memberId ?? memberFilter;
+      const gen = nextGeneration();
+      setLoading(true);
+      setLoadError(null);
+      const params = new URLSearchParams({
+        key: adminKey,
+        status: activeStatus,
+        page: String(activePage),
+        limit: String(pageSize),
+      });
+      if (activeMember !== "all") params.set("memberId", activeMember);
+      const res = await fetch(`/api/admin/links?${params}`);
+      const data = await res.json();
+      if (!isLatest(gen)) return;
+      if (!res.ok || data.error) {
+        setLoadError(data.error || `Failed to load links (${res.status})`);
+        setLinks([]);
+        setTotal(0);
+        setTotalPages(1);
+        setLoading(false);
+        return;
+      }
+      const apiTotal = data.pagination?.total ?? 0;
+      const apiTotalPages = Math.max(1, data.pagination?.totalPages ?? 1);
+      if (activePage > apiTotalPages && apiTotal > 0) {
+        setPage(apiTotalPages);
+        setLoading(false);
+        return;
+      }
+      setLinks(data.links || []);
+      setTotal(apiTotal);
+      setTotalPages(apiTotalPages);
+      setLoading(false);
+    },
+    [adminKey, statusFilter, memberFilter, page, pageSize, nextGeneration, isLatest]
+  );
 
   useEffect(() => {
     load();
@@ -73,10 +100,8 @@ export default function AdminLinksSection({
   }, [statusFilter, memberFilter]);
 
   function memberName(link: LinkRow) {
-    const tm = link.team_members;
-    if (!tm) return "—";
-    if (Array.isArray(tm)) return tm[0]?.name || "—";
-    return tm.name || "—";
+    if (!link.member_id) return "—";
+    return members.find((m) => m.id === link.member_id)?.name || "—";
   }
 
   function toggleSelect(id: string) {
@@ -104,12 +129,16 @@ export default function AdminLinksSection({
       body: JSON.stringify({ paste, batchName }),
     });
     const data = await res.json();
+    if (data.error) {
+      onToast(data.error, "error");
+      return;
+    }
     onToast(`Imported ${data.inserted} links (${data.duplicates} duplicates skipped)`);
     setPaste("");
     setPreview(null);
     setStatusFilter("available");
     setPage(1);
-    load();
+    load({ page: 1, status: "available" });
   }
 
   async function resetLink(linkId: string) {
@@ -187,7 +216,7 @@ export default function AdminLinksSection({
       setSelected(new Set());
       setStatusFilter("available");
       setPage(1);
-      load();
+      load({ page: 1, status: "available" });
     }
   }
 
@@ -289,10 +318,16 @@ export default function AdminLinksSection({
         />
         <span className="text-xs text-lux-muted ml-auto tabular-nums">
           {total} links · page {page} of {totalPages}
+          {statusFilter === "available" && total === 0 && (
+            <span className="text-lux-cyan ml-2">Try filter “All statuses”</span>
+          )}
         </span>
       </div>
 
       <div className="lux-card overflow-x-auto">
+        {loadError && (
+          <p className="p-4 text-sm text-red-400 border-b border-white/[0.06]">{loadError}</p>
+        )}
         {loading ? (
           <p className="p-6 text-sm text-lux-muted">Loading links…</p>
         ) : (
