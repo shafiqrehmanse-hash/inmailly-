@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import LuxBackground from "@/components/home/LuxBackground";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -44,12 +45,13 @@ export default function AdminLoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-bold uppercase tracking-wide text-lux-muted">Secret key</label>
-            <input
-              type="password"
-              required
-              className="lux-input mt-1.5"
+            <PasswordInput
+              className="mt-1.5"
+              inputClassName="lux-input"
+              variant="lux"
               value={key}
-              onChange={(e) => setKey(e.target.value)}
+              onChange={setKey}
+              required
               placeholder="Enter admin key"
             />
           </div>

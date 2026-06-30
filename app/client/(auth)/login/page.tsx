@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import TeamAuthLayout from "@/components/team/TeamAuthLayout";
+import PasswordInput from "@/components/ui/PasswordInput";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
@@ -108,13 +109,7 @@ function LoginForm() {
         </div>
         <div>
           <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Password</label>
-          <input
-            type="password"
-            required
-            className="ws-input mt-1.5"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <PasswordInput className="mt-1.5" value={password} onChange={setPassword} required />
         </div>
         <button
           type="submit"

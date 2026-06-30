@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { notifyAdminOnSignup } from "@/lib/post-verification";
+import { sendTeamVerificationEmail } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { findMemberIdByReferralCode } from "@/lib/utils";
+import { generateVerificationLink } from "@/lib/verification-email";
 
 export async function POST(request: Request) {
   try {
@@ -10,8 +13,12 @@ export async function POST(request: Request) {
     if (!name || !email || !password || !inviteCode) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
     }
+    if (password.length < 8) {
+      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+    }
 
     const admin = createAdminClient();
+    const normalizedEmail = email.trim().toLowerCase();
 
     const { data: codeRow } = await admin
       .from("invite_codes")
@@ -28,9 +35,9 @@ export async function POST(request: Request) {
     }
 
     const { data: authData, error: authError } = await admin.auth.admin.createUser({
-      email: email.trim(),
+      email: normalizedEmail,
       password,
-      email_confirm: true,
+      email_confirm: false,
     });
 
     if (authError || !authData.user) {
@@ -45,7 +52,7 @@ export async function POST(request: Request) {
       .insert({
         user_id: authData.user.id,
         name: name.trim(),
-        email: email.trim().toLowerCase(),
+        email: normalizedEmail,
         invite_code: inviteCode.trim(),
       })
       .select()
@@ -73,14 +80,48 @@ export async function POST(request: Request) {
       if (referrerId) {
         await admin.from("referrals").insert({
           referrer_id: referrerId,
-          referred_email: email.trim().toLowerCase(),
+          referred_email: normalizedEmail,
           referred_name: name.trim(),
           status: "joined",
         });
       }
     }
 
-    return NextResponse.json({ success: true });
+    const adminNotify = await notifyAdminOnSignup("team", {
+      name: name.trim(),
+      email: normalizedEmail,
+      inviteCode: inviteCode.trim(),
+    });
+
+    const link = await generateVerificationLink(admin, normalizedEmail, "/team/hub", password);
+    if ("error" in link) {
+      return NextResponse.json({
+        error: link.error,
+        partial: true,
+        adminNotified: adminNotify.ok,
+      }, { status: 400 });
+    }
+
+    const verifySend = await sendTeamVerificationEmail({
+      name: name.trim(),
+      email: normalizedEmail,
+      verifyUrl: link.verifyUrl,
+    });
+
+    if (!verifySend.ok && !verifySend.skipped) {
+      return NextResponse.json({
+        error: verifySend.error || "Could not send verification email",
+        partial: true,
+        adminNotified: adminNotify.ok,
+      }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      verifyEmail: true,
+      adminNotified: adminNotify.ok,
+      emailConfigured: !verifySend.skipped,
+    });
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

@@ -100,14 +100,94 @@ export function adminClientSignupEmail(data: { name: string; email: string; comp
     eyebrow: "Admin alert",
     title: "New client signed up",
     bodyHtml: [
-      p("Someone just created a client account on InMailly."),
+      p("Someone just created a client account on InMailly. <strong style=\"color:#fafafa;\">Email verification is pending.</strong>"),
       detailRow("Name", data.name),
       detailRow("Email", data.email),
       data.company ? detailRow("Company", data.company) : "",
       detailRow("Source", "Self signup"),
     ].join(""),
-    cta: { href: `${site}/admin`, label: "Open admin panel →" },
-    footerNote: `Reply directly to this email to reach ${data.email}.`,
+    cta: { href: `${site}/admin/clients`, label: "Open clients panel →" },
+    footerNote: `You'll get another email when they verify. Reply directly to reach ${data.email}.`,
+  });
+}
+
+export function adminClientVerifiedEmail(data: { name: string; email: string; company?: string | null }) {
+  const site = getSiteUrl();
+  return emailLayout({
+    preheader: `Client verified: ${data.name}`,
+    eyebrow: "Admin alert",
+    title: "Client email verified",
+    bodyHtml: [
+      p("<strong style=\"color:#22d3ee;\">A client just verified their email</strong> and can access their dashboard."),
+      detailRow("Name", data.name),
+      detailRow("Email", data.email),
+      data.company ? detailRow("Company", data.company) : "",
+    ].join(""),
+    cta: { href: `${site}/admin/clients`, label: "View in admin →" },
+    footerNote: `They are live in the system. Reach them at ${data.email}.`,
+  });
+}
+
+export function adminTeamSignupPendingEmail(data: { name: string; email: string; inviteCode?: string | null }) {
+  const site = getSiteUrl();
+  return emailLayout({
+    preheader: `New team signup: ${data.name}`,
+    eyebrow: "Admin alert",
+    title: "New team member signed up",
+    bodyHtml: [
+      p("Someone registered for the outreach team. <strong style=\"color:#fafafa;\">They must verify email before accessing the workspace.</strong>"),
+      detailRow("Name", data.name),
+      detailRow("Email", data.email),
+      data.inviteCode ? detailRow("Invite code", data.inviteCode) : "",
+    ].join(""),
+    cta: { href: `${site}/admin/team/members`, label: "Open team panel →" },
+    footerNote: "You'll get another email when they verify their address.",
+  });
+}
+
+export function adminTeamVerifiedEmail(data: { name: string; email: string; inviteCode?: string | null }) {
+  const site = getSiteUrl();
+  return emailLayout({
+    preheader: `Team member verified: ${data.name}`,
+    eyebrow: "Admin alert",
+    title: "Team member email verified",
+    bodyHtml: [
+      p("<strong style=\"color:#22d3ee;\">A team member just verified their email</strong> and can now access the outreach workspace."),
+      detailRow("Name", data.name),
+      detailRow("Email", data.email),
+      data.inviteCode ? detailRow("Invite code", data.inviteCode) : "",
+    ].join(""),
+    cta: { href: `${site}/admin/team/members`, label: "View team members →" },
+    footerNote: `${data.name} can now log in at ${site}/team/login`,
+  });
+}
+
+export function teamVerifyEmail(data: { firstName: string; verifyUrl: string }) {
+  const site = getSiteUrl();
+  return emailLayout({
+    preheader: "Verify your email to access the InMailly team workspace",
+    eyebrow: "Team account",
+    title: `Welcome, ${data.firstName}`,
+    bodyHtml: [
+      p("Thanks for joining the InMailly outreach team. Verify your email to unlock your workspace — links, leads, scripts, and responses."),
+      p("You won't be able to log in until this step is complete."),
+    ].join(""),
+    cta: { href: data.verifyUrl, label: "Verify email & join team →" },
+    secondaryCta: { href: `${site}/team/login`, label: "Already verified? Log in →" },
+    footerNote: "This link expires in 24 hours. If you didn't sign up, ignore this email.",
+  });
+}
+
+export function teamWelcomeVerifiedEmail(data: { firstName: string }) {
+  const site = getSiteUrl();
+  return emailLayout({
+    preheader: "Your team workspace is ready",
+    eyebrow: "You're in",
+    title: "Workspace unlocked",
+    bodyHtml: [
+      p(`Hi ${esc(data.firstName)}, your email is verified. You can now claim links, log leads, and work your daily outreach.`),
+    ].join(""),
+    cta: { href: `${site}/team/hub`, label: "Open team hub →" },
   });
 }
 

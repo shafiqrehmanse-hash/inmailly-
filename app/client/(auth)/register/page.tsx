@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useState } from "react";
 import TeamAuthLayout from "@/components/team/TeamAuthLayout";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 function RegisterForm() {
   const [name, setName] = useState("");
@@ -81,8 +82,14 @@ function RegisterForm() {
         <Field label="Full name" value={name} onChange={setName} required />
         <Field label="Work email" type="email" value={email} onChange={setEmail} required />
         <Field label="Company" value={company} onChange={setCompany} placeholder="Your company name" />
-        <Field label="Password" type="password" value={password} onChange={setPassword} required />
-        <Field label="Confirm password" type="password" value={confirm} onChange={setConfirm} required />
+        <div>
+          <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Password</label>
+          <PasswordInput className="mt-1.5" value={password} onChange={setPassword} required />
+        </div>
+        <div>
+          <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Confirm password</label>
+          <PasswordInput className="mt-1.5" value={confirm} onChange={setConfirm} required />
+        </div>
         <button
           type="submit"
           disabled={loading}

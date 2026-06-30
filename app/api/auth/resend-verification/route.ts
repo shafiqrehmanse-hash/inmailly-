@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { sendClientVerificationEmail } from "@/lib/email";
-import { getSiteUrl } from "@/lib/site-url";
+import { sendClientVerificationEmail, sendTeamVerificationEmail } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { generateVerificationLink } from "@/lib/verification-email";
 
 export async function POST(request: Request) {
   try {
@@ -13,39 +13,46 @@ export async function POST(request: Request) {
     const normalizedEmail = email.trim().toLowerCase();
     const admin = createAdminClient();
 
-    const { data: client } = await admin
-      .from("clients")
-      .select("name, user_id")
-      .ilike("email", normalizedEmail)
-      .maybeSingle();
+    const [{ data: client }, { data: teamMember }] = await Promise.all([
+      admin.from("clients").select("name, user_id").ilike("email", normalizedEmail).maybeSingle(),
+      admin.from("team_members").select("name, user_id, role").eq("email", normalizedEmail).maybeSingle(),
+    ]);
 
-    if (!client?.user_id) {
-      return NextResponse.json({ error: "No client account found for this email." }, { status: 404 });
+    const account = client?.user_id
+      ? { type: "client" as const, name: client.name || "there", userId: client.user_id, redirect: "/client/dashboard" }
+      : teamMember?.user_id && teamMember.role !== "campaign_manager"
+        ? { type: "team" as const, name: teamMember.name || "there", userId: teamMember.user_id, redirect: "/team/hub" }
+        : null;
+
+    if (!account) {
+      return NextResponse.json({ error: "No account found for this email." }, { status: 404 });
     }
 
-    const { data: userData } = await admin.auth.admin.getUserById(client.user_id);
+    const { data: userData } = await admin.auth.admin.getUserById(account.userId);
     if (userData.user?.email_confirmed_at) {
       return NextResponse.json({ error: "Email is already verified. Try logging in." }, { status: 400 });
     }
 
-    const redirectTo = `${getSiteUrl()}/auth/callback?next=${encodeURIComponent("/client/dashboard")}`;
-    const { data, error } = await admin.auth.admin.generateLink({
-      type: "magiclink",
-      email: normalizedEmail,
-      options: { redirectTo },
-    });
-
-    if (error || !data.properties?.action_link) {
-      return NextResponse.json({ error: error?.message || "Could not send verification email" }, { status: 400 });
+    const link = await generateVerificationLink(admin, normalizedEmail, account.redirect);
+    if ("error" in link) {
+      return NextResponse.json({ error: link.error }, { status: 400 });
     }
 
-    await sendClientVerificationEmail({
-      name: client.name || "there",
-      email: normalizedEmail,
-      verifyUrl: data.properties.action_link,
-    });
+    if (account.type === "client") {
+      await sendClientVerificationEmail({
+        name: account.name,
+        email: normalizedEmail,
+        verifyUrl: link.verifyUrl,
+      });
+    } else {
+      await sendTeamVerificationEmail({
+        name: account.name,
+        email: normalizedEmail,
+        verifyUrl: link.verifyUrl,
+      });
+    }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, accountType: account.type });
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

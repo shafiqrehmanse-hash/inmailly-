@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { notifyAdminClientSignup, sendClientVerificationEmail } from "@/lib/email";
+import { notifyAdminOnSignup } from "@/lib/post-verification";
+import { isEmailConfigured, sendClientVerificationEmail } from "@/lib/email";
 import { ensureClientHasProject } from "@/lib/ensure-client-project";
 import { getSiteContent } from "@/lib/site-content-server";
-import { getSiteUrl } from "@/lib/site-url";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { generateVerificationLink } from "@/lib/verification-email";
 
 async function createClientProfile(
   admin: ReturnType<typeof createAdminClient>,
@@ -82,37 +83,22 @@ async function sendVerificationEmail(
   password: string,
   name: string
 ) {
-  const redirectTo = `${getSiteUrl()}/auth/callback?next=${encodeURIComponent("/client/dashboard")}`;
-  const { data, error } = await admin.auth.admin.generateLink({
-    type: "signup",
-    email,
-    password,
-    options: { redirectTo },
-  });
-
-  if (error || !data.properties?.action_link) {
-    const fallback = await admin.auth.admin.generateLink({
-      type: "magiclink",
-      email,
-      options: { redirectTo },
-    });
-    if (fallback.error || !fallback.data.properties?.action_link) {
-      return { error: error?.message || fallback.error?.message || "Could not generate verify link" };
-    }
-    await sendClientVerificationEmail({
-      name,
-      email,
-      verifyUrl: fallback.data.properties.action_link,
-    });
-    return { ok: true as const };
+  const link = await generateVerificationLink(admin, email, "/client/dashboard", password);
+  if ("error" in link) {
+    return { error: link.error };
   }
 
-  await sendClientVerificationEmail({
+  const result = await sendClientVerificationEmail({
     name,
     email,
-    verifyUrl: data.properties.action_link,
+    verifyUrl: link.verifyUrl,
   });
-  return { ok: true as const };
+
+  if (!result.ok && !result.skipped) {
+    return { error: result.error || "Could not send verification email" };
+  }
+
+  return { ok: true as const, emailConfigured: !result.skipped };
 }
 
 export async function POST(request: Request) {
@@ -218,7 +204,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const signupNotify = await notifyAdminClientSignup({
+    const signupNotify = await notifyAdminOnSignup("client", {
       name: name.trim(),
       email: normalizedEmail,
       company: companyName,
@@ -230,6 +216,7 @@ export async function POST(request: Request) {
         error: verify.error,
         partial: true,
         adminNotified: signupNotify.ok,
+        emailConfigured: isEmailConfigured(),
       }, { status: 400 });
     }
 
@@ -237,7 +224,7 @@ export async function POST(request: Request) {
       success: true,
       verifyEmail: true,
       adminNotified: signupNotify.ok,
-      adminNotifySkipped: signupNotify.skipped === true,
+      emailConfigured: verify.emailConfigured,
     });
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });

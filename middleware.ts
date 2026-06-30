@@ -35,6 +35,8 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const verified = user ? isEmailVerified(user) : false;
+
   const isTeamAuth =
     pathname === "/team/login" ||
     pathname === "/team/register" ||
@@ -47,7 +49,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/team/login", request.url));
   }
 
-  if (isTeamAuth && user) {
+  if (pathname.startsWith("/team") && !isTeamAuth && user && !verified) {
+    return NextResponse.redirect(new URL("/team/login?verify=required", request.url));
+  }
+
+  if (isTeamAuth && user && verified) {
     return NextResponse.redirect(new URL("/team/hub", request.url));
   }
 
@@ -55,14 +61,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/client/login", request.url));
   }
 
-  if (pathname.startsWith("/client/dashboard") && user && !isEmailVerified(user)) {
+  if (pathname.startsWith("/client/dashboard") && user && !verified) {
     return NextResponse.redirect(new URL("/client/login?verify=required", request.url));
   }
 
-  if (isClientAuth && user) {
-    if (!isEmailVerified(user)) {
-      return response;
-    }
+  if (isClientAuth && user && verified) {
     const { data: client } = await supabase
       .from("clients")
       .select("id")

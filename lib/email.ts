@@ -1,7 +1,10 @@
 import { Resend } from "resend";
 import {
   adminClientSignupEmail,
+  adminClientVerifiedEmail,
   adminContactEmail,
+  adminTeamSignupPendingEmail,
+  adminTeamVerifiedEmail,
   clientCampaignStartedEmail,
   clientCampaignFinishedEmail,
   clientCustomEmail,
@@ -10,6 +13,8 @@ import {
   clientVerifyEmail,
   clientWelcomeVerifiedEmail,
   teamClientFollowupEmail,
+  teamVerifyEmail,
+  teamWelcomeVerifiedEmail,
 } from "@/lib/email-templates";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSiteUrl } from "@/lib/site-url";
@@ -110,6 +115,73 @@ export async function notifyAdminClientSignup(data: {
     console.warn("[email] admin signup notify skipped — RESEND_API_KEY not set");
   }
   return result;
+}
+
+export async function notifyAdminClientVerified(data: {
+  name: string;
+  email: string;
+  company?: string | null;
+}) {
+  return sendEmailSafe({
+    to: getNotifyEmail(),
+    replyTo: data.email,
+    subject: `Client verified email: ${data.name}`,
+    html: adminClientVerifiedEmail(data),
+    text: `Client verified: ${data.name} (${data.email})`,
+  });
+}
+
+export async function notifyAdminTeamSignupPending(data: {
+  name: string;
+  email: string;
+  inviteCode?: string | null;
+}) {
+  return sendEmailSafe({
+    to: getNotifyEmail(),
+    replyTo: data.email,
+    subject: `New team signup (pending verify): ${data.name}`,
+    html: adminTeamSignupPendingEmail(data),
+    text: `New team signup pending verification: ${data.name} (${data.email})`,
+  });
+}
+
+export async function notifyAdminTeamVerified(data: {
+  name: string;
+  email: string;
+  inviteCode?: string | null;
+}) {
+  return sendEmailSafe({
+    to: getNotifyEmail(),
+    replyTo: data.email,
+    subject: `Team member verified: ${data.name}`,
+    html: adminTeamVerifiedEmail(data),
+    text: `Team member verified: ${data.name} (${data.email})`,
+  });
+}
+
+export async function sendTeamVerificationEmail(data: {
+  name: string;
+  email: string;
+  verifyUrl: string;
+}) {
+  const first = data.name.trim().split(" ")[0];
+  return sendEmailSafe({
+    to: data.email,
+    subject: "Verify your email — InMailly team workspace",
+    html: teamVerifyEmail({ firstName: first, verifyUrl: data.verifyUrl }),
+    text: `Hi ${first}, verify your email to join the InMailly team: ${data.verifyUrl}`,
+  });
+}
+
+export async function notifyTeamWelcomeVerified(data: { name: string; email: string }) {
+  const first = data.name.trim().split(" ")[0];
+  const site = getSiteUrl();
+  return sendEmailSafe({
+    to: data.email,
+    subject: "You're verified — open your team workspace",
+    html: teamWelcomeVerifiedEmail({ firstName: first }),
+    text: `Hi ${first}, your team workspace is ready: ${site}/team/hub`,
+  });
 }
 
 export async function sendClientVerificationEmail(data: {

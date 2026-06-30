@@ -2,11 +2,11 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import TeamAuthLayout from "@/components/team/TeamAuthLayout";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 function RegisterForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const refCode = searchParams.get("ref") || "";
   const [name, setName] = useState("");
@@ -16,6 +16,8 @@ function RegisterForm() {
   const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkEmail, setCheckEmail] = useState(false);
+  const [sentTo, setSentTo] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,11 +48,34 @@ function RegisterForm() {
       setError(data.error || "Registration failed");
       return;
     }
-    router.push("/team/login?registered=1");
+    setSentTo(email.trim().toLowerCase());
+    setCheckEmail(true);
+  }
+
+  if (checkEmail) {
+    return (
+      <TeamAuthLayout title="Check your email" subtitle="Verify before you can access the team workspace">
+        <div className="bg-ws-ind/10 border border-ws-ind/30 rounded-xl px-5 py-5 mb-5 space-y-3">
+          <p className="text-sm text-ws-cyan font-semibold">Verification email sent</p>
+          <p className="text-sm text-white/70 leading-relaxed">
+            We sent a link to <strong className="text-white">{sentTo}</strong>. Click{" "}
+            <strong className="text-white">Verify email &amp; join team</strong> in that message to unlock your
+            workspace.
+          </p>
+          <p className="text-xs text-white/40">Check spam if you don&apos;t see it within a minute.</p>
+        </div>
+        <Link
+          href="/team/login"
+          className="block w-full text-center py-3.5 border border-white/15 text-white/80 rounded-xl text-sm font-semibold hover:border-ws-cyan/40 hover:text-ws-cyan transition-colors"
+        >
+          Already verified? Log in →
+        </Link>
+      </TeamAuthLayout>
+    );
   }
 
   return (
-    <TeamAuthLayout title="Join the team" subtitle="Invite code required">
+    <TeamAuthLayout title="Join the team" subtitle="Invite code required — email verification required">
       {refCode && (
         <p className="text-xs text-ws-cyan text-center mb-4 font-medium">Referred by: {refCode}</p>
       )}
@@ -62,8 +87,14 @@ function RegisterForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <Field label="Full name" value={name} onChange={setName} required />
         <Field label="Email" value={email} onChange={setEmail} type="email" required />
-        <Field label="Password" value={password} onChange={setPassword} type="password" required />
-        <Field label="Confirm password" value={confirm} onChange={setConfirm} type="password" required />
+        <div>
+          <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Password</label>
+          <PasswordInput className="mt-1.5" value={password} onChange={setPassword} required />
+        </div>
+        <div>
+          <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Confirm password</label>
+          <PasswordInput className="mt-1.5" value={confirm} onChange={setConfirm} required />
+        </div>
         <div>
           <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Invite code</label>
           <input

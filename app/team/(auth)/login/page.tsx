@@ -3,32 +3,68 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import TeamAuthLayout from "@/components/team/TeamAuthLayout";
+import PasswordInput from "@/components/ui/PasswordInput";
 import { getLoginRedirect, isCampaignManager } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const registered = searchParams.get("registered");
+  const verifyRequired = searchParams.get("verify") === "required";
+  const verifyFailed = searchParams.get("error") === "verify_failed";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  async function resendVerification() {
+    if (!email.trim()) {
+      setError("Enter your email first, then click resend.");
+      return;
+    }
+    setResending(true);
+    setError("");
+    const res = await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+    const data = await res.json();
+    setResending(false);
+    if (!res.ok) {
+      setError(data.error || "Could not resend verification email");
+      return;
+    }
+    setInfo("Verification email sent — check your inbox (and spam).");
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setInfo("");
     setLoading(true);
     const supabase = createClient();
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
     if (authError) {
-      setError(authError.message);
       setLoading(false);
+      if (authError.message.toLowerCase().includes("email not confirmed")) {
+        setError("Please verify your email first. Use the link we sent, or resend below.");
+      } else {
+        setError(authError.message);
+      }
       return;
     }
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    if (user && !user.email_confirmed_at) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      setError("Please verify your email before logging in. Resend the link below.");
+      return;
+    }
     if (user) {
       const { data: member } = await supabase
         .from("team_members")
@@ -57,9 +93,19 @@ function LoginForm() {
 
   return (
     <TeamAuthLayout title="Team Login" subtitle="Internal outreach workspace">
-      {registered && (
+      {verifyRequired && (
+        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl px-4 py-3 text-sm mb-5">
+          Verify your email before opening the team workspace. Check your inbox or resend below.
+        </div>
+      )}
+      {verifyFailed && (
+        <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm mb-5">
+          Verification link expired or invalid. Request a new one below.
+        </div>
+      )}
+      {info && (
         <div className="bg-ws-ind/10 border border-ws-ind/30 text-ws-cyan rounded-xl px-4 py-3 text-sm mb-5">
-          Account created — you can log in now.
+          {info}
         </div>
       )}
       {error && (
@@ -80,13 +126,7 @@ function LoginForm() {
         </div>
         <div>
           <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Password</label>
-          <input
-            type="password"
-            required
-            className="ws-input mt-1.5"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <PasswordInput className="mt-1.5" value={password} onChange={setPassword} required />
         </div>
         <button
           type="submit"
@@ -96,6 +136,14 @@ function LoginForm() {
           {loading ? "Signing in…" : "Log in →"}
         </button>
       </form>
+      <button
+        type="button"
+        onClick={resendVerification}
+        disabled={resending}
+        className="w-full mt-3 text-center text-xs text-ws-cyan hover:underline disabled:opacity-50"
+      >
+        {resending ? "Sending…" : "Resend verification email"}
+      </button>
       <p className="text-center text-xs text-white/30 mt-6">
         Campaign managers:{" "}
         <a href="/campaign/login" className="text-lux-cyan hover:underline">
