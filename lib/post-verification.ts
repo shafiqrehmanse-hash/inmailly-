@@ -50,7 +50,11 @@ export async function handlePostEmailVerification(user: AuthUser) {
       email: client.email || email,
       company: client.company_name,
     });
-    await notifyClientWelcomeVerified({ name: client.name, email: client.email || email });
+    await notifyClientWelcomeVerified({
+      name: client.name,
+      email: client.email || email,
+      company: client.company_name,
+    });
     notified = true;
   }
 

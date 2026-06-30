@@ -178,9 +178,10 @@ export async function notifyTeamWelcomeVerified(data: { name: string; email: str
   const site = getSiteUrl();
   return sendEmailSafe({
     to: data.email,
-    subject: "You're verified — open your team workspace",
+    replyTo: getNotifyEmail(),
+    subject: `Welcome to InMailly, ${first} — you're officially in ✦`,
     html: teamWelcomeVerifiedEmail({ firstName: first }),
-    text: `Hi ${first}, your team workspace is ready: ${site}/team/hub`,
+    text: `Hey ${first},\n\nWelcome to the InMailly outreach team — your email is verified and your workspace is live.\n\nOpen your hub: ${site}/team/hub\nClaim links: ${site}/team/links\n\nWarm regards,\nShafiq Rehman\nFounder, InMailly\nShafiq's Marketing Automations Valley\n\nReply anytime — I'm in your corner.`,
   });
 }
 
@@ -198,14 +199,19 @@ export async function sendClientVerificationEmail(data: {
   });
 }
 
-export async function notifyClientWelcomeVerified(data: { name: string; email: string }) {
+export async function notifyClientWelcomeVerified(data: {
+  name: string;
+  email: string;
+  company?: string | null;
+}) {
   const first = data.name.trim().split(" ")[0];
   const site = getSiteUrl();
   return sendEmailSafe({
     to: data.email,
-    subject: "You're verified — open your InMailly dashboard",
-    html: clientWelcomeVerifiedEmail({ firstName: first }),
-    text: `Hi ${first}, your dashboard is ready: ${site}/client/dashboard`,
+    replyTo: getNotifyEmail(),
+    subject: `Welcome to InMailly, ${first} — your dashboard is ready ◆`,
+    html: clientWelcomeVerifiedEmail({ firstName: first, company: data.company }),
+    text: `Hi ${first},\n\nWelcome to InMailly — your email is verified and your campaign dashboard is unlocked.\n\nOpen dashboard: ${site}/client/dashboard\nBook a call: ${site}/contact\n\nWarm regards,\nShafiq Rehman\nFounder, InMailly\nShafiq's Marketing Automations Valley\n\nReply anytime — we're here to help.`,
   });
 }
 

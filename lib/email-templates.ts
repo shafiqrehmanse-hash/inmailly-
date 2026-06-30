@@ -84,6 +84,42 @@ export function p(text: string) {
   return `<p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#a1a1aa;">${text}</p>`;
 }
 
+function heroBanner(emoji: string, headline: string, subline: string) {
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
+    <tr><td align="center" style="padding:28px 20px;background:linear-gradient(145deg,rgba(37,99,235,0.22) 0%,rgba(34,211,238,0.08) 50%,rgba(124,58,237,0.12) 100%);border:1px solid rgba(34,211,238,0.28);">
+      <div style="font-size:42px;line-height:1;margin-bottom:12px;">${emoji}</div>
+      <p style="margin:0 0 6px;font-size:17px;font-weight:800;color:#fafafa;letter-spacing:-0.02em;">${headline}</p>
+      <p style="margin:0;font-size:13px;line-height:1.5;color:#a1a1aa;">${subline}</p>
+    </td></tr>
+  </table>`;
+}
+
+function featureCard(icon: string, title: string, description: string) {
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;">
+    <tr>
+      <td width="44" valign="top" style="padding:14px 0 14px 14px;font-size:22px;line-height:1;">${icon}</td>
+      <td valign="top" style="padding:14px 14px 14px 8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
+        <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#f4f4f5;">${esc(title)}</p>
+        <p style="margin:0;font-size:13px;line-height:1.55;color:#71717a;">${esc(description)}</p>
+      </td>
+    </tr>
+  </table>`;
+}
+
+function founderWelcomeSignature() {
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 0;">
+    <tr><td style="padding:20px 18px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-left:3px solid #22d3ee;">
+      <p style="margin:0 0 12px;font-size:14px;line-height:1.65;color:#d4d4d8;font-style:italic;">
+        &ldquo;We built InMailly for teams who care about quality outreach — not spam. Glad you&rsquo;re here.&rdquo;
+      </p>
+      <p style="margin:0;font-size:14px;font-weight:700;color:#fafafa;">Shafiq Rehman</p>
+      <p style="margin:4px 0 0;font-size:12px;color:#22d3ee;">Founder, InMailly</p>
+      <p style="margin:2px 0 0;font-size:11px;color:#71717a;">Shafiq&rsquo;s Marketing Automations Valley</p>
+      <p style="margin:14px 0 0;font-size:12px;color:#52525b;">Reply to this email anytime — it comes straight to me.</p>
+    </td></tr>
+  </table>`;
+}
+
 export function detailRow(label: string, value: string) {
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 8px;">
     <tr>
@@ -180,14 +216,49 @@ export function teamVerifyEmail(data: { firstName: string; verifyUrl: string }) 
 
 export function teamWelcomeVerifiedEmail(data: { firstName: string }) {
   const site = getSiteUrl();
+  const name = esc(data.firstName);
   return emailLayout({
-    preheader: "Your team workspace is ready",
-    eyebrow: "You're in",
-    title: "Workspace unlocked",
+    preheader: `${data.firstName}, your InMailly team workspace is live — let's go`,
+    eyebrow: "Welcome to the team",
+    title: `You're in, ${name} ✦`,
     bodyHtml: [
-      p(`Hi ${esc(data.firstName)}, your email is verified. You can now claim links, log leads, and work your daily outreach.`),
+      heroBanner("✓", "Email verified — workspace unlocked", "Your outreach command center is ready. Time to claim links and close deals."),
+      p(`Hey <strong style="color:#fafafa;">${name}</strong>, welcome to the InMailly outreach team. You just joined a system built for serious LinkedIn prospecting — not random DMs.`),
+      `<p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#71717a;">Your toolkit</p>`,
+      featureCard("⛓", "Work links", "Claim LinkedIn profiles from the pool and mark them used as you outreach."),
+      featureCard("📋", "Marketing leads", "Log every reply, track status, and build your personal pipeline."),
+      featureCard("💬", "Responses", "See hot leads who replied and keep the conversation going."),
+      founderWelcomeSignature(),
     ].join(""),
-    cta: { href: `${site}/team/hub`, label: "Open team hub →" },
+    cta: { href: `${site}/team/hub`, label: "Open my workspace →" },
+    secondaryCta: { href: `${site}/team/links`, label: "Claim my first links →" },
+    footerNote: "Pro tip: check Daily Scripts on your hub before you start today's outreach session.",
+  });
+}
+
+export function clientWelcomeVerifiedEmail(data: { firstName: string; company?: string | null }) {
+  const site = getSiteUrl();
+  const name = esc(data.firstName);
+  const companyLine = data.company
+    ? p(`Your <strong style="color:#fafafa;">${esc(data.company)}</strong> preview project is set up and waiting.`)
+    : p("Your preview project is set up and waiting in the dashboard.");
+  return emailLayout({
+    preheader: `${data.firstName}, your InMailly client dashboard is ready`,
+    eyebrow: "Welcome to InMailly",
+    title: `Welcome aboard, ${name}`,
+    bodyHtml: [
+      heroBanner("◆", "You're officially verified", "Your live campaign command center is unlocked — the same view you'll use when outreach goes live."),
+      p(`Hi <strong style="color:#fafafa;">${name}</strong>, thank you for trusting InMailly with your outreach. We run managed LinkedIn campaigns with real humans, real proof, and a dashboard you can actually use.`),
+      companyLine,
+      `<p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#71717a;">Inside your dashboard</p>`,
+      featureCard("📊", "Campaign overview", "Track InMails sent, responses, and hot leads in one clean view."),
+      featureCard("💬", "Responses inbox", "Every reply from your campaign lands here — with full thread history."),
+      featureCard("📸", "Send proofs", "See screenshot proof of every InMail your team sends on your behalf."),
+      founderWelcomeSignature(),
+    ].join(""),
+    cta: { href: `${site}/client/dashboard`, label: "Open my dashboard →" },
+    secondaryCta: { href: `${site}/contact`, label: "Book a launch call with Shafiq →" },
+    footerNote: "When you're ready to go live, book a call and send us your target audience + InMail script. We'll handle the rest.",
   });
 }
 
@@ -208,20 +279,6 @@ export function clientVerifyEmail(data: { firstName: string; verifyUrl: string }
     cta: { href: data.verifyUrl, label: "Verify email & open dashboard" },
     secondaryCta: { href: `${site}/contact`, label: "Book a launch call instead →" },
     footerNote: "This link expires in 24 hours. If you didn't create an account, you can ignore this email.",
-  });
-}
-
-export function clientWelcomeVerifiedEmail(data: { firstName: string }) {
-  const site = getSiteUrl();
-  return emailLayout({
-    preheader: "Your email is verified — dashboard ready",
-    eyebrow: "You're in",
-    title: "Dashboard unlocked",
-    bodyHtml: [
-      p(`Hi ${esc(data.firstName)}, your email is verified and your preview dashboard is ready.`),
-      p("Explore the layout now. When you're ready to go live, book a call and send us your target audience + InMail script."),
-    ].join(""),
-    cta: { href: `${site}/client/dashboard`, label: "Go to my dashboard →" },
   });
 }
 
