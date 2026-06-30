@@ -10,10 +10,12 @@ export default function Toast({
   message,
   type = "success",
   onDismiss,
+  themeClass,
 }: {
   message: string;
   type?: ToastType;
   onDismiss: () => void;
+  themeClass?: string;
 }) {
   useEffect(() => {
     const t = setTimeout(onDismiss, 4000);
@@ -24,7 +26,9 @@ export default function Toast({
     <div
       className={cn(
         "fixed bottom-6 right-6 z-[300] px-5 py-3 rounded-xl lux-card text-sm font-medium animate-slide-up",
-        type === "success" && "border-lux-cyan/40 text-lux-cyan",
+        themeClass,
+        type === "success" && !themeClass && "border-lux-cyan/40 text-lux-cyan",
+        type === "success" && themeClass === "team-toast-theme" && "team-toast-theme",
         type === "error" && "border-red-500/40 text-red-400",
         type === "info" && "border-lux-blue/40 text-lux-text"
       )}

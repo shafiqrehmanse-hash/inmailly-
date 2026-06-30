@@ -43,8 +43,8 @@ export default function ResponsesPage() {
         </p>
       </div>
 
-      <div className="lux-card border-lux-cyan/20 bg-lux-cyan/5 px-4 py-3 text-sm text-lux-muted">
-        <strong className="text-lux-cyan">Tip:</strong> Open a lead → log their reply with sender{" "}
+      <div className="lux-card team-tip-card px-4 py-3 text-sm text-lux-muted">
+        <strong className="team-kicker">Tip:</strong> Open a lead → log their reply with sender{" "}
         <strong className="text-lux-text">lead</strong> in the thread, or set status to{" "}
         <strong className="text-lux-text">Replied</strong> / <strong className="text-lux-text">Interested</strong>{" "}
         to show them here.

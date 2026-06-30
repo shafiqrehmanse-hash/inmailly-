@@ -10,12 +10,14 @@ export default function Modal({
   title,
   children,
   wide,
+  panelClassName,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
   wide?: boolean;
+  panelClassName?: string;
 }) {
   useEffect(() => {
     if (open) {
@@ -36,7 +38,8 @@ export default function Modal({
       <div
         className={cn(
           "relative lux-card w-full max-h-[90vh] overflow-y-auto z-10",
-          wide ? "max-w-3xl" : "max-w-lg"
+          wide ? "max-w-3xl" : "max-w-lg",
+          panelClassName
         )}
       >
         {title && (

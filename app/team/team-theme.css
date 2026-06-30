@@ -1,0 +1,258 @@
+/**
+ * Team workspace — SAS-inspired shady red theme.
+ * Scoped to .team-workspace only (revert = remove import + wrapper).
+ */
+
+.team-workspace {
+  --team-red: #e51937;
+  --team-red-bright: #ff2d4a;
+  --team-red-soft: #ff6b7a;
+  --team-red-dim: rgba(229, 25, 55, 0.14);
+  --team-red-glow: rgba(229, 25, 55, 0.22);
+  --team-bg: #0a0a0a;
+  --team-card: #161616;
+  --team-card-hover: #1c1c1c;
+  --team-muted: #a3a3a3;
+  --team-border: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+  background-color: var(--team-bg);
+}
+
+.team-workspace-bg-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 85% 55% at 8% -5%, rgba(229, 25, 55, 0.2), transparent 58%),
+    radial-gradient(ellipse 65% 45% at 95% 105%, rgba(180, 20, 40, 0.14), transparent 52%),
+    radial-gradient(ellipse 45% 35% at 50% 45%, rgba(229, 25, 55, 0.05), transparent 65%);
+}
+
+.team-workspace-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Cards */
+.team-workspace .lux-card {
+  background: linear-gradient(160deg, rgba(22, 22, 22, 0.98) 0%, rgba(14, 14, 14, 0.95) 100%);
+  border-color: var(--team-border);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+}
+
+.team-workspace .lux-card:hover {
+  border-color: rgba(229, 25, 55, 0.22);
+}
+
+/* Accent remap: cyan/blue → SAS red */
+.team-workspace [class*="text-lux-cyan"],
+.team-workspace [class*="text-ws-cyan"] {
+  color: var(--team-red-soft) !important;
+}
+
+.team-workspace [class*="text-lux-blue"] {
+  color: var(--team-red-bright) !important;
+}
+
+.team-workspace [class*="text-lux-text"],
+.team-workspace [class*="text-ws-cyan"].font-bricolage {
+  color: #ffffff;
+}
+
+.team-workspace .text-lux-muted {
+  color: var(--team-muted) !important;
+}
+
+.team-workspace [class*="border-lux-cyan"],
+.team-workspace [class*="border-ws-cyan"] {
+  border-color: rgba(229, 25, 55, 0.35) !important;
+}
+
+.team-workspace [class*="bg-lux-cyan"],
+.team-workspace [class*="bg-ws-ind"] {
+  background-color: var(--team-red-dim) !important;
+}
+
+.team-workspace [class*="bg-lux-blue"] {
+  background-color: rgba(229, 25, 55, 0.55) !important;
+}
+
+.team-workspace [class*="from-lux-blue"],
+.team-workspace [class*="from-lux-violet"],
+.team-workspace [class*="from-cyan"],
+.team-workspace [class*="from-ws-ind"] {
+  --tw-gradient-from: #e51937 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(229 25 55 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+.team-workspace [class*="to-lux-cyan"],
+.team-workspace [class*="to-ind2"] {
+  --tw-gradient-to: #b81028 var(--tw-gradient-to-position) !important;
+}
+
+/* Buttons */
+.team-workspace .lux-btn-primary,
+.team-workspace button.bg-ws-ind {
+  background: var(--team-red) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 20px var(--team-red-glow) !important;
+}
+
+.team-workspace .lux-btn-primary:hover,
+.team-workspace button.bg-ws-ind:hover {
+  background: var(--team-red-bright) !important;
+}
+
+.team-workspace .lux-btn-ghost {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+.team-workspace .lux-btn-ghost:hover {
+  border-color: rgba(229, 25, 55, 0.45) !important;
+  color: var(--team-red-soft) !important;
+  background: rgba(229, 25, 55, 0.06) !important;
+}
+
+/* Inputs */
+.team-workspace .lux-input,
+.team-workspace .ws-input {
+  background: #121212 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.team-workspace .lux-input:focus,
+.team-workspace .ws-input:focus {
+  border-color: rgba(229, 25, 55, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(229, 25, 55, 0.15) !important;
+}
+
+/* Opened links — warm red-green */
+.team-workspace [class*="border-emerald"] {
+  border-color: rgba(74, 222, 128, 0.35) !important;
+}
+
+.team-workspace [class*="bg-emerald"] {
+  background-color: rgba(34, 197, 94, 0.08) !important;
+}
+
+.team-workspace [class*="text-emerald"] {
+  color: #6ee7a0 !important;
+}
+
+/* Pagination & tabs active */
+.team-workspace [class*="bg-lux-cyan/15"] {
+  background-color: var(--team-red-dim) !important;
+  color: var(--team-red-soft) !important;
+  border-color: rgba(229, 25, 55, 0.4) !important;
+}
+
+/* Stat numbers */
+.team-workspace .team-stat-value {
+  color: var(--team-red-bright) !important;
+}
+
+/* Chart bars */
+.team-workspace .team-chart-bar-leads {
+  background: var(--team-red) !important;
+}
+
+.team-workspace .team-chart-bar-links {
+  background: rgba(229, 25, 55, 0.45) !important;
+}
+
+/* Modal overlay (portaled — add class via LeadModal when in team) */
+.team-modal-theme.lux-card,
+.team-workspace .team-modal-theme {
+  background: linear-gradient(180deg, #1a1a1a 0%, #121212 100%) !important;
+  border-color: rgba(229, 25, 55, 0.2) !important;
+}
+
+/* Toast portaled to body */
+.team-toast-theme {
+  background: #161616 !important;
+  border-color: rgba(229, 25, 55, 0.4) !important;
+  color: #ff6b7a !important;
+}
+
+/* Portaled dropdowns when team workspace is active */
+body:has(.team-workspace) [data-lux-select-menu] {
+  background: #141414 !important;
+  border-color: rgba(229, 25, 55, 0.22) !important;
+}
+
+body:has(.team-workspace) [data-lux-select-menu] button.text-lux-cyan,
+body:has(.team-workspace) [data-lux-select-menu] button[class*="text-lux-cyan"] {
+  color: #ff6b7a !important;
+}
+
+body:has(.team-workspace) [data-lux-select-menu] button[class*="bg-lux-cyan"] {
+  background: rgba(229, 25, 55, 0.12) !important;
+}
+
+/* Badges on dark cards */
+.team-workspace span[class*="bg-green-50"],
+.team-workspace span[class*="bg-green-100"] {
+  background: rgba(34, 197, 94, 0.14) !important;
+  color: #6ee7a0 !important;
+  border-color: rgba(34, 197, 94, 0.28) !important;
+}
+
+.team-workspace span[class*="bg-amber-50"],
+.team-workspace span[class*="bg-amber-100"] {
+  background: rgba(251, 191, 36, 0.12) !important;
+  color: #fcd34d !important;
+  border-color: rgba(251, 191, 36, 0.28) !important;
+}
+
+.team-workspace span[class*="bg-red-50"] {
+  background: rgba(229, 25, 55, 0.12) !important;
+  color: #ff8a98 !important;
+  border-color: rgba(229, 25, 55, 0.28) !important;
+}
+
+.team-workspace span[class*="bg-ind/"],
+.team-workspace span[class*="bg-sky/"] {
+  background: rgba(229, 25, 55, 0.12) !important;
+  color: #ff8a98 !important;
+  border-color: rgba(229, 25, 55, 0.28) !important;
+}
+
+.team-workspace span[class*="bg-off"],
+.team-workspace span[class*="text-dimmer"] {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #a3a3a3 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.team-workspace .team-tip-card {
+  border-color: rgba(229, 25, 55, 0.2) !important;
+  background: rgba(229, 25, 55, 0.06) !important;
+}
+
+.team-workspace a[class*="text-lux-cyan"] {
+  color: #ff6b7a !important;
+}
+
+.team-workspace a[class*="text-lux-cyan"]:hover {
+  color: #ff8a98 !important;
+}
+
+.team-workspace .team-kicker,
+.team-workspace strong.team-kicker {
+  color: #ff6b7a !important;
+}
+
+/* Primary CTA pills */
+.team-workspace .team-tab-active {
+  background: rgba(229, 25, 55, 0.14) !important;
+  color: #ff8a98 !important;
+  border-color: rgba(229, 25, 55, 0.4) !important;
+}
