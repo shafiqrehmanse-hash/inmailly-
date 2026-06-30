@@ -55,10 +55,12 @@ export default function AdminProjectsSection({
   adminKey,
   members,
   onToast,
+  initialClientFilter,
 }: {
   adminKey: string;
   members: TeamMember[];
   onToast: (msg: string, type?: "success" | "error") => void;
+  initialClientFilter?: string;
 }) {
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const [clients, setClients] = useState<Client[]>([]);
@@ -87,6 +89,10 @@ export default function AdminProjectsSection({
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (initialClientFilter) setClientFilter(initialClientFilter);
+  }, [initialClientFilter]);
 
   async function saveProject() {
     if (!projectForm.client_id || !projectForm.name.trim()) {

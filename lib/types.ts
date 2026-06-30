@@ -46,6 +46,8 @@ export type Lead = {
   deal_closed: boolean;
   closed_at: string | null;
   notes: string | null;
+  client_followup_message: string | null;
+  client_followup_at: string | null;
   source_link_id: string | null;
   created_at: string;
   updated_at: string;

@@ -118,6 +118,24 @@ export default function ProjectClientWorkspace({
     load();
   }
 
+  async function copyFollowup(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setMsg({ text: "Follow-up copied — paste into LinkedIn", type: "success" });
+    } catch {
+      setMsg({ text: "Could not copy", type: "error" });
+    }
+  }
+
+  const sortedResponses = [...responses].sort((a, b) => {
+    const aHas = Boolean(a.client_followup_at);
+    const bHas = Boolean(b.client_followup_at);
+    if (aHas !== bHas) return aHas ? -1 : 1;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const followupCount = responses.filter((r) => r.client_followup_message).length;
+
   async function copyPortalLink() {
     if (!portalUrl) return;
     try {
@@ -212,8 +230,16 @@ export default function ProjectClientWorkspace({
         <div className="lux-card p-5 sm:p-6 min-w-0">
           <h3 className="font-bricolage font-bold text-lux-text mb-1">
             Client responses ({visibleCount} shown · {responses.length} total)
+            {followupCount > 0 && (
+              <span className="ml-2 text-[0.65rem] font-bold uppercase tracking-wide text-amber-300">
+                · {followupCount} follow-up{followupCount !== 1 ? "s" : ""} to send
+              </span>
+            )}
           </h3>
-          <p className="text-xs text-lux-muted mb-4">Uncheck &quot;Client&quot; to hide from dashboard without deleting.</p>
+          <p className="text-xs text-lux-muted mb-4">
+            Clients can submit follow-up messages from their dashboard — send those on LinkedIn. Uncheck
+            &quot;Client&quot; to hide from dashboard without deleting.
+          </p>
           {loading ? (
             <p className="text-lux-muted text-sm">Loading…</p>
           ) : responses.length === 0 ? (
@@ -223,12 +249,16 @@ export default function ProjectClientWorkspace({
             </div>
           ) : (
             <div className="space-y-3 max-h-[520px] overflow-y-auto">
-              {responses.map((r) => (
+              {sortedResponses.map((r) => (
                 <div
                   key={r.id}
                   className={cn(
                     "bg-white/[0.03] border rounded-xl p-4",
-                    r.visible_to_client ? "border-white/[0.08]" : "border-red-500/20 opacity-75"
+                    r.client_followup_message
+                      ? "border-amber-500/35 bg-amber-500/[0.06]"
+                      : r.visible_to_client
+                        ? "border-white/[0.08]"
+                        : "border-red-500/20 opacity-75"
                   )}
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
@@ -241,9 +271,41 @@ export default function ProjectClientWorkspace({
                   {r.notes && (
                     <p className="text-sm text-lux-muted italic leading-relaxed">&ldquo;{r.notes}&rdquo;</p>
                   )}
+                  {r.client_followup_message && (
+                    <div className="mt-3 border border-amber-500/25 bg-amber-500/5 rounded-lg p-3">
+                      <p className="text-[0.62rem] uppercase tracking-wider text-amber-300 font-bold mb-1.5">
+                        Client follow-up to send
+                        {r.client_followup_at && (
+                          <span className="text-lux-muted font-normal normal-case ml-2">
+                            · {formatDate(r.client_followup_at)}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-sm text-lux-text leading-relaxed whitespace-pre-wrap">
+                        {r.client_followup_message}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => copyFollowup(r.client_followup_message!)}
+                        className="mt-2 text-[0.65rem] font-semibold text-lux-cyan hover:underline"
+                      >
+                        Copy message →
+                      </button>
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
                     <div className="text-[0.65rem] text-lux-muted/70">{formatDate(r.created_at)}</div>
                     <div className="flex items-center gap-3">
+                      {r.profile_url && (
+                        <a
+                          href={r.profile_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[0.65rem] text-[#0A66C2] font-semibold hover:underline"
+                        >
+                          LinkedIn →
+                        </a>
+                      )}
                       <label className="flex items-center gap-1.5 text-[0.65rem] text-lux-muted cursor-pointer">
                         <input
                           type="checkbox"

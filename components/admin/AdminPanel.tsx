@@ -6,12 +6,13 @@ import Button from "@/components/ui/Button";
 import LeadModal from "@/components/team/LeadModal";
 import AdminClientsSection from "@/components/admin/AdminClientsSection";
 import AdminProjectsSection from "@/components/admin/AdminProjectsSection";
+import AdminLinksSection from "@/components/admin/AdminLinksSection";
 import AdminWebsiteSection from "@/components/admin/AdminWebsiteSection";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import Toast, { ToastType } from "@/components/team/Toast";
 import LuxSelect from "@/components/ui/LuxSelect";
-import type { Lead, OutreachLink, TeamMember } from "@/lib/types";
-import { formatDate, truncateUrl } from "@/lib/utils";
+import type { Lead, TeamMember } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
 import AdminShell, { type AdminTab } from "@/components/admin/AdminShell";
 
 type MemberRow = TeamMember & { active_links: number; leads_count: number };
@@ -28,12 +29,9 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
   // Overview
   const [overview, setOverview] = useState<Record<string, unknown> | null>(null);
 
-  // Links
-  const [paste, setPaste] = useState("");
-  const [batchName, setBatchName] = useState("");
-  const [preview, setPreview] = useState<{ new: number; duplicates: number; invalid: number } | null>(null);
-  const [adminLinks, setAdminLinks] = useState<OutreachLink[]>([]);
-  const [linkStatusFilter, setLinkStatusFilter] = useState("all");
+  // Links / projects cross-nav
+  const [linksMemberFilter, setLinksMemberFilter] = useState<string | undefined>();
+  const [projectsClientFilter, setProjectsClientFilter] = useState<string | undefined>();
 
   // Team
   const [members, setMembers] = useState<MemberRow[]>([]);
@@ -79,12 +77,6 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
     setOverviewLoading(false);
   }, [adminKey]);
 
-  const loadLinks = useCallback(async () => {
-    const res = await fetch(`/api/admin/links?key=${adminKey}&status=${linkStatusFilter}`);
-    const data = await res.json();
-    setAdminLinks(data.links || []);
-  }, [adminKey, linkStatusFilter]);
-
   const loadMembers = useCallback(async () => {
     const res = await fetch(`/api/admin/members?key=${adminKey}`);
     const data = await res.json();
@@ -121,46 +113,23 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
 
   useEffect(() => {
     if (tab === "overview") loadOverview();
-    if (tab === "links") loadLinks();
-    if (tab === "team") loadMembers();
+    if (tab === "links" || tab === "team") loadMembers();
     if (tab === "projects") loadMembers();
     if (tab === "clients") loadMembers();
     if (tab === "leads") { loadLeads(); loadMembers(); }
     if (tab === "scripts") loadScript();
     if (tab === "referrals") loadReferrals();
     if (tab === "funds") { loadFunds(); loadMembers(); }
-  }, [tab, loadOverview, loadLinks, loadMembers, loadLeads, loadScript, loadReferrals, loadFunds]);
+  }, [tab, loadOverview, loadMembers, loadLeads, loadScript, loadReferrals, loadFunds]);
 
-  async function handlePreview() {
-    const res = await fetch(`/api/admin/links/preview?key=${adminKey}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ paste }),
-    });
-    setPreview(await res.json());
+  function openProjectsForClient(clientId: string) {
+    setProjectsClientFilter(clientId);
+    setTab("projects");
   }
 
-  async function handleImport() {
-    const res = await fetch(`/api/admin/links/import?key=${adminKey}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ paste, batchName }),
-    });
-    const data = await res.json();
-    showToast(`Imported ${data.inserted} links (${data.duplicates} duplicates skipped)`);
-    setPaste("");
-    setPreview(null);
-    loadLinks();
-  }
-
-  async function resetLink(linkId: string) {
-    await fetch(`/api/admin/links/reset?key=${adminKey}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ linkId }),
-    });
-    showToast("Link reset to available");
-    loadLinks();
+  function openLinksForMember(memberId: string) {
+    setLinksMemberFilter(memberId);
+    setTab("links");
   }
 
   async function addMember() {
@@ -265,6 +234,8 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
 
   const ov = overview as {
     members?: number;
+    clients?: number;
+    projects?: { total: number; active: number; preview: number; needs_setup: number };
     links?: { available: number; claimed: number; used: number };
     leads?: number;
     deals?: number;
@@ -289,14 +260,34 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
         ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <AdminStatCard value={ov?.members || 0} label="Members" />
+            <AdminStatCard value={ov?.clients || 0} label="Clients" />
+            <AdminStatCard value={ov?.projects?.total || 0} label="Projects" />
+            <AdminStatCard value={ov?.members || 0} label="Team members" />
             <AdminStatCard value={ov?.leads || 0} label="Leads" />
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <AdminStatCard value={ov?.projects?.active || 0} label="Active campaigns" sub="projects" />
+            <AdminStatCard value={ov?.projects?.preview || 0} label="Preview / draft" sub="projects" />
             <AdminStatCard value={ov?.deals || 0} label="Deals closed" />
             <AdminStatCard
               value={(ov?.links?.available || 0) + (ov?.links?.claimed || 0) + (ov?.links?.used || 0)}
               label="Total links"
             />
           </div>
+          {(ov?.projects?.needs_setup || 0) > 0 && (
+            <div className="lux-card p-5 border-amber-500/25 bg-amber-500/5">
+              <h3 className="font-bricolage font-bold text-amber-300 mb-1">
+                {ov?.projects?.needs_setup} client{ov?.projects?.needs_setup === 1 ? "" : "s"} need setup
+              </h3>
+              <p className="text-sm text-lux-muted">
+                Self-signup accounts still in preview — open Clients → Projects to assign a manager, add scripts, and
+                activate.
+              </p>
+              <Button variant="lux-ghost" size="sm" className="mt-3" onClick={() => setTab("clients")}>
+                Go to clients →
+              </Button>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-4">
             <AdminStatCard value={ov?.links?.available || 0} label="Available" sub="links" />
             <AdminStatCard value={ov?.links?.claimed || 0} label="Claimed" sub="links" />
@@ -308,83 +299,41 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
               {ov?.today?.links || 0} links imported · {ov?.today?.leads || 0} leads added
             </p>
           </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { tab: "clients" as AdminTab, label: "Manage clients" },
+              { tab: "projects" as AdminTab, label: "Campaign projects" },
+              { tab: "links" as AdminTab, label: "Assign links" },
+              { tab: "team" as AdminTab, label: "Team & invites" },
+            ].map((q) => (
+              <button
+                key={q.tab}
+                type="button"
+                onClick={() => setTab(q.tab)}
+                className="lux-card p-4 text-left text-sm font-semibold text-lux-cyan hover:border-lux-cyan/30 transition-colors"
+              >
+                {q.label} →
+              </button>
+            ))}
+          </div>
         </div>
         )
       )}
 
       {tab === "links" && (
-        <div className="space-y-6">
-          <div className="lux-card p-5 space-y-4">
-            <h3 className="font-bricolage font-bold">Import links</h3>
-            <textarea
-              className="lux-input min-h-[120px] font-mono text-sm"
-              placeholder="Paste URLs here, one per line…"
-              value={paste}
-              onChange={(e) => setPaste(e.target.value)}
-            />
-            <input
-              className="lux-input"
-              placeholder="Batch name (optional)"
-              value={batchName}
-              onChange={(e) => setBatchName(e.target.value)}
-            />
-            <div className="flex gap-3">
-              <Button variant="lux-ghost" onClick={handlePreview}>Preview</Button>
-              <Button variant="lux" onClick={handleImport}>Import</Button>
-            </div>
-            {preview && (
-              <p className="text-sm text-lux-muted">
-                {preview.new} new · {preview.duplicates} duplicates · {preview.invalid} invalid lines
-              </p>
-            )}
-          </div>
-          <div className="flex gap-3 flex-wrap">
-            <LuxSelect
-              className="w-44"
-              size="sm"
-              value={linkStatusFilter}
-              onChange={setLinkStatusFilter}
-              options={["all", "available", "claimed", "used"].map((s) => ({
-                value: s,
-                label: s.charAt(0).toUpperCase() + s.slice(1),
-              }))}
-            />
-          </div>
-          <div className="lux-card overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-lux-muted text-xs uppercase bg-lux-bg2 border-b border-white/[0.06]">
-                  <th className="text-left px-4 py-3">URL</th>
-                  <th className="text-left px-4 py-3">Label</th>
-                  <th className="text-left px-4 py-3">Status</th>
-                  <th className="text-left px-4 py-3">Claimed</th>
-                  <th className="text-left px-4 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {adminLinks.map((link) => (
-                  <tr key={link.id} className="border-b border-white/[0.06]">
-                    <td className="px-4 py-3 max-w-[200px] truncate text-lux-cyan">{truncateUrl(link.url, 40)}</td>
-                    <td className="px-4 py-3">{link.smart_label}</td>
-                    <td className="px-4 py-3"><Badge variant={link.status}>{link.status}</Badge></td>
-                    <td className="px-4 py-3 text-lux-muted text-xs">{formatDate(link.claimed_at)}</td>
-                    <td className="px-4 py-3">
-                      {link.status === "used" && (
-                        <Button variant="lux-ghost" size="sm" onClick={() => resetLink(link.id)}>Reset</Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <AdminLinksSection
+          adminKey={adminKey}
+          members={members}
+          onToast={(message, type) => showToast(message, type)}
+          initialMemberFilter={linksMemberFilter}
+        />
       )}
 
       {tab === "clients" && (
         <AdminClientsSection
           adminKey={adminKey}
           onToast={(message, type) => showToast(message, type)}
+          onOpenProjects={openProjectsForClient}
         />
       )}
 
@@ -393,6 +342,7 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
           adminKey={adminKey}
           members={members.filter((m) => m.role === "campaign_manager")}
           onToast={(message, type) => showToast(message, type)}
+          initialClientFilter={projectsClientFilter}
         />
       )}
 
@@ -502,7 +452,14 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
                           />
                         </td>
                         <td className="px-4 py-3">
-                          <Button variant="lux-ghost" size="sm" onClick={() => resetPassword(m.email)}>Reset pwd</Button>
+                          <div className="flex flex-wrap gap-1">
+                            <Button variant="lux-ghost" size="sm" onClick={() => openLinksForMember(m.id)}>
+                              Links
+                            </Button>
+                            <Button variant="lux-ghost" size="sm" onClick={() => resetPassword(m.email)}>
+                              Reset pwd
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))

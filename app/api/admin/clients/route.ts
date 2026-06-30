@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
   const admin = createAdminClient();
   const { data: clients, error } = await admin
     .from("clients")
-    .select("*, projects(id, name, status, portal_token, created_at)")
+    .select(
+      "*, projects(id, name, status, portal_token, inmail_package_size, created_at, project_assignments(id))"
+    )
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -26,7 +28,18 @@ export async function GET(request: NextRequest) {
     const sorted = [...projectRows].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-    const latest_project = sorted[0] || null;
+    const latest_project = sorted[0]
+      ? {
+          id: sorted[0].id,
+          name: sorted[0].name,
+          status: sorted[0].status,
+          portal_token: sorted[0].portal_token,
+          inmail_package_size: sorted[0].inmail_package_size,
+          assignee_count: Array.isArray(sorted[0].project_assignments)
+            ? sorted[0].project_assignments.length
+            : 0,
+        }
+      : null;
     return {
       ...c,
       project_count: projectRows.length,

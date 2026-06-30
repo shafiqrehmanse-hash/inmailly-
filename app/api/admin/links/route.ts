@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const status = request.nextUrl.searchParams.get("status");
+  const memberId = request.nextUrl.searchParams.get("memberId");
   const admin = createAdminClient();
   let query = admin
     .from("outreach_links")
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
     .order("created_at", { ascending: false })
     .limit(500);
   if (status && status !== "all") query = query.eq("status", status);
+  if (memberId && memberId !== "all") query = query.eq("member_id", memberId);
   const { data } = await query;
   return NextResponse.json({ links: data });
 }

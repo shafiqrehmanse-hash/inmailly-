@@ -8,9 +8,11 @@ import { formatDate } from "@/lib/utils";
 export default function AdminClientsSection({
   adminKey,
   onToast,
+  onOpenProjects,
 }: {
   adminKey: string;
   onToast: (msg: string, type?: "success" | "error") => void;
+  onOpenProjects?: (clientId: string) => void;
 }) {
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const [clients, setClients] = useState<
@@ -21,6 +23,8 @@ export default function AdminClientsSection({
         name: string;
         status: string;
         portal_token: string | null;
+        inmail_package_size: number | null;
+        assignee_count?: number;
       } | null;
     })[]
   >([]);
@@ -247,6 +251,15 @@ export default function AdminClientsSection({
                     <div className="flex flex-wrap gap-4 mt-3 text-xs text-lux-muted items-center">
                       <span>{c.project_count || 0} projects</span>
                       <span>Added {formatDate(c.created_at)}</span>
+                      {onOpenProjects && (
+                        <button
+                          type="button"
+                          className="text-lux-cyan hover:underline font-semibold"
+                          onClick={() => onOpenProjects(c.id)}
+                        >
+                          Open projects →
+                        </button>
+                      )}
                       {c.signup_source === "self" && c.latest_project?.portal_token && (
                         <>
                           <button
@@ -273,6 +286,9 @@ export default function AdminClientsSection({
                         {c.is_active ? "Deactivate" : "Activate"}
                       </button>
                     </div>
+                    {c.signup_source === "self" && c.latest_project && (
+                      <OnboardingChecklist project={c.latest_project} />
+                    )}
                     {c.signup_source === "self" && (
                       <p className="text-xs text-lux-muted mt-3 border-t border-white/[0.06] pt-3 leading-relaxed">
                         <strong className="text-lux-cyan">Self signup</strong> — client sees an empty preview until you
@@ -293,6 +309,40 @@ export default function AdminClientsSection({
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+function OnboardingChecklist({
+  project,
+}: {
+  project: {
+    status: string;
+    inmail_package_size: number | null;
+    assignee_count?: number;
+  };
+}) {
+  const steps = [
+    { done: project.status === "active", label: "Campaign set to Active" },
+    { done: (project.assignee_count || 0) > 0, label: "Campaign manager assigned" },
+    { done: Boolean(project.inmail_package_size), label: "InMail package size set" },
+  ];
+  const doneCount = steps.filter((s) => s.done).length;
+  if (doneCount === steps.length) return null;
+
+  return (
+    <div className="mt-3 border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 rounded-lg">
+      <p className="text-[0.65rem] uppercase tracking-wider text-amber-300 font-bold mb-2">
+        Onboarding · {doneCount}/{steps.length} complete
+      </p>
+      <ul className="space-y-1">
+        {steps.map((s) => (
+          <li key={s.label} className="flex items-center gap-2 text-xs">
+            <span className={s.done ? "text-emerald-400" : "text-lux-muted"}>{s.done ? "✓" : "○"}</span>
+            <span className={s.done ? "text-lux-muted line-through" : "text-lux-text"}>{s.label}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

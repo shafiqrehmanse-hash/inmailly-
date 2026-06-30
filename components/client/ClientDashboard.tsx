@@ -11,6 +11,7 @@ import {
 } from "@/lib/client-demo";
 import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 import ProofLightbox, { ProofThumb } from "@/components/proof/ProofLightbox";
+import ClientResponseModal, { type ClientResponseDetail } from "@/components/client/ClientResponseModal";
 import { cn } from "@/lib/utils";
 import {
   HiArrowTrendingUp,
@@ -60,17 +61,23 @@ export default function ClientDashboard({
   className = "",
   live,
   usingDemoFill = false,
+  onFollowupSaved,
 }: {
   mode?: "hero" | "full";
   className?: string;
   live?: ClientDashboardLiveData;
   /** Sample campaign metrics until real responses/proofs exist (client login only). */
   usingDemoFill?: boolean;
+  onFollowupSaved?: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [activityIdx, setActivityIdx] = useState(0);
   const [sent, setSent] = useState(DEMO_CAMPAIGN.sent);
   const [proofLightbox, setProofLightbox] = useState<string | null>(null);
+  const [responseModal, setResponseModal] = useState<ClientResponseDetail | null>(null);
+  const [localFollowups, setLocalFollowups] = useState<
+    Record<string, { clientFollowupMessage: string; clientFollowupAt: string }>
+  >({});
   const isHero = mode === "hero";
   const isLive = Boolean(live);
   const isPreviewLive = isLive && live!.status === "preview" && !usingDemoFill;
@@ -88,6 +95,41 @@ export default function ClientDashboard({
   const activity = isLive
     ? live!.latestActivity || { name: "—", action: "Waiting for first response", time: "—" }
     : DEMO_ACTIVITY[activityIdx];
+
+  const displayResponses = isLive
+    ? live!.responses.map((r) => {
+        const patch = localFollowups[r.id];
+        return patch
+          ? { ...r, clientFollowupMessage: patch.clientFollowupMessage, clientFollowupAt: patch.clientFollowupAt }
+          : r;
+      })
+    : DEMO_RESPONSES;
+
+  function openResponse(r: ClientResponseDetail) {
+    setResponseModal(r);
+  }
+
+  function handleFollowupSaved(updated: Pick<ClientResponseDetail, "id" | "clientFollowupMessage" | "clientFollowupAt">) {
+    if (updated.clientFollowupMessage && updated.clientFollowupAt) {
+      setLocalFollowups((prev) => ({
+        ...prev,
+        [updated.id]: {
+          clientFollowupMessage: updated.clientFollowupMessage!,
+          clientFollowupAt: updated.clientFollowupAt!,
+        },
+      }));
+      setResponseModal((cur) =>
+        cur?.id === updated.id
+          ? {
+              ...cur,
+              clientFollowupMessage: updated.clientFollowupMessage,
+              clientFollowupAt: updated.clientFollowupAt,
+            }
+          : cur
+      );
+    }
+    onFollowupSaved?.();
+  }
 
   return (
     <div
@@ -216,9 +258,10 @@ export default function ClientDashboard({
           )}
           {!isHero && tab === "responses" && (
             <ResponsesPanel
-              responses={isLive ? live!.responses : DEMO_RESPONSES}
+              responses={displayResponses}
               visibleCount={isLive ? live!.stats.total : DEMO_RESPONSES.length}
               teamCount={isLive ? live!.stats.teamResponses : undefined}
+              onSelect={openResponse}
             />
           )}
           {!isHero && tab === "sends" && (
@@ -262,6 +305,12 @@ export default function ClientDashboard({
       {proofLightbox && (
         <ProofLightbox src={proofLightbox} alt="InMail send proof" onClose={() => setProofLightbox(null)} />
       )}
+      <ClientResponseModal
+        response={responseModal}
+        onClose={() => setResponseModal(null)}
+        onSaved={handleFollowupSaved}
+        readOnly={!isLive || usingDemoFill}
+      />
     </div>
   );
 }
@@ -495,6 +544,7 @@ function ResponsesPanel({
   responses,
   visibleCount,
   teamCount,
+  onSelect,
 }: {
   responses: {
     id: string;
@@ -504,9 +554,13 @@ function ResponsesPanel({
     time: string;
     status: string;
     unread?: boolean;
+    profileUrl?: string | null;
+    clientFollowupMessage?: string | null;
+    clientFollowupAt?: string | null;
   }[];
   visibleCount?: number;
   teamCount?: number;
+  onSelect?: (r: ClientResponseDetail) => void;
 }) {
   const unread = responses.filter((r) => r.unread).length;
   const visible = visibleCount ?? responses.length;
@@ -529,14 +583,30 @@ function ResponsesPanel({
         </div>
       ) : (
         responses.map((r, i) => (
-          <motion.div
+          <motion.button
             key={r.id}
+            type="button"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.08 }}
-            className={`border p-3 ${
-              r.unread ? "border-lux-cyan/30 bg-lux-cyan/5" : "border-white/[0.06] bg-lux-bg2/30"
-            }`}
+            onClick={() =>
+              onSelect?.({
+                id: r.id,
+                name: r.name,
+                title: r.title,
+                preview: r.preview,
+                time: r.time,
+                status: r.status,
+                profileUrl: r.profileUrl ?? null,
+                clientFollowupMessage: r.clientFollowupMessage ?? null,
+                clientFollowupAt: r.clientFollowupAt ?? null,
+              })
+            }
+            className={cn(
+              "w-full text-left border p-3 transition-colors",
+              r.unread ? "border-lux-cyan/30 bg-lux-cyan/5" : "border-white/[0.06] bg-lux-bg2/30",
+              onSelect && "cursor-pointer hover:border-lux-cyan/40 hover:bg-lux-cyan/[0.07]"
+            )}
           >
             <div className="flex justify-between gap-2">
               <div>
@@ -547,9 +617,21 @@ function ResponsesPanel({
                 {r.status}
               </span>
             </div>
-            <p className="text-[0.75rem] text-lux-muted mt-2">{r.preview}</p>
-            <div className="text-[0.6rem] text-lux-muted/70 mt-1">{r.time}</div>
-          </motion.div>
+            <p className="text-[0.75rem] text-lux-muted mt-2 line-clamp-2">{r.preview}</p>
+            <div className="flex items-center justify-between mt-1">
+              <div className="text-[0.6rem] text-lux-muted/70">{r.time}</div>
+              <div className="flex items-center gap-2">
+                {r.clientFollowupMessage && (
+                  <span className="text-[0.55rem] uppercase tracking-wider text-emerald-400">Follow-up sent</span>
+                )}
+                {onSelect && (
+                  <span className="text-[0.6rem] text-lux-cyan">
+                    {r.clientFollowupMessage ? "View / edit →" : "Add follow-up →"}
+                  </span>
+                )}
+              </div>
+            </div>
+          </motion.button>
         ))
       )}
     </div>

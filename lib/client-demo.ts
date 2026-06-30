@@ -23,8 +23,11 @@ export const DEMO_RESPONSES = [
     title: "VP Growth · Acme SaaS",
     preview: "This is exactly what we've been looking for. Can we jump on a call this week?",
     time: "Today, 9:14 AM",
-    status: "interested" as const,
+    status: "interested",
     unread: true,
+    profileUrl: "https://www.linkedin.com/in/example",
+    clientFollowupMessage: null,
+    clientFollowupAt: null,
   },
   {
     id: "r2",
@@ -32,8 +35,11 @@ export const DEMO_RESPONSES = [
     title: "Head of Sales · NovaTech",
     preview: "Send me pricing for 5k sends. We're comparing a few vendors.",
     time: "Today, 8:42 AM",
-    status: "hot" as const,
+    status: "hot",
     unread: true,
+    profileUrl: "https://www.linkedin.com/in/example",
+    clientFollowupMessage: null,
+    clientFollowupAt: null,
   },
   {
     id: "r3",
@@ -41,8 +47,11 @@ export const DEMO_RESPONSES = [
     title: "Founder · Launchpad",
     preview: "Love the approach — human-operated is a big plus for us.",
     time: "Yesterday",
-    status: "replied" as const,
+    status: "replied",
     unread: false,
+    profileUrl: null,
+    clientFollowupMessage: null,
+    clientFollowupAt: null,
   },
 ];
 

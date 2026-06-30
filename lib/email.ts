@@ -7,7 +7,9 @@ import {
   clientSendProofEmail,
   clientVerifyEmail,
   clientWelcomeVerifiedEmail,
+  teamClientFollowupEmail,
 } from "@/lib/email-templates";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getSiteUrl } from "@/lib/site-url";
 
 type SendEmailInput = {
@@ -197,4 +199,44 @@ export async function getClientEmailForProject(projectId: string): Promise<{
   }
 
   return { email, clientName, projectName };
+}
+
+export async function getProjectManagerEmails(projectId: string): Promise<string[]> {
+  const admin = createAdminClient();
+  const { data: rows } = await admin
+    .from("project_assignments")
+    .select("team_members ( email, is_active )")
+    .eq("project_id", projectId);
+
+  const emails = new Set<string>();
+  for (const row of rows || []) {
+    const tm = row.team_members as { email?: string; is_active?: boolean } | { email?: string; is_active?: boolean }[] | null;
+    const member = Array.isArray(tm) ? tm[0] : tm;
+    if (member?.is_active !== false && member?.email?.trim()) {
+      emails.add(member.email.trim());
+    }
+  }
+  return Array.from(emails);
+}
+
+export async function notifyTeamClientFollowup(data: {
+  projectId: string;
+  projectName: string;
+  clientName: string;
+  leadName: string;
+  message: string;
+  isUpdate?: boolean;
+}) {
+  const managerEmails = await getProjectManagerEmails(data.projectId);
+  const recipients = Array.from(new Set([getNotifyEmail(), ...managerEmails]));
+  const subject = data.isUpdate
+    ? `Follow-up updated: ${data.leadName} · ${data.projectName}`
+    : `Client follow-up to send: ${data.leadName} · ${data.projectName}`;
+
+  return sendEmailSafe({
+    to: recipients,
+    subject,
+    html: teamClientFollowupEmail(data),
+    text: `${data.clientName} wrote a follow-up for ${data.leadName}: ${data.message.slice(0, 200)}`,
+  });
 }

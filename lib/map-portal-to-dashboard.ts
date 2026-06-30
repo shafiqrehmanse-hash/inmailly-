@@ -23,6 +23,9 @@ export type ClientDashboardLiveData = {
     time: string;
     status: string;
     unread: boolean;
+    profileUrl: string | null;
+    clientFollowupMessage: string | null;
+    clientFollowupAt: string | null;
   }[];
   pipeline: { label: string; count: number; value: number }[];
   velocity: number[];
@@ -36,8 +39,11 @@ type PortalResponse = {
   name: string;
   company: string | null;
   position: string | null;
+  profile_url: string | null;
   status: string;
   notes: string | null;
+  client_followup_message: string | null;
+  client_followup_at: string | null;
   created_at: string;
 };
 
@@ -134,6 +140,9 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
     time: formatDate(r.created_at),
     status: r.status.replace("_", " "),
     unread: i < 3 && ["interested", "replied"].includes(r.status),
+    profileUrl: r.profile_url?.trim() || null,
+    clientFollowupMessage: r.client_followup_message?.trim() || null,
+    clientFollowupAt: r.client_followup_at || null,
   }));
 
   const latest = responses[0];

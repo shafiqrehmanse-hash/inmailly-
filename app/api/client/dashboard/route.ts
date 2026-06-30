@@ -17,7 +17,7 @@ export async function GET() {
 
   const { data: responses } = await admin
     .from("leads")
-    .select("id, name, company, position, status, notes, created_at")
+    .select("id, name, company, position, profile_url, status, notes, client_followup_message, client_followup_at, created_at")
     .eq("project_id", project.id)
     .eq("visible_to_client", true)
     .order("created_at", { ascending: false })

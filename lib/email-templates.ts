@@ -211,3 +211,24 @@ export function clientSendProofEmail(data: { clientName: string; projectName: st
     cta: { href: `${site}/client/dashboard`, label: "View send proofs →" },
   });
 }
+
+export function teamClientFollowupEmail(data: {
+  clientName: string;
+  projectName: string;
+  leadName: string;
+  message: string;
+  isUpdate?: boolean;
+}) {
+  const site = getSiteUrl();
+  return emailLayout({
+    eyebrow: "Client follow-up",
+    title: data.isUpdate ? "Follow-up updated" : "New follow-up to send",
+    bodyHtml: [
+      p(
+        `<strong style="color:#fafafa;">${esc(data.clientName)}</strong> wrote a follow-up for <strong style="color:#fafafa;">${esc(data.leadName)}</strong> on ${esc(data.projectName)}. Send this on LinkedIn:`
+      ),
+      detailRow("Message", data.message),
+    ].join(""),
+    cta: { href: `${site}/campaign/hub`, label: "Open campaign hub →" },
+  });
+}
