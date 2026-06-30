@@ -13,29 +13,41 @@ type NavItem = {
   label: string;
   icon: string;
   badge?: boolean;
+  accent?: "cyan" | "violet" | "amber";
 };
 
-const sections: { label: string; items: NavItem[] }[] = [
+const sections: { label: string; tone: string; items: NavItem[] }[] = [
   {
     label: "Main",
+    tone: "text-cyan-400/70",
     items: [
-      { id: "hub", href: "/team/hub", label: "Home", icon: "⌂" },
-      { id: "links", href: "/team/links", label: "Work Links", icon: "⛓", badge: true },
-      { id: "leads", href: "/team/leads", label: "My Leads", icon: "◫" },
+      { id: "hub", href: "/team/hub", label: "Home", icon: "⌂", accent: "cyan" },
+      { id: "links", href: "/team/links", label: "Work Links", icon: "⛓", badge: true, accent: "cyan" },
+      { id: "leads", href: "/team/leads", label: "My Leads", icon: "◫", accent: "violet" },
     ],
   },
   {
     label: "Outreach",
+    tone: "text-violet-400/70",
     items: [
-      { id: "responses", href: "/team/responses", label: "Responses", icon: "💬" },
-      { id: "referrals", href: "/team/referrals", label: "Earn & Refer", icon: "✦" },
+      { id: "responses", href: "/team/responses", label: "Responses", icon: "💬", accent: "violet" },
+      { id: "referrals", href: "/team/referrals", label: "Earn & Refer", icon: "✦", accent: "amber" },
     ],
   },
   {
     label: "Account",
-    items: [{ id: "settings", href: "/team/settings", label: "Settings", icon: "⚙" }],
+    tone: "text-slate-400/70",
+    items: [{ id: "settings", href: "/team/settings", label: "Settings", icon: "⚙", accent: "cyan" }],
   },
 ];
+
+const activeStyles: Record<NonNullable<NavItem["accent"]>, string> = {
+  cyan: "border-cyan-400 bg-gradient-to-r from-cyan-500/20 via-cyan-500/8 to-transparent text-white shadow-[inset_0_1px_0_rgba(34,211,238,0.15)]",
+  violet:
+    "border-violet-400 bg-gradient-to-r from-violet-500/20 via-violet-500/8 to-transparent text-white shadow-[inset_0_1px_0_rgba(167,139,250,0.15)]",
+  amber:
+    "border-amber-400 bg-gradient-to-r from-amber-500/15 via-amber-500/6 to-transparent text-white shadow-[inset_0_1px_0_rgba(251,191,36,0.12)]",
+};
 
 export default function Sidebar({
   member,
@@ -61,42 +73,52 @@ export default function Sidebar({
 
   const NavContent = () => (
     <>
-      <div className="px-5 pb-5 border-b border-white/[0.08]">
-        <Link href="/team/hub" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-lux-blue to-lux-cyan flex items-center justify-center font-bricolage font-extrabold text-sm text-white">
+      <div className="px-5 pt-5 pb-5 border-b border-white/[0.06] bg-gradient-to-br from-cyan-500/[0.06] to-violet-600/[0.04]">
+        <Link href="/team/hub" className="flex items-center gap-3" onClick={() => setOpen(false)}>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-600 flex items-center justify-center font-bricolage font-extrabold text-sm text-white shadow-lg shadow-cyan-500/20 ring-1 ring-white/20">
             I
           </div>
           <div>
-            <div className="font-bricolage font-extrabold text-sm text-lux-text">InMailly</div>
-            <div className="text-[0.58rem] text-lux-muted uppercase tracking-widest">Team workspace</div>
+            <div className="font-bricolage font-extrabold text-[0.95rem] text-white tracking-tight">
+              InMailly
+            </div>
+            <div className="text-[0.58rem] text-cyan-300/60 uppercase tracking-[0.2em] font-semibold">
+              Team workspace
+            </div>
           </div>
         </Link>
       </div>
 
-      <nav className="flex-1 py-3 overflow-y-auto">
+      <nav className="flex-1 py-4 overflow-y-auto px-2">
         {sections.map((section) => (
-          <div key={section.label} className="px-3 mb-1">
-            <div className="text-[0.55rem] font-bold uppercase tracking-widest text-lux-muted/60 px-2 py-2">
+          <div key={section.label} className="mb-3">
+            <div
+              className={cn(
+                "text-[0.55rem] font-bold uppercase tracking-[0.18em] px-3 py-2",
+                section.tone
+              )}
+            >
               {section.label}
             </div>
             {section.items.map((item) => {
               const active = pathname === item.href || pathname.startsWith(item.href + "/");
+              const accent = item.accent || "cyan";
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors mb-0.5 border-l-2",
+                    "flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all mb-0.5 border-l-[3px]",
                     active
-                      ? "border-lux-cyan bg-lux-cyan/10 text-lux-text"
-                      : "border-transparent text-lux-muted hover:text-lux-text hover:bg-white/[0.04]"
+                      ? activeStyles[accent]
+                      : "border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]"
                   )}
                 >
-                  <span className="w-[18px] text-center shrink-0">{item.icon}</span>
-                  <span className="flex-1">{item.label}</span>
+                  <span className="w-[18px] text-center shrink-0 text-base">{item.icon}</span>
+                  <span className="flex-1 font-medium">{item.label}</span>
                   {item.badge && poolCount > 0 && (
-                    <span className="bg-lux-cyan/15 text-lux-cyan text-[0.58rem] font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-gradient-to-r from-cyan-500/25 to-blue-500/20 text-cyan-300 text-[0.58rem] font-bold px-2 py-0.5 rounded-full border border-cyan-400/25">
                       {poolCount}
                     </span>
                   )}
@@ -107,20 +129,20 @@ export default function Sidebar({
         ))}
       </nav>
 
-      <div className="px-5 py-4 border-t border-white/[0.08]">
+      <div className="mx-3 mb-4 p-3 rounded-xl border border-white/[0.08] bg-gradient-to-br from-slate-800/50 to-violet-950/30">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-lux-blue to-lux-cyan flex items-center justify-center text-xs font-bold text-white">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-white shadow-md">
             {initials}
           </div>
           <div className="min-w-0">
-            <div className="text-sm text-lux-text truncate">{member.name}</div>
-            <div className="text-[0.65rem] text-lux-muted">Outreach member</div>
+            <div className="text-sm text-white font-medium truncate">{member.name}</div>
+            <div className="text-[0.65rem] text-cyan-300/50">Outreach member</div>
           </div>
         </div>
         <button
           type="button"
           onClick={logout}
-          className="w-full text-left text-sm text-lux-muted hover:text-lux-text py-1.5"
+          className="w-full text-left text-xs text-slate-400 hover:text-rose-300 py-1.5 px-1 transition-colors"
         >
           Sign out
         </button>
@@ -131,7 +153,7 @@ export default function Sidebar({
   return (
     <>
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl lux-card flex items-center justify-center text-lg text-lux-text"
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-slate-900/90 border border-cyan-500/20 flex items-center justify-center text-lg text-white shadow-lg"
         onClick={() => setOpen(true)}
         aria-label="Open menu"
       >
@@ -139,12 +161,14 @@ export default function Sidebar({
       </button>
 
       {open && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-black/60" onClick={() => setOpen(false)} />
+        <div className="lg:hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
       )}
 
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-[220px] bg-lux-bg2 border-r border-white/[0.08] flex flex-col z-50 transition-transform duration-300",
+          "fixed top-0 left-0 h-full w-[240px] flex flex-col z-50 transition-transform duration-300",
+          "bg-gradient-to-b from-[#080d18] via-[#0c1222] to-[#0f0a1a]",
+          "border-r border-cyan-500/10 shadow-[4px_0_32px_rgba(0,0,0,0.45)]",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ScriptPayload } from "@/lib/scripts";
+import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { cn } from "@/lib/utils";
 
 const PICKER_OPTIONS = [
@@ -61,13 +62,9 @@ export default function DailyScriptBar({
 
   async function copyText(text: string, label: string) {
     if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      setToast(label);
-      setTimeout(() => setToast(""), 2200);
-    } catch {
-      /* ignore */
-    }
+    const ok = await copyToClipboard(text);
+    setToast(ok ? label : "Copy failed — select text manually");
+    setTimeout(() => setToast(""), 2200);
   }
 
   const pct = active?.pct ?? 0;
