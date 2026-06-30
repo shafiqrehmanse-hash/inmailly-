@@ -14,11 +14,12 @@ export async function GET(request: NextRequest) {
   const { data: members } = await admin.from("team_members").select("*").order("joined_at", { ascending: false });
   const enriched = [];
   for (const m of members || []) {
-    const [{ count: activeLinks }, { count: leadsCount }] = await Promise.all([
+    const [{ count: activeLinks }, { count: leadsCount }, { count: dealsCount }] = await Promise.all([
       admin.from("outreach_links").select("*", { count: "exact", head: true }).eq("member_id", m.id).eq("status", "claimed"),
-      admin.from("leads").select("*", { count: "exact", head: true }).eq("member_id", m.id),
+      admin.from("leads").select("*", { count: "exact", head: true }).eq("member_id", m.id).is("project_id", null),
+      admin.from("leads").select("*", { count: "exact", head: true }).eq("member_id", m.id).is("project_id", null).eq("deal_closed", true),
     ]);
-    enriched.push({ ...m, active_links: activeLinks || 0, leads_count: leadsCount || 0 });
+    enriched.push({ ...m, active_links: activeLinks || 0, leads_count: leadsCount || 0, deals_closed: dealsCount || 0 });
   }
   return NextResponse.json({ members: enriched });
 }

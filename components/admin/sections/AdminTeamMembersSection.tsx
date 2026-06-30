@@ -1,5 +1,6 @@
 "use client";
 
+import AdminStatCard from "@/components/admin/AdminStatCard";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
@@ -7,7 +8,7 @@ import LuxSelect from "@/components/ui/LuxSelect";
 import type { TeamMember } from "@/lib/types";
 import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 
-type MemberRow = TeamMember & { active_links: number; leads_count: number };
+type MemberRow = TeamMember & { active_links: number; leads_count: number; deals_closed?: number };
 
 const roleOptions = [
   { value: "member", label: "Outreach worker" },
@@ -84,21 +85,41 @@ export default function AdminTeamMembersSection() {
   }
 
   async function generateInvite() {
+    if (!inviteLabel.trim()) {
+      showToast("Enter a name/label first", "error");
+      return;
+    }
     const res = await fetch(`/api/admin/invite-codes?key=${adminKey}`, {
       method: "POST",
       headers,
       body: JSON.stringify({ label: inviteLabel, uses: inviteUses }),
     });
     const data = await res.json();
+    if (data.error) {
+      showToast(data.error, "error");
+      return;
+    }
     setGeneratedCode(data.code?.code || "");
-    showToast("Invite code generated");
+    showToast("Invite code generated from label");
   }
+
+  const outreachMembers = members.filter((m) => m.role !== "campaign_manager");
+  const totalLeads = outreachMembers.reduce((s, m) => s + m.leads_count, 0);
+  const totalDeals = outreachMembers.reduce((s, m) => s + (m.deals_closed || 0), 0);
+  const totalLinks = outreachMembers.reduce((s, m) => s + m.active_links, 0);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">Team members</h1>
         <p className="text-sm text-lux-muted mt-1">Access, roles, invites, and outreach worker accounts.</p>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <AdminStatCard value={outreachMembers.length} label="Outreach members" />
+        <AdminStatCard value={totalLeads} label="Outreach leads" />
+        <AdminStatCard value={totalDeals} label="Deals closed" />
+        <AdminStatCard value={totalLinks} label="Active links" />
       </div>
 
       <section>
@@ -116,7 +137,7 @@ export default function AdminTeamMembersSection() {
           <div className="lux-card p-5 space-y-3">
             <h3 className="font-bricolage font-bold text-lux-text">Invite code</h3>
             <p className="text-xs text-lux-muted -mt-1">For self-registration at /team/register</p>
-            <input className="lux-input" placeholder="Label (e.g. March batch)" value={inviteLabel} onChange={(e) => setInviteLabel(e.target.value)} />
+            <input className="lux-input" placeholder="Name / label (e.g. Hania batch)" value={inviteLabel} onChange={(e) => setInviteLabel(e.target.value)} />
             <input className="lux-input" type="number" min={1} placeholder="Number of uses" value={inviteUses} onChange={(e) => setInviteUses(parseInt(e.target.value) || 1)} />
             <Button variant="lux" onClick={generateInvite} className="w-full">Generate code</Button>
             {generatedCode && (
@@ -143,6 +164,7 @@ export default function AdminTeamMembersSection() {
                 <th className="text-left px-4 py-3 font-semibold">Role</th>
                 <th className="text-left px-4 py-3 font-semibold">Links</th>
                 <th className="text-left px-4 py-3 font-semibold">Leads</th>
+                <th className="text-left px-4 py-3 font-semibold">Deals</th>
                 <th className="text-left px-4 py-3 font-semibold">Active</th>
                 <th className="text-left px-4 py-3 font-semibold">Actions</th>
               </tr>
@@ -150,7 +172,7 @@ export default function AdminTeamMembersSection() {
             <tbody>
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-lux-muted">
+                  <td colSpan={8} className="px-4 py-12 text-center text-lux-muted">
                     No team members yet.
                   </td>
                 </tr>
@@ -164,6 +186,7 @@ export default function AdminTeamMembersSection() {
                     </td>
                     <td className="px-4 py-3">{m.active_links}</td>
                     <td className="px-4 py-3">{m.leads_count}</td>
+                    <td className="px-4 py-3 text-emerald-400">{m.deals_closed || 0}</td>
                     <td className="px-4 py-3">
                       <input type="checkbox" className="rounded border-white/20 text-lux-cyan focus:ring-lux-cyan" checked={m.is_active} onChange={(e) => toggleActive(m.id, e.target.checked)} />
                     </td>

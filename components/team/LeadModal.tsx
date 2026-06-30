@@ -43,6 +43,7 @@ export default function LeadModal({
   prefill,
   onSaved,
   isAdmin,
+  adminKey,
 }: {
   open: boolean;
   onClose: () => void;
@@ -53,6 +54,7 @@ export default function LeadModal({
   prefill?: { name?: string; url?: string; source_link_id?: string };
   onSaved?: () => void;
   isAdmin?: boolean;
+  adminKey?: string;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [form, setForm] = useState<LeadForm>({
@@ -94,6 +96,12 @@ export default function LeadModal({
   }, [open, currentLead?.id]);
 
   async function loadMessages(leadId: string) {
+    if (adminKey) {
+      const res = await fetch(`/api/admin/leads/messages?key=${adminKey}&leadId=${leadId}`);
+      const data = await res.json();
+      setMessages((data.messages as LeadMessage[]) || []);
+      return;
+    }
     const { data } = await supabase
       .from("lead_messages")
       .select("*")
@@ -131,6 +139,19 @@ export default function LeadModal({
 
   async function handleUpdateLead(updates: Partial<Lead>) {
     if (!currentLead) return;
+    if (adminKey) {
+      const res = await fetch(`/api/admin/leads?key=${adminKey}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead_id: currentLead.id, ...updates }),
+      });
+      const data = await res.json();
+      if (data.lead) {
+        setCurrentLead(data.lead as Lead);
+        onSaved?.();
+      }
+      return;
+    }
     const { data } = await supabase
       .from("leads")
       .update({ ...updates, updated_at: new Date().toISOString() })
@@ -145,12 +166,35 @@ export default function LeadModal({
 
   async function handleAddMessage() {
     if (!currentLead || !msgContent.trim()) return;
+    const displayName = isAdmin ? `Admin → ${memberName}` : memberName;
+
+    if (adminKey) {
+      const res = await fetch(`/api/admin/leads/messages?key=${adminKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lead_id: currentLead.id,
+          sender: msgSender,
+          sender_name: msgSender === "team" ? displayName : currentLead.name,
+          msg_type: msgType,
+          content: msgContent.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.message) {
+        setMessages((m) => [...m, data.message as LeadMessage]);
+        setMsgContent("");
+        onSaved?.();
+      }
+      return;
+    }
+
     const { data } = await supabase
       .from("lead_messages")
       .insert({
         lead_id: currentLead.id,
         sender: msgSender,
-        sender_name: msgSender === "team" ? memberName : currentLead.name,
+        sender_name: msgSender === "team" ? (isAdmin ? `Admin → ${memberName}` : memberName) : currentLead.name,
         msg_type: msgType,
         content: msgContent.trim(),
       })
@@ -248,7 +292,18 @@ export default function LeadModal({
               />
               Deal closed
             </label>
-            {!isAdmin && (
+            {isAdmin && adminKey ? (
+              <LuxSelect
+                className="ml-auto w-40"
+                size="sm"
+                value={currentLead.status}
+                onChange={(status) => handleUpdateLead({ status: status as Lead["status"] })}
+                options={STATUSES.map((s) => ({
+                  value: s,
+                  label: s.replace(/_/g, " "),
+                }))}
+              />
+            ) : !isAdmin ? (
               <LuxSelect
                 className="ml-auto w-40"
                 size="sm"
@@ -261,7 +316,7 @@ export default function LeadModal({
                   label: s.replace(/_/g, " "),
                 }))}
               />
-            )}
+            ) : null}
           </div>
 
           <div>

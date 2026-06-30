@@ -5,8 +5,15 @@ export const TEAM_ADMIN_NAV: ManagedNavGroup[] = [
     title: "Dashboard",
     items: [
       { href: "/admin/team", label: "Overview", icon: "◫" },
-      { href: "/admin/team/leads", label: "All leads", icon: "📋" },
+      { href: "/admin/team/leads", label: "Outreach leads", icon: "📋" },
+      { href: "/admin/team/responses", label: "Responses", icon: "💬" },
       { href: "/admin/team/members", label: "Team members", icon: "👥" },
+    ],
+  },
+  {
+    title: "Communicate",
+    items: [
+      { href: "/admin/team/email", label: "Email team", icon: "✉" },
     ],
   },
   {
@@ -64,6 +71,7 @@ export const PROJECTS_ADMIN_NAV: ManagedNavGroup[] = [
         icon: "○",
         match: (p, q) => p === "/admin/projects" && q === "status=draft",
       },
+      { href: "/admin/projects/responses", label: "Campaign responses", icon: "💬" },
     ],
   },
   {
