@@ -63,12 +63,19 @@ export default async function HubPage() {
 
   const quickNav = [
     {
+      href: "/team/scripts",
+      label: "Scripts",
+      icon: "📋",
+      desc: "Copy Add Note and InMail — subject and message separate.",
+      go: "Open scripts →",
+      featured: true,
+    },
+    {
       href: "/team/links",
       label: "Work Links",
       icon: "⛓",
       desc: `${avail} profiles ready — claim, open, mark used.`,
       go: "Open links →",
-      featured: true,
     },
     {
       href: "/team/leads",
@@ -104,7 +111,8 @@ export default async function HubPage() {
           <span className="text-lux-text"> 👋</span>
         </h1>
         <p className="text-lux-muted text-[0.92rem] mt-2 max-w-xl leading-relaxed">
-          Copy scripts from the sidebar, jump into a section below, then claim links and log leads.
+          Open <strong className="text-lux-violet font-semibold">Scripts</strong> to copy outreach copy,
+          then jump into a section below.
         </p>
       </div>
 

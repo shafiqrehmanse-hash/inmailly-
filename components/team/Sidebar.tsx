@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import SidebarScripts from "@/components/team/SidebarScripts";
 import { createClient } from "@/lib/supabase/client";
-import type { ScriptPayload } from "@/lib/scripts";
 import type { TeamMember } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +23,7 @@ const sections: { label: string; tone: string; items: NavItem[] }[] = [
     items: [
       { id: "hub", href: "/team/hub", label: "Home", icon: "⌂", accent: "cyan" },
       { id: "links", href: "/team/links", label: "Work Links", icon: "⛓", badge: true, accent: "cyan" },
+      { id: "scripts", href: "/team/scripts", label: "Scripts", icon: "📋", accent: "violet" },
       { id: "leads", href: "/team/leads", label: "My Leads", icon: "◫", accent: "violet" },
     ],
   },
@@ -54,11 +53,9 @@ const activeStyles: Record<NonNullable<NavItem["accent"]>, string> = {
 export default function Sidebar({
   member,
   poolCount,
-  scripts,
 }: {
   member: TeamMember;
   poolCount: number;
-  scripts: Record<string, ScriptPayload>;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -93,7 +90,7 @@ export default function Sidebar({
         </Link>
       </div>
 
-      <nav className="flex-1 py-3 overflow-y-auto px-2 min-h-0">
+      <nav className="flex-1 py-3 overflow-y-auto px-2 min-h-0 lux-scrollbar-hide">
         {sections.map((section) => (
           <div key={section.label} className="mb-2">
             <div
@@ -131,9 +128,6 @@ export default function Sidebar({
             })}
           </div>
         ))}
-
-        <div className="my-2 mx-2 border-t border-lux-violet/15" />
-        <SidebarScripts scripts={scripts} />
       </nav>
 
       <div className="mx-3 mb-4 p-3 rounded-xl border border-lux-violet/20 bg-gradient-to-br from-lux-violet/10 via-slate-900/40 to-lux-bg2/60 shrink-0">

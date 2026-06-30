@@ -47,6 +47,11 @@ export function parseScriptParts(text: string) {
   return { subject: "", body: trimmed, has_subject: false };
 }
 
+/** Strip legacy "Script:" prefix from message body for display and copy */
+export function cleanScriptBody(text: string): string {
+  return text.replace(/^Script\s*[:-]\s*/i, "").trim();
+}
+
 function buildEntry(
   key: string,
   meta: {
@@ -60,7 +65,8 @@ function buildEntry(
   content: string
 ): ScriptPayload {
   const parts = parseScriptParts(content);
-  const length = content.length;
+  const body = cleanScriptBody(parts.body);
+  const length = body.length || content.length;
   const limit = meta.limit;
   return {
     key,
@@ -71,7 +77,7 @@ function buildEntry(
     limit,
     content,
     subject: parts.subject,
-    body: parts.body,
+    body,
     has_subject: parts.has_subject,
     length,
     remaining: Math.max(0, limit - length),
@@ -156,7 +162,9 @@ function buildInmailEntry(
   if (!subject && !body && legacy) {
     const parts = parseScriptParts(legacy);
     subject = parts.subject;
-    body = parts.body;
+    body = cleanScriptBody(parts.body);
+  } else {
+    body = cleanScriptBody(body);
   }
 
   const content = subject ? `Subject: ${subject}\n\n${body}` : body;
@@ -203,4 +211,11 @@ export function buildScriptsPayload(db: {
   };
 
   return { ...core, ...followupScripts() };
+}
+
+/** Core outreach scripts shown on the team Scripts page (extend as admin adds more) */
+export const TEAM_SCRIPT_ORDER = ["add_note", "inmail"] as const;
+
+export function listTeamScripts(payload: Record<string, ScriptPayload>): ScriptPayload[] {
+  return TEAM_SCRIPT_ORDER.map((key) => payload[key]).filter(Boolean);
 }

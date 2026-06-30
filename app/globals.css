@@ -109,6 +109,13 @@ body {
     @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent;
     animation: shimmer 1.8s ease-in-out infinite;
   }
+  .lux-scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .lux-scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
   .section-kicker {
     @apply text-[0.65rem] font-bold uppercase tracking-widest text-ind flex items-center gap-2;
   }
