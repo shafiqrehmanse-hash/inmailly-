@@ -12,14 +12,30 @@ export async function GET(request: NextRequest) {
   }
   const status = request.nextUrl.searchParams.get("status");
   const memberId = request.nextUrl.searchParams.get("memberId");
+  const page = Math.max(1, parseInt(request.nextUrl.searchParams.get("page") || "1", 10) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(request.nextUrl.searchParams.get("limit") || "10", 10) || 10));
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
   const admin = createAdminClient();
   let query = admin
     .from("outreach_links")
-    .select("*, team_members(name)")
-    .order("created_at", { ascending: false })
-    .limit(500);
+    .select("*, team_members(name)", { count: "exact" })
+    .order("created_at", { ascending: false });
   if (status && status !== "all") query = query.eq("status", status);
   if (memberId && memberId !== "all") query = query.eq("member_id", memberId);
-  const { data } = await query;
-  return NextResponse.json({ links: data });
+  const { data, count, error } = await query.range(from, to);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  const total = count || 0;
+  return NextResponse.json({
+    links: data || [],
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    },
+  });
 }

@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
+import Pagination from "@/components/ui/Pagination";
 import AdminClientEmailPanel from "@/components/admin/AdminClientEmailPanel";
 import type { Client } from "@/lib/types";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { formatDate } from "@/lib/utils";
 
 export default function AdminClientsSection({
@@ -30,17 +32,25 @@ export default function AdminClientsSection({
     })[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = DEFAULT_PAGE_SIZE;
   const [form, setForm] = useState({ name: "", company_name: "", email: "", notes: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", company_name: "", email: "", notes: "" });
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/admin/clients?key=${adminKey}`);
+    const res = await fetch(
+      `/api/admin/clients?key=${adminKey}&page=${page}&limit=${pageSize}`
+    );
     const data = await res.json();
     setClients(data.clients || []);
+    setTotal(data.pagination?.total ?? data.clients?.length ?? 0);
+    setTotalPages(data.pagination?.totalPages ?? 1);
     setLoading(false);
-  }, [adminKey]);
+  }, [adminKey, page, pageSize]);
 
   useEffect(() => {
     load();
@@ -63,6 +73,7 @@ export default function AdminClientsSection({
     }
     onToast("Client added");
     setForm({ name: "", company_name: "", email: "", notes: "" });
+    setPage(1);
     load();
   }
 
@@ -157,7 +168,7 @@ export default function AdminClientsSection({
       <section>
         <div className="flex items-center justify-between mb-4">
           <p className="admin-section-title">All clients</p>
-          <span className="text-xs text-lux-muted">{clients.length} total</span>
+          <span className="text-xs text-lux-muted">{total} total · page {page} of {totalPages}</span>
         </div>
         <div className="space-y-3">
           {clients.length === 0 ? (
@@ -327,6 +338,13 @@ export default function AdminClientsSection({
             ))
           )}
         </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={pageSize}
+          onPage={setPage}
+        />
       </section>
     </div>
   );

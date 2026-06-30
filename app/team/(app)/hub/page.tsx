@@ -117,6 +117,29 @@ export default async function HubPage() {
         </p>
       </div>
 
+      <div className="lux-card p-5 sm:p-6 border-white/[0.08]">
+        <p className="text-[0.68rem] font-bold uppercase tracking-widest text-lux-muted mb-3">
+          Team access
+        </p>
+        <div className="grid sm:grid-cols-2 gap-4 text-sm text-lux-muted leading-relaxed">
+          <div>
+            <p className="font-semibold text-lux-text mb-1">New member signup</p>
+            <p>
+              Admin creates an invite code in <strong className="text-lux-text">Admin → Team</strong>, then share{" "}
+              <code className="text-lux-cyan/90">/team/register</code> with the code.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-lux-text mb-1">Login</p>
+            <p>
+              Outreach workers: <code className="text-lux-cyan/90">/team/login</code>
+              <br />
+              Campaign managers: <code className="text-lux-cyan/90">/campaign/login</code>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard value={avail} label="Links available" />
         <StatCard value={myActive.count || 0} label="Your active" />

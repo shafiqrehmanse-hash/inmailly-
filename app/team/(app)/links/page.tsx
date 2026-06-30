@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import LinkCard from "@/components/team/LinkCard";
 import StatCard from "@/components/team/StatCard";
 import Toast, { ToastType } from "@/components/team/Toast";
+import Pagination from "@/components/ui/Pagination";
 import { createClient } from "@/lib/supabase/client";
 import type { OutreachLink, TeamMember } from "@/lib/types";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { cn } from "@/lib/utils";
 
 type Tab = "pool" | "mine" | "used";
@@ -15,12 +17,16 @@ export default function LinksPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [tab, setTab] = useState<Tab>("pool");
+  const [page, setPage] = useState(1);
   const [member, setMember] = useState<TeamMember | null>(null);
   const [links, setLinks] = useState<OutreachLink[]>([]);
+  const [listTotal, setListTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState({ pool: 0, claimed: 0, myActive: 0, iUsed: 0 });
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const memberRef = useRef<TeamMember | null>(null);
+  const pageSize = DEFAULT_PAGE_SIZE;
 
   const showToast = (message: string, type: ToastType = "success") =>
     setToast({ message, type });
@@ -78,15 +84,16 @@ export default function LinksPage() {
   );
 
   const fetchLinks = useCallback(
-    async (activeTab: Tab, memberId: string) => {
-      let query = supabase.from("outreach_links").select("*");
+    async (activeTab: Tab, memberId: string, activePage: number) => {
+      const from = (activePage - 1) * pageSize;
+      const to = from + pageSize - 1;
+      let query = supabase.from("outreach_links").select("*", { count: "exact" });
 
       if (activeTab === "pool") {
         query = query
           .eq("status", "available")
           .is("member_id", null)
-          .order("created_at", { ascending: true })
-          .limit(200);
+          .order("created_at", { ascending: false });
       } else if (activeTab === "mine") {
         query = query
           .eq("member_id", memberId)
@@ -96,30 +103,36 @@ export default function LinksPage() {
         query = query
           .eq("used_by_member_id", memberId)
           .eq("status", "used")
-          .order("used_at", { ascending: false })
-          .limit(80);
+          .order("used_at", { ascending: false });
       }
 
-      const { data } = await query;
+      const { data, count } = await query.range(from, to);
+      const total = count || 0;
       setLinks((data as OutreachLink[]) || []);
+      setListTotal(total);
+      setTotalPages(Math.max(1, Math.ceil(total / pageSize)));
     },
-    [supabase]
+    [supabase, pageSize]
   );
 
   const refresh = useCallback(
-    async (activeTab = tab) => {
+    async (activeTab = tab, activePage = page) => {
       const m = await ensureMember();
       if (!m) return;
-      await Promise.all([fetchLinks(activeTab, m.id), fetchStats(m.id)]);
+      await Promise.all([fetchLinks(activeTab, m.id, activePage), fetchStats(m.id)]);
       setLoading(false);
     },
-    [ensureMember, fetchLinks, fetchStats, tab]
+    [ensureMember, fetchLinks, fetchStats, tab, page]
   );
 
   useEffect(() => {
     setLoading(true);
-    refresh(tab);
-  }, [tab, refresh]);
+    refresh(tab, page);
+  }, [tab, page, refresh]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [tab]);
 
   useEffect(() => {
     let debounce: ReturnType<typeof setTimeout>;
@@ -127,14 +140,14 @@ export default function LinksPage() {
       .channel("links-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "outreach_links" }, () => {
         clearTimeout(debounce);
-        debounce = setTimeout(() => refresh(tab), 400);
+        debounce = setTimeout(() => refresh(tab, page), 400);
       })
       .subscribe();
     return () => {
       clearTimeout(debounce);
       supabase.removeChannel(channel);
     };
-  }, [supabase, refresh, tab]);
+  }, [supabase, refresh, tab, page]);
 
   async function handleClaim(link: OutreachLink) {
     if (!member) return;
@@ -156,7 +169,7 @@ export default function LinksPage() {
     } else {
       showToast("Link already claimed by someone else", "error");
     }
-    refresh(tab);
+    refresh(tab, page);
   }
 
   async function handleMarkUsed(link: OutreachLink) {
@@ -172,7 +185,7 @@ export default function LinksPage() {
       .eq("id", link.id)
       .eq("member_id", member.id);
     showToast("Marked as used");
-    refresh(tab);
+    refresh(tab, page);
   }
 
   async function handleRelease(link: OutreachLink) {
@@ -184,7 +197,7 @@ export default function LinksPage() {
       .eq("id", link.id)
       .eq("member_id", member.id);
     showToast("Link released to pool");
-    refresh(tab);
+    refresh(tab, page);
   }
 
   function handleAddLead(link: OutreachLink) {
@@ -216,9 +229,8 @@ export default function LinksPage() {
         <strong className="text-lux-cyan text-[0.7rem] uppercase tracking-wide block mb-1.5">
           ✨ Smart workflow tips
         </strong>
-        LinkedIn profiles are auto-labeled from the URL. Sales Nav links get a different playbook.
-        Always mark <strong className="text-lux-text">Used</strong> after outreach so admin can track
-        progress.
+        Newest links appear first. Use pagination below — 10 links per page. Always mark{" "}
+        <strong className="text-lux-text">Used</strong> after outreach so admin can track progress.
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -246,12 +258,9 @@ export default function LinksPage() {
             {t.label} ({t.count})
           </button>
         ))}
-        <a
-          href="/team/leads"
-          className="ml-auto text-sm font-bold text-lux-muted border border-dashed border-white/[0.12] rounded-full px-4 py-2 hover:border-lux-cyan/30 hover:text-lux-cyan"
-        >
-          ← Back to leads
-        </a>
+        <span className="ml-auto text-xs text-lux-muted tabular-nums">
+          Page {page} of {totalPages}
+        </span>
       </div>
 
       {loading ? (
@@ -280,6 +289,13 @@ export default function LinksPage() {
               onAddLead={() => handleAddLead(link)}
             />
           ))}
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={listTotal}
+            pageSize={pageSize}
+            onPage={setPage}
+          />
         </div>
       )}
 

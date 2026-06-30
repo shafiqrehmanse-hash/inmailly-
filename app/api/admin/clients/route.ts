@@ -11,13 +11,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const page = Math.max(1, parseInt(request.nextUrl.searchParams.get("page") || "1", 10) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(request.nextUrl.searchParams.get("limit") || "10", 10) || 10));
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
   const admin = createAdminClient();
-  const { data: clients, error } = await admin
+  const { data: clients, error, count } = await admin
     .from("clients")
     .select(
-      "*, projects(id, name, status, portal_token, inmail_package_size, created_at, project_assignments(id))"
+      "*, projects(id, name, status, portal_token, inmail_package_size, created_at, project_assignments(id))",
+      { count: "exact" }
     )
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -48,7 +55,15 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  return NextResponse.json({ clients: enriched });
+  return NextResponse.json({
+    clients: enriched,
+    pagination: {
+      page,
+      limit,
+      total: count || 0,
+      totalPages: Math.max(1, Math.ceil((count || 0) / limit)),
+    },
+  });
 }
 
 export async function POST(request: NextRequest) {

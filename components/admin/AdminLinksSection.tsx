@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
+import Pagination from "@/components/ui/Pagination";
 import type { OutreachLink, TeamMember } from "@/lib/types";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { formatDate, truncateUrl } from "@/lib/utils";
 
 type LinkRow = OutreachLink & {
@@ -33,18 +35,29 @@ export default function AdminLinksSection({
   const [assignMemberId, setAssignMemberId] = useState("");
   const [bulkCount, setBulkCount] = useState("25");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = DEFAULT_PAGE_SIZE;
 
   const outreachMembers = members.filter((m) => m.role !== "campaign_manager" && m.is_active);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ key: adminKey, status: statusFilter });
+    const params = new URLSearchParams({
+      key: adminKey,
+      status: statusFilter,
+      page: String(page),
+      limit: String(pageSize),
+    });
     if (memberFilter !== "all") params.set("memberId", memberFilter);
     const res = await fetch(`/api/admin/links?${params}`);
     const data = await res.json();
     setLinks(data.links || []);
+    setTotal(data.pagination?.total ?? 0);
+    setTotalPages(data.pagination?.totalPages ?? 1);
     setLoading(false);
-  }, [adminKey, statusFilter, memberFilter]);
+  }, [adminKey, statusFilter, memberFilter, page, pageSize]);
 
   useEffect(() => {
     load();
@@ -53,6 +66,11 @@ export default function AdminLinksSection({
   useEffect(() => {
     if (initialMemberFilter) setMemberFilter(initialMemberFilter);
   }, [initialMemberFilter]);
+
+  useEffect(() => {
+    setPage(1);
+    setSelected(new Set());
+  }, [statusFilter, memberFilter]);
 
   function memberName(link: LinkRow) {
     const tm = link.team_members;
@@ -89,6 +107,8 @@ export default function AdminLinksSection({
     onToast(`Imported ${data.inserted} links (${data.duplicates} duplicates skipped)`);
     setPaste("");
     setPreview(null);
+    setStatusFilter("available");
+    setPage(1);
     load();
   }
 
@@ -165,6 +185,8 @@ export default function AdminLinksSection({
     else {
       onToast(`Released ${data.released} links back to pool`);
       setSelected(new Set());
+      setStatusFilter("available");
+      setPage(1);
       load();
     }
   }
@@ -202,6 +224,9 @@ export default function AdminLinksSection({
             {preview.new} new · {preview.duplicates} duplicates · {preview.invalid} invalid lines
           </p>
         )}
+        <p className="text-xs text-lux-muted">
+          After import, the list switches to <strong className="text-lux-text">Available</strong> so you see new links on page 1.
+        </p>
       </div>
 
       <div className="lux-card p-5 space-y-4 border-lux-cyan/20">
@@ -241,7 +266,7 @@ export default function AdminLinksSection({
         </div>
       </div>
 
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap items-center">
         <LuxSelect
           className="w-44"
           size="sm"
@@ -262,70 +287,84 @@ export default function AdminLinksSection({
             ...members.map((m) => ({ value: m.id, label: m.name })),
           ]}
         />
+        <span className="text-xs text-lux-muted ml-auto tabular-nums">
+          {total} links · page {page} of {totalPages}
+        </span>
       </div>
 
       <div className="lux-card overflow-x-auto">
         {loading ? (
           <p className="p-6 text-sm text-lux-muted">Loading links…</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-lux-muted text-xs uppercase bg-lux-bg2 border-b border-white/[0.06]">
-                <th className="px-3 py-3 w-10" />
-                <th className="text-left px-4 py-3">URL</th>
-                <th className="text-left px-4 py-3">Label</th>
-                <th className="text-left px-4 py-3">Status</th>
-                <th className="text-left px-4 py-3">Member</th>
-                <th className="text-left px-4 py-3">Claimed</th>
-                <th className="text-left px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {links.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-lux-muted">
-                    No links match this filter.
-                  </td>
+          <>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-lux-muted text-xs uppercase bg-lux-bg2 border-b border-white/[0.06]">
+                  <th className="px-3 py-3 w-10" />
+                  <th className="text-left px-4 py-3">URL</th>
+                  <th className="text-left px-4 py-3">Label</th>
+                  <th className="text-left px-4 py-3">Status</th>
+                  <th className="text-left px-4 py-3">Member</th>
+                  <th className="text-left px-4 py-3">Claimed</th>
+                  <th className="text-left px-4 py-3">Actions</th>
                 </tr>
-              ) : (
-                links.map((link) => (
-                  <tr key={link.id} className="border-b border-white/[0.06]">
-                    <td className="px-3 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selected.has(link.id)}
-                        onChange={() => toggleSelect(link.id)}
-                        className="rounded border-white/20"
-                      />
-                    </td>
-                    <td className="px-4 py-3 max-w-[180px] truncate">
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-lux-cyan hover:underline"
-                      >
-                        {truncateUrl(link.url, 36)}
-                      </a>
-                    </td>
-                    <td className="px-4 py-3">{link.smart_label || "—"}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={link.status}>{link.status}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-lux-text">{memberName(link)}</td>
-                    <td className="px-4 py-3 text-lux-muted text-xs">{formatDate(link.claimed_at)}</td>
-                    <td className="px-4 py-3">
-                      {link.status === "used" && (
-                        <Button variant="lux-ghost" size="sm" onClick={() => resetLink(link.id)}>
-                          Reset
-                        </Button>
-                      )}
+              </thead>
+              <tbody>
+                {links.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-10 text-center text-lux-muted">
+                      No links match this filter.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  links.map((link) => (
+                    <tr key={link.id} className="border-b border-white/[0.06]">
+                      <td className="px-3 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(link.id)}
+                          onChange={() => toggleSelect(link.id)}
+                          className="rounded border-white/20"
+                        />
+                      </td>
+                      <td className="px-4 py-3 max-w-[180px] truncate">
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-lux-cyan hover:underline"
+                        >
+                          {truncateUrl(link.url, 36)}
+                        </a>
+                      </td>
+                      <td className="px-4 py-3">{link.smart_label || "—"}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant={link.status}>{link.status}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-lux-text">{memberName(link)}</td>
+                      <td className="px-4 py-3 text-lux-muted text-xs">{formatDate(link.claimed_at)}</td>
+                      <td className="px-4 py-3">
+                        {link.status === "used" && (
+                          <Button variant="lux-ghost" size="sm" onClick={() => resetLink(link.id)}>
+                            Reset
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+            <div className="px-4 pb-4">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={pageSize}
+                onPage={setPage}
+              />
+            </div>
+          </>
         )}
       </div>
     </div>
