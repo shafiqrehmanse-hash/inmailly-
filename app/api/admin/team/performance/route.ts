@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
   weekAgo.setDate(weekAgo.getDate() - 7);
   const inactiveCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-  const [membersRes, claimedRows, usedRows, leadsRows] = await Promise.all([
+  const [membersRes, claimedRows, usedRows, leadsRows, autoAssignWeekRes, autoAssignTodayRes] =
+    await Promise.all([
     admin
       .from("team_members")
       .select("id, name, email, role, last_login, joined_at, is_active")
@@ -43,6 +44,14 @@ export async function GET(request: NextRequest) {
       .from("leads")
       .select("member_id, created_at, status, deal_closed")
       .is("project_id", null),
+    admin
+      .from("link_auto_assign_events")
+      .select("member_id, assigned_count, created_at")
+      .gte("created_at", weekAgo.toISOString()),
+    admin
+      .from("link_auto_assign_events")
+      .select("assigned_count")
+      .gte("created_at", today.toISOString()),
   ]);
 
   const members = membersRes.data || [];
@@ -115,9 +124,24 @@ export async function GET(request: NextRequest) {
     byMember.set(row.member_id, a);
   }
 
+  const autoAssignWeekRows = autoAssignWeekRes.error ? [] : autoAssignWeekRes.data || [];
+  const autoAssignTodayRows = autoAssignTodayRes.error ? [] : autoAssignTodayRes.data || [];
+
+  const autoAssignByMember: Record<string, { week: number; lastAt: string | null }> = {};
+  for (const row of autoAssignWeekRows) {
+    const cur = autoAssignByMember[row.member_id] || { week: 0, lastAt: null };
+    cur.week += row.assigned_count;
+    if (!cur.lastAt || row.created_at > cur.lastAt) cur.lastAt = row.created_at;
+    autoAssignByMember[row.member_id] = cur;
+  }
+
+  const autoAssignLinksToday = autoAssignTodayRows.reduce((s, e) => s + e.assigned_count, 0);
+  const autoAssignBatchesToday = autoAssignTodayRows.length;
+
   const teamMembers = members
     .map((m) => {
       const a = byMember.get(m.id) || acc();
+      const auto = autoAssignByMember[m.id] || { week: 0, lastAt: null };
       const productivityScore = a.usedWeek * 10 + a.leadsWeek * 15 + a.usedToday * 5 + a.leadsToday * 8;
       const lastLogin = m.last_login ? new Date(m.last_login) : null;
       const inactive24h = !lastLogin || lastLogin < inactiveCutoff;
@@ -146,6 +170,8 @@ export async function GET(request: NextRequest) {
         needsAttention,
         dailyUsed: a.dailyUsed,
         conversionRate: a.used > 0 ? Math.round((a.leads / a.used) * 100) : 0,
+        autoAssignWeek: auto.week,
+        lastAutoAssignAt: auto.lastAt,
       };
     })
     .sort((a, b) => b.productivityScore - a.productivityScore)
@@ -172,7 +198,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     members: teamMembers,
-    totals,
+    totals: { ...totals, autoAssignLinksToday, autoAssignBatchesToday },
     dayLabels,
     generatedAt: new Date().toISOString(),
   });

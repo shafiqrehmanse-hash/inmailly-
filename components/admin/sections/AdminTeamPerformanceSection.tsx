@@ -30,6 +30,8 @@ type MemberPerformance = {
   needsAttention: boolean;
   dailyUsed: number[];
   conversionRate: number;
+  autoAssignWeek: number;
+  lastAutoAssignAt: string | null;
 };
 
 type PerformanceData = {
@@ -42,6 +44,8 @@ type PerformanceData = {
     leadsToday: number;
     inactive: number;
     needsAttention: number;
+    autoAssignLinksToday?: number;
+    autoAssignBatchesToday?: number;
   };
   dayLabels: string[];
 };
@@ -49,14 +53,21 @@ type PerformanceData = {
 export default function AdminTeamPerformanceSection() {
   const adminKey = useAdminKey();
   const [data, setData] = useState<PerformanceData | null>(null);
+  const [autoFeed, setAutoFeed] = useState<
+    { memberName: string; assigned_count: number; created_at: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"score" | "used" | "claimed" | "leads">("score");
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/admin/team/performance?key=${adminKey}`);
-    const json = await res.json();
-    setData(json);
+    const [perfRes, autoRes] = await Promise.all([
+      fetch(`/api/admin/team/performance?key=${adminKey}`),
+      fetch(`/api/admin/team/auto-assign?key=${adminKey}`),
+    ]);
+    setData(await perfRes.json());
+    const autoJson = await autoRes.json();
+    setAutoFeed(autoJson.recent || []);
     setLoading(false);
   }, [adminKey]);
 
@@ -96,13 +107,34 @@ export default function AdminTeamPerformanceSection() {
       )}
 
       {data && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
           <AdminStatCard value={data.members.length} label="Active team" />
           <AdminStatCard value={data.totals.claimed} label="Claimed now" />
           <AdminStatCard value={data.totals.used} label="Total used" />
           <AdminStatCard value={data.totals.usedToday} label="Used today" />
           <AdminStatCard value={data.totals.leadsToday} label="Leads today" />
+          <AdminStatCard value={data.totals.autoAssignLinksToday ?? 0} label="Auto-assigned today" />
           <AdminStatCard value={data.totals.inactive} label="Inactive 24h" />
+        </div>
+      )}
+
+      {autoFeed.length > 0 && (
+        <div className="lux-card-elite p-4 border-lux-violet/20">
+          <p className="text-[0.65rem] font-bold uppercase tracking-widest text-lux-violet mb-3">
+            Recent self-serve auto-assigns
+          </p>
+          <div className="space-y-2 max-h-40 overflow-y-auto lux-scrollbar-hide">
+            {autoFeed.slice(0, 8).map((e) => (
+              <div
+                key={e.created_at + e.memberName + e.assigned_count}
+                className="flex flex-wrap items-center justify-between gap-2 text-sm border-b border-white/[0.04] pb-2 last:border-0"
+              >
+                <span className="text-lux-text font-medium">{e.memberName}</span>
+                <span className="text-lux-cyan font-semibold tabular-nums">+{e.assigned_count} links</span>
+                <span className="text-[0.65rem] text-lux-muted">{formatRelative(e.created_at)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -170,6 +202,7 @@ export default function AdminTeamPerformanceSection() {
                   <th className="px-4 py-3 font-bold text-center">Leads</th>
                   <th className="px-4 py-3 font-bold text-center">Responses</th>
                   <th className="px-4 py-3 font-bold text-center">Score</th>
+                  <th className="px-4 py-3 font-bold text-center">Auto (7d)</th>
                   <th className="px-4 py-3 font-bold">Last active</th>
                   <th className="px-4 py-3 font-bold">7-day activity</th>
                   <th className="px-4 py-3 font-bold">Status</th>
@@ -211,6 +244,20 @@ export default function AdminTeamPerformanceSection() {
                       <span className="font-bricolage font-extrabold text-lux-cyan tabular-nums">
                         {m.productivityScore}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-center tabular-nums text-lux-violet font-semibold">
+                      {m.autoAssignWeek > 0 ? (
+                        <>
+                          +{m.autoAssignWeek}
+                          {m.lastAutoAssignAt && (
+                            <div className="text-[0.58rem] text-lux-muted font-normal">
+                              {formatRelative(m.lastAutoAssignAt)}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-4 py-3 text-[0.72rem] text-lux-muted whitespace-nowrap">
                       {m.lastLogin ? (

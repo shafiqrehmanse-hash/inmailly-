@@ -19,10 +19,16 @@ type TeamOverview = {
 export default function TeamOverviewPage() {
   const adminKey = useAdminKey();
   const [data, setData] = useState<TeamOverview | null>(null);
+  const [autoToday, setAutoToday] = useState(0);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/admin/team/overview?key=${adminKey}`);
-    setData(await res.json());
+    const [ovRes, autoRes] = await Promise.all([
+      fetch(`/api/admin/team/overview?key=${adminKey}`),
+      fetch(`/api/admin/team/auto-assign?key=${adminKey}`),
+    ]);
+    setData(await ovRes.json());
+    const auto = await autoRes.json();
+    setAutoToday(auto.linksToday || 0);
   }, [adminKey]);
 
   useEffect(() => {
@@ -47,8 +53,18 @@ export default function TeamOverviewPage() {
         <AdminStatCard value={data?.leadsWeek || 0} label="Leads this week" />
         <AdminStatCard value={data?.links?.available || 0} label="Links in pool" />
         <AdminStatCard value={data?.links?.claimed || 0} label="Links claimed" />
-        <AdminStatCard value={data?.links?.usedToday || 0} label="Used today" />
+        <AdminStatCard value={autoToday} label="Auto-assigned today" />
       </div>
+
+      {autoToday > 0 && (
+        <div className="lux-card-elite p-4 border-lux-violet/20 text-sm text-lux-muted">
+          <strong className="text-lux-violet">{autoToday} links</strong> self-assigned by team members today — see{" "}
+          <Link href="/admin/team/performance" className="text-lux-cyan font-semibold hover:underline">
+            Team performance
+          </Link>{" "}
+          for details.
+        </div>
+      )}
 
       {data?.totalFunds !== undefined && data.totalFunds > 0 && (
         <div className="lux-card p-4 flex items-center justify-between">

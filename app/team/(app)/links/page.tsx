@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import LinkCard from "@/components/team/LinkCard";
+import AutoAssignPanel from "@/components/team/AutoAssignPanel";
 import StatCard from "@/components/team/StatCard";
 import Toast, { ToastType } from "@/components/team/Toast";
 import Pagination from "@/components/ui/Pagination";
@@ -254,6 +255,15 @@ export default function LinksPage() {
           mark <strong className="text-lux-text">Used</strong>, then add as a Lead when they reply.
         </p>
       </div>
+
+      <AutoAssignPanel
+        onToast={(message, type) => showToast(message, type || "success")}
+        onAssigned={() => {
+          setTab("mine");
+          setPage(1);
+          refresh("mine", 1);
+        }}
+      />
 
       <div className="lux-card-elite p-4 text-lux-muted text-[0.84rem] leading-relaxed">
         <strong className="text-lux-cyan text-[0.7rem] uppercase tracking-wide block mb-1.5">
