@@ -242,7 +242,6 @@ export default function LeadModal({
       onClose={onClose}
       title={viewMode ? currentLead?.name || "Lead" : "Add Lead"}
       wide
-      panelClassName="team-modal-theme"
     >
       {!viewMode ? (
         <div className="space-y-4">

@@ -107,14 +107,14 @@ export default async function HubPage() {
       <TeamProgressChart leadDates={leadDates} linkDates={linkDates} />
 
       <div className="relative overflow-hidden lux-card p-5 sm:p-6">
-        <div className="text-[0.68rem] font-bold uppercase tracking-widest team-kicker mb-2">
+        <div className="text-[0.68rem] font-bold uppercase tracking-widest text-lux-cyan mb-2">
           Recommended workflow
         </div>
         <p className="text-[0.9rem] text-lux-muted leading-relaxed">
-          <strong className="team-kicker">1.</strong> Work Links →{" "}
-          <strong className="team-kicker">2.</strong> Run outreach →{" "}
-          <strong className="team-kicker">3.</strong> Mark used →{" "}
-          <strong className="team-kicker">4.</strong> Log leads
+          <strong className="text-lux-cyan">1.</strong> Work Links →{" "}
+          <strong className="text-lux-cyan">2.</strong> Run outreach →{" "}
+          <strong className="text-lux-cyan">3.</strong> Mark used →{" "}
+          <strong className="text-lux-cyan">4.</strong> Log leads
         </p>
       </div>
 
@@ -153,16 +153,16 @@ export default async function HubPage() {
           <Link
             key={item.href}
             href={item.href}
-            className={`lux-card p-5 flex flex-col gap-2 min-h-[130px] hover:border-[rgba(229,25,55,0.3)] transition-all group ${
-              item.featured ? "border-[rgba(229,25,55,0.25)]" : ""
+            className={`lux-card p-5 flex flex-col gap-2 min-h-[130px] hover:border-lux-cyan/30 transition-all group ${
+              item.featured ? "border-lux-blue/30" : ""
             }`}
           >
             <div className="text-2xl">{item.icon}</div>
-            <div className="font-bricolage font-extrabold text-lux-text group-hover:text-[#ff8a98] transition-colors">
+            <div className="font-bricolage font-extrabold text-lux-text group-hover:text-lux-cyan transition-colors">
               {item.label}
             </div>
             <p className="text-[0.8rem] text-lux-muted leading-relaxed flex-1">{item.desc}</p>
-            <span className="text-[0.72rem] font-bold text-[#ff6b7a]">{item.go}</span>
+            <span className="text-[0.72rem] font-bold text-lux-cyan">{item.go}</span>
           </Link>
         ))}
       </div>

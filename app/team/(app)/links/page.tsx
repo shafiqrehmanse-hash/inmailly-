@@ -279,8 +279,8 @@ export default function LinksPage() {
             className={cn(
               "px-4 py-2 rounded-full border text-[0.8rem] font-bold transition-colors",
               tab === t.id
-                ? "team-tab-active"
-                : "bg-white/[0.03] text-lux-muted border-white/[0.08] hover:border-[rgba(229,25,55,0.25)]"
+                ? "bg-lux-cyan/15 text-lux-cyan border-lux-cyan/40"
+                : "bg-white/[0.03] text-lux-muted border-white/[0.08] hover:border-lux-cyan/25"
             )}
           >
             {t.id === "pool" && "📥 "}
@@ -334,12 +334,7 @@ export default function LinksPage() {
       )}
 
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          themeClass="team-toast-theme"
-          onDismiss={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
     </div>
   );
