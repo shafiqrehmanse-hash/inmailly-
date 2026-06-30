@@ -96,49 +96,32 @@ export default async function HubPage() {
   return (
     <div className="space-y-7">
       <div>
-        <h1 className="font-bricolage font-extrabold text-[clamp(1.5rem,4vw,2rem)] tracking-tight text-lux-text">
-          Welcome back, {member.name} 👋
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-lux-cyan mb-2">
+          Team workspace
+        </p>
+        <h1 className="font-bricolage font-extrabold text-[clamp(1.6rem,4vw,2.15rem)] tracking-tight">
+          <span className="lux-gradient-text">Welcome back, {member.name}</span>
+          <span className="text-lux-text"> 👋</span>
         </h1>
         <p className="text-lux-muted text-[0.92rem] mt-2 max-w-xl leading-relaxed">
-          Claim links, run outreach, log leads — your daily workflow in one place.
+          Use the <strong className="text-lux-cyan font-semibold">Scripts</strong> bar above to copy
+          outreach copy — then claim links, run outreach, and log leads.
         </p>
       </div>
 
       <TeamProgressChart leadDates={leadDates} linkDates={linkDates} />
 
-      <div className="relative overflow-hidden lux-card p-5 sm:p-6">
+      <div className="lux-card-elite p-5 sm:p-6">
         <div className="text-[0.68rem] font-bold uppercase tracking-widest text-lux-cyan mb-2">
           Recommended workflow
         </div>
         <p className="text-[0.9rem] text-lux-muted leading-relaxed">
-          <strong className="text-lux-cyan">1.</strong> Work Links →{" "}
-          <strong className="text-lux-cyan">2.</strong> Run outreach →{" "}
-          <strong className="text-lux-cyan">3.</strong> Mark used →{" "}
-          <strong className="text-lux-cyan">4.</strong> Log leads
+          <strong className="text-lux-cyan">1.</strong> Copy script →{" "}
+          <strong className="text-lux-cyan">2.</strong> Work Links →{" "}
+          <strong className="text-lux-cyan">3.</strong> Run outreach →{" "}
+          <strong className="text-lux-cyan">4.</strong> Mark used →{" "}
+          <strong className="text-lux-cyan">5.</strong> Log leads
         </p>
-      </div>
-
-      <div className="lux-card p-5 sm:p-6 border-white/[0.08]">
-        <p className="text-[0.68rem] font-bold uppercase tracking-widest text-lux-muted mb-3">
-          Team access
-        </p>
-        <div className="grid sm:grid-cols-2 gap-4 text-sm text-lux-muted leading-relaxed">
-          <div>
-            <p className="font-semibold text-lux-text mb-1">New member signup</p>
-            <p>
-              Admin creates an invite code in <strong className="text-lux-text">Admin → Team</strong>, then share{" "}
-              <code className="text-lux-cyan/90">/team/register</code> with the code.
-            </p>
-          </div>
-          <div>
-            <p className="font-semibold text-lux-text mb-1">Login</p>
-            <p>
-              Outreach workers: <code className="text-lux-cyan/90">/team/login</code>
-              <br />
-              Campaign managers: <code className="text-lux-cyan/90">/campaign/login</code>
-            </p>
-          </div>
-        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -153,8 +136,10 @@ export default async function HubPage() {
           <Link
             key={item.href}
             href={item.href}
-            className={`lux-card p-5 flex flex-col gap-2 min-h-[130px] hover:border-lux-cyan/30 transition-all group ${
-              item.featured ? "border-lux-blue/30" : ""
+            className={`p-5 flex flex-col gap-2 min-h-[130px] transition-all duration-300 group ${
+              item.featured
+                ? "lux-card-featured hover:shadow-[0_0_56px_rgba(34,211,238,0.1)]"
+                : "lux-card-elite hover:border-lux-cyan/30 hover:shadow-[0_0_32px_rgba(34,211,238,0.06)]"
             }`}
           >
             <div className="text-2xl">{item.icon}</div>

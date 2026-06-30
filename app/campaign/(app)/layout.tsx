@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import CampaignSidebar from "@/components/campaign/CampaignSidebar";
+import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import { getCurrentMember } from "@/lib/team";
 import { isCampaignManager } from "@/lib/roles";
 
@@ -13,9 +14,10 @@ export default async function CampaignAppLayout({
   if (!isCampaignManager(member.role)) redirect("/team/hub");
 
   return (
-    <div className="min-h-screen bg-lux-bg text-lux-text">
+    <div className="min-h-screen bg-lux-bg text-lux-text relative">
+      <WorkspaceAmbient />
       <CampaignSidebar member={member} />
-      <div className="lg:ml-[220px] min-h-screen flex flex-col">
+      <div className="lg:ml-[220px] min-h-screen flex flex-col relative">
         <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-[1400px] mx-auto w-full">
           {children}
         </main>

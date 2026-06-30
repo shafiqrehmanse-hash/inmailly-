@@ -8,24 +8,24 @@ import { cn } from "@/lib/utils";
 const PICKER_OPTIONS = [
   {
     key: "followup_accepted",
-    color: "green",
     title: "After connection accepted",
     hint: "First message once they accept your request",
     icon: "🤝",
+    accent: "from-lux-cyan/20 to-lux-blue/10 border-lux-cyan/30",
   },
   {
     key: "followup_learn_more",
-    color: "purple",
     title: 'After "I would like to learn more"',
     hint: "Qualify their interest and offer a call",
     icon: "💬",
+    accent: "from-lux-violet/20 to-lux-blue/10 border-lux-violet/30",
   },
   {
     key: "followup_pricing",
-    color: "gold",
     title: "After someone asks pricing",
     hint: "Share pricing page and optional calendar link",
     icon: "💰",
+    accent: "from-amber-500/15 to-lux-cyan/10 border-amber-400/25",
   },
 ] as const;
 
@@ -60,45 +60,52 @@ export default function DailyScriptBar({
     document.body.style.overflow = "hidden";
   }
 
-  async function copyText(text: string, label: string) {
-    if (!text) return;
-    const ok = await copyToClipboard(text);
-    setToast(ok ? label : "Copy failed — select text manually");
-    setTimeout(() => setToast(""), 2200);
+  async function copyOnly(text: string, successMsg: string) {
+    if (!text?.trim()) return;
+    const ok = await copyToClipboard(text.trim());
+    setToast(ok ? successMsg : "Copy failed — tap the text and copy manually");
+    setTimeout(() => setToast(""), 2400);
   }
 
   const pct = active?.pct ?? 0;
+  const scriptText =
+    active?.tone === "inmail"
+      ? active.body || ""
+      : active?.has_subject && active.body
+        ? active.body
+        : active?.content || "";
 
   return (
     <>
       <div
-        className="sticky top-0 z-40 bg-lux-bg2/95 backdrop-blur-md border-b border-white/[0.08]"
+        className="sticky top-0 z-40 border-b border-white/[0.08] bg-lux-bg/80 backdrop-blur-xl"
         role="region"
         aria-label="Daily outreach scripts"
       >
-        <div className="max-w-[1200px] mx-auto px-4 py-2 flex items-center gap-2 flex-wrap">
-          <span className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-cyan mr-1">
-            Daily scripts
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lux-cyan/35 to-transparent" />
+        <div className="max-w-[1200px] mx-auto px-4 py-2.5 flex items-center gap-2 flex-wrap">
+          <span className="text-[0.62rem] font-bold uppercase tracking-[0.22em] text-lux-cyan mr-0.5 select-none">
+            Scripts
           </span>
           <ScriptBtn
             icon="📝"
             label="Add Note"
-            sub="Connection request"
-            className="from-blue-600/35 to-blue-600/15 border-blue-400/35"
+            sub="Connection"
+            tone="note"
             onClick={() => openScript("add_note")}
           />
           <ScriptBtn
             icon="📨"
             label="InMail"
-            sub="Direct message"
-            className="from-amber-500/40 to-amber-700/20 border-amber-300/40"
+            sub="Subject + body"
+            tone="inmail"
             onClick={() => openScript("inmail")}
           />
           <ScriptBtn
-            icon="↩️"
+            icon="↩"
             label="Follow-ups"
-            sub="After they reply"
-            className="from-ind2/40 to-ind/20 border-indigo-300/40"
+            sub="After reply"
+            tone="followup"
             onClick={() => {
               setPickerOpen(true);
               document.body.style.overflow = "hidden";
@@ -107,186 +114,139 @@ export default function DailyScriptBar({
         </div>
       </div>
 
-      {pickerOpen && (
+      {(pickerOpen || active) && (
         <div
-          className="fixed inset-0 z-[200] bg-ink/70 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
           onClick={(e) => e.target === e.currentTarget && closeAll()}
         >
-          <div className="w-full max-w-md bg-gradient-to-b from-ink2 to-[#1a1030] border border-green-500/25 rounded-[22px] p-5 shadow-2xl">
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <div>
-                <h2 className="font-bricolage font-extrabold text-lg text-white">
-                  Follow-up scripts
-                </h2>
-                <p className="text-sm text-white/70 mt-1">
-                  Pick the situation — then copy the script to paste in LinkedIn.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeAll}
-                className="w-9 h-9 rounded-lg bg-white/10 text-white/60 hover:text-white"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <div className="space-y-2.5">
-              {PICKER_OPTIONS.map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => openScript(opt.key)}
-                  className={cn(
-                    "w-full text-left rounded-xl border p-0 overflow-hidden transition-transform hover:-translate-y-0.5",
-                    opt.color === "green" &&
-                      "bg-gradient-to-br from-[#0d4a28] via-[#16803f] to-[#22a855] border-green-300/50",
-                    opt.color === "purple" &&
-                      "bg-gradient-to-br from-[#3b1f6e] via-[#5a3fa8] to-[#7857c8] border-violet-300/50",
-                    opt.color === "gold" &&
-                      "bg-gradient-to-br from-[#5c4200] via-[#a67c00] to-[#d4a017] border-amber-200/50"
-                  )}
-                >
-                  <span className="flex items-center gap-3.5 p-4">
-                    <span className="w-11 h-11 rounded-xl bg-white/15 border border-white/25 flex items-center justify-center text-xl">
-                      {opt.icon}
-                    </span>
-                    <span>
-                      <strong className="block font-bricolage font-extrabold text-sm text-white">
-                        {opt.title}
-                      </strong>
-                      <span className="block text-xs text-white/90 mt-0.5">{opt.hint}</span>
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-md" />
 
-      {active && (
-        <div
-          className="fixed inset-0 z-[210] bg-ink/70 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={(e) => e.target === e.currentTarget && closeAll()}
-        >
-          <div
-            className={cn(
-              "relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl border overflow-hidden shadow-2xl",
-              active.tone === "inmail" && "bg-gradient-to-b from-[#1a1030] to-[#2d1f4e] border-violet-400/35",
-              active.tone === "followup" && "bg-gradient-to-b from-[#12182a] to-[#1e2a45] border-blue-400/30",
-              active.tone === "note" && "bg-gradient-to-b from-[#0f1a12] to-ink2 border-green-500/25"
-            )}
-          >
-            <div className="p-5 pb-3 flex gap-3 items-start border-b border-white/10">
-              <span className="w-12 h-12 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-2xl">
-                {active.icon}
-              </span>
-              <div className="flex-1 min-w-0">
-                <h2 className="font-bricolage font-extrabold text-lg text-white">
-                  {active.label} — Team copy
-                </h2>
-                <p className="text-xs text-white/45 mt-0.5">
-                  {active.subtitle} · {active.badge}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeAll}
-                className="w-9 h-9 rounded-lg bg-white/10 text-white/60"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 px-5 py-3">
-              {[
-                { label: "Characters", value: active.length },
-                { label: "Remaining", value: active.remaining },
-                { label: "Of limit", value: `${active.pct}%` },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className="bg-white/5 border border-white/10 rounded-xl p-3 text-center"
-                >
-                  <div
+          {pickerOpen && !active && (
+            <div className="relative lux-modal-panel w-full max-w-md p-5 sm:p-6 animate-slide-up">
+              <ModalHeader
+                icon="↩"
+                title="Follow-up scripts"
+                subtitle="Pick a situation — copy only the message text to paste in LinkedIn."
+                onClose={closeAll}
+              />
+              <div className="space-y-2.5 mt-4">
+                {PICKER_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => openScript(opt.key)}
                     className={cn(
-                      "font-bricolage font-extrabold text-xl",
-                      pct > 100 ? "text-red-400" : pct > 85 ? "text-amber-300" : "text-green-400"
+                      "w-full text-left rounded-xl border bg-gradient-to-br p-4 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(34,211,238,0.08)]",
+                      opt.accent
                     )}
                   >
-                    {s.value}
-                  </div>
-                  <div className="text-[0.62rem] font-bold uppercase tracking-wide text-white/35 mt-1">
-                    {s.label}
-                  </div>
-                </div>
-              ))}
+                    <span className="flex items-center gap-3.5">
+                      <span className="w-11 h-11 rounded-xl bg-white/[0.08] border border-white/15 flex items-center justify-center text-xl">
+                        {opt.icon}
+                      </span>
+                      <span>
+                        <strong className="block font-bricolage font-extrabold text-sm text-lux-text">
+                          {opt.title}
+                        </strong>
+                        <span className="block text-xs text-lux-muted mt-0.5">{opt.hint}</span>
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
 
-            <div className="px-5 pb-4 flex-1 min-h-0 overflow-hidden flex flex-col">
-              <div className="flex-1 overflow-auto bg-black/25 border border-white/10 rounded-xl p-4 max-h-72">
+          {active && (
+            <div className="relative lux-modal-panel w-full max-w-lg max-h-[90vh] flex flex-col animate-slide-up">
+              <ModalHeader
+                icon={active.icon}
+                title={active.label}
+                subtitle={`${active.subtitle} · ${active.badge}`}
+                onClose={closeAll}
+              />
+
+              <div className="grid grid-cols-3 gap-2 px-5 py-3 border-b border-white/[0.06]">
+                {[
+                  { label: "Characters", value: active.length },
+                  { label: "Remaining", value: active.remaining },
+                  { label: "Of limit", value: `${active.pct}%` },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="bg-lux-bg2/60 border border-white/[0.06] rounded-xl p-3 text-center"
+                  >
+                    <div
+                      className={cn(
+                        "font-bricolage font-extrabold text-xl tabular-nums",
+                        pct > 100 ? "text-red-400" : pct > 85 ? "text-amber-300" : "text-lux-cyan"
+                      )}
+                    >
+                      {s.value}
+                    </div>
+                    <div className="text-[0.58rem] font-bold uppercase tracking-wide text-lux-muted mt-1">
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3">
                 {active.empty ? (
-                  <p className="text-sm text-white/35 italic">
-                    No script set yet. Ask admin to add today&apos;s copy in Team Admin → Scripts.
+                  <p className="text-sm text-lux-muted italic text-center py-8">
+                    No script set yet. Admin can add copy in Admin → Team → Daily scripts.
                   </p>
                 ) : (
-                  <p className="text-sm text-white/85 whitespace-pre-wrap leading-relaxed">
-                    {active.content}
-                  </p>
+                  <>
+                    {active.has_subject && active.subject && (
+                      <CopyBox
+                        label="Subject"
+                        text={active.subject}
+                        onCopy={() => copyOnly(active.subject, "Subject copied")}
+                      />
+                    )}
+                    <CopyBox
+                      label={active.tone === "inmail" ? "Message" : "Script"}
+                      text={scriptText}
+                      onCopy={() => copyOnly(scriptText, "Message copied — ready to paste")}
+                      tall
+                    />
+                  </>
                 )}
-              </div>
-              <div className="h-1.5 bg-white/10 rounded-full mt-3 overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all",
-                    pct > 100 ? "bg-red-500" : pct > 85 ? "bg-amber-400" : "bg-green-500"
-                  )}
-                  style={{ width: `${Math.min(100, pct)}%` }}
-                />
-              </div>
-            </div>
 
-            <div className="p-5 pt-3 border-t border-white/10 bg-black/20 space-y-2">
-              <div className={cn("grid gap-2", active.has_subject ? "grid-cols-2" : "grid-cols-1")}>
-                {active.has_subject && active.subject && (
-                  <button
-                    type="button"
-                    onClick={() => copyText(active.subject, "Subject copied")}
-                    className="rounded-xl bg-gradient-to-br from-amber-600 to-amber-400 text-ink font-bold text-sm py-3 px-4"
-                  >
-                    Copy subject
-                  </button>
+                {!active.empty && (
+                  <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all bg-gradient-to-r",
+                        pct > 100
+                          ? "from-red-600 to-red-400"
+                          : pct > 85
+                            ? "from-amber-600 to-amber-400"
+                            : "from-lux-blue to-lux-cyan"
+                      )}
+                      style={{ width: `${Math.min(100, pct)}%` }}
+                    />
+                  </div>
                 )}
+              </div>
+
+              <div className="p-5 pt-3 border-t border-white/[0.06] bg-lux-bg2/40">
                 <button
                   type="button"
-                  disabled={active.empty}
-                  onClick={() =>
-                    copyText(
-                      active.has_subject && active.body ? active.body : active.content,
-                      "Script copied — ready to paste"
-                    )
-                  }
-                  className="rounded-xl bg-gradient-to-br from-green-700 to-green-500 text-white font-bold text-sm py-3 px-4 disabled:opacity-40"
+                  onClick={closeAll}
+                  className="w-full py-2.5 rounded-xl lux-btn-ghost text-[0.72rem]"
                 >
-                  Copy script
+                  Close
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={closeAll}
-                className="w-full py-2.5 rounded-xl border border-white/15 text-white/55 text-xs font-semibold uppercase tracking-wide hover:bg-white/10"
-              >
-                Close
-              </button>
             </div>
-          </div>
+          )}
         </div>
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[220] bg-ink2 text-green-400 border border-green-500/40 px-5 py-3 rounded-full text-sm font-bold shadow-xl">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[220] lux-toast-success select-none">
           {toast}
         </div>
       )}
@@ -294,32 +254,123 @@ export default function DailyScriptBar({
   );
 }
 
+function ModalHeader({
+  icon,
+  title,
+  subtitle,
+  onClose,
+}: {
+  icon: string;
+  title: string;
+  subtitle: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="p-5 pb-4 flex gap-3 items-start border-b border-white/[0.06]">
+      <span className="w-12 h-12 rounded-xl bg-gradient-to-br from-lux-cyan/20 to-lux-violet/20 border border-white/10 flex items-center justify-center text-2xl shrink-0">
+        {icon}
+      </span>
+      <div className="flex-1 min-w-0">
+        <h2 className="font-bricolage font-extrabold text-lg text-lux-text">{title}</h2>
+        <p className="text-xs text-lux-muted mt-0.5">{subtitle}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        className="w-9 h-9 rounded-xl border border-white/10 bg-white/[0.05] text-lux-muted hover:text-lux-text hover:border-lux-cyan/30 transition-colors select-none"
+        aria-label="Close"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+function CopyBox({
+  label,
+  text,
+  onCopy,
+  tall,
+}: {
+  label: string;
+  text: string;
+  onCopy: () => void;
+  tall?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-white/[0.08] bg-lux-bg2/50 overflow-hidden">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-white/[0.06] bg-white/[0.03]">
+        <span className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-lux-cyan select-none">
+          {label}
+        </span>
+        <button
+          type="button"
+          onClick={onCopy}
+          onMouseDown={(e) => e.preventDefault()}
+          className="lux-copy-btn select-none"
+          aria-label={`Copy ${label.toLowerCase()}`}
+        >
+          <CopyIcon />
+          <span>Copy</span>
+        </button>
+      </div>
+      <div
+        className={cn(
+          "p-4 text-sm text-lux-text/90 whitespace-pre-wrap leading-relaxed overflow-auto select-text cursor-text",
+          tall ? "max-h-56" : "max-h-24"
+        )}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
 function ScriptBtn({
   icon,
   label,
   sub,
-  className,
+  tone,
   onClick,
 }: {
   icon: string;
   label: string;
   sub: string;
-  className: string;
+  tone: "note" | "inmail" | "followup";
   onClick: () => void;
 }) {
+  const tones = {
+    note: "from-lux-blue/25 to-lux-cyan/10 border-lux-cyan/30 hover:shadow-[0_4px_24px_rgba(34,211,238,0.12)]",
+    inmail: "from-lux-violet/20 to-lux-blue/10 border-lux-violet/30 hover:shadow-[0_4px_24px_rgba(139,92,246,0.12)]",
+    followup: "from-lux-cyan/15 to-lux-blue/8 border-lux-cyan/25 hover:shadow-[0_4px_24px_rgba(34,211,238,0.1)]",
+  };
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-2 px-4 py-2 rounded-[11px] border text-white font-bricolage font-extrabold text-[0.78rem] bg-gradient-to-br transition-transform hover:-translate-y-px",
-        className
+        "inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-white font-bricolage font-extrabold text-[0.76rem] bg-gradient-to-br transition-all hover:-translate-y-px select-none",
+        tones[tone]
       )}
     >
       <span className="text-base">{icon}</span>
       <span className="text-left">
         {label}
-        <span className="block font-sans font-semibold text-[0.58rem] opacity-75">{sub}</span>
+        <span className="block font-sans font-medium text-[0.58rem] text-lux-muted">{sub}</span>
       </span>
     </button>
   );

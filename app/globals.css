@@ -42,16 +42,57 @@ body {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   .lux-btn-primary {
-    @apply inline-flex items-center justify-center px-7 py-3.5 bg-lux-blue text-white text-[0.8rem] font-semibold uppercase tracking-wider hover:bg-lux-blue/90 transition-all duration-300 shadow-[0_0_30px_rgba(37,99,235,0.25)];
+    @apply inline-flex items-center justify-center px-7 py-3.5 bg-gradient-to-r from-lux-blue to-lux-blue/90 text-white text-[0.8rem] font-semibold uppercase tracking-wider hover:from-lux-blue hover:to-lux-cyan/80 transition-all duration-300 shadow-[0_0_30px_rgba(37,99,235,0.25)] hover:shadow-[0_0_40px_rgba(34,211,238,0.2)] hover:-translate-y-px rounded-xl;
   }
   .lux-btn-ghost {
-    @apply inline-flex items-center justify-center px-7 py-3.5 border border-white/[0.12] text-lux-muted text-[0.8rem] font-semibold uppercase tracking-wider hover:border-lux-cyan/40 hover:text-lux-cyan transition-all duration-300;
+    @apply inline-flex items-center justify-center px-7 py-3.5 border border-white/[0.12] text-lux-muted text-[0.8rem] font-semibold uppercase tracking-wider hover:border-lux-cyan/40 hover:text-lux-cyan hover:bg-lux-cyan/[0.04] hover:shadow-[0_0_24px_rgba(34,211,238,0.08)] transition-all duration-300 rounded-xl;
   }
   .lux-input {
-    @apply w-full bg-lux-bg2 border border-white/[0.08] px-4 py-3.5 text-lux-text placeholder:text-lux-muted/50 focus:outline-none focus:border-lux-blue/50 focus:ring-1 focus:ring-lux-blue/30 transition-colors;
+    @apply w-full bg-lux-bg2/80 border border-white/[0.08] px-4 py-3.5 text-lux-text placeholder:text-lux-muted/50 focus:outline-none focus:border-lux-cyan/40 focus:ring-1 focus:ring-lux-cyan/25 focus:shadow-[0_0_20px_rgba(34,211,238,0.08)] transition-all duration-200;
   }
   .lux-card {
     @apply border border-white/[0.08] bg-lux-card/90 backdrop-blur-xl;
+  }
+  .lux-card-elite {
+    @apply relative border border-white/[0.1] bg-gradient-to-b from-lux-card/95 to-lux-bg2/70 backdrop-blur-xl shadow-[0_8px_40px_rgba(0,0,0,0.35)];
+  }
+  .lux-card-elite::before {
+    content: "";
+    @apply absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lux-cyan/35 to-transparent pointer-events-none;
+  }
+  .lux-card-featured {
+    @apply relative border border-lux-cyan/20 bg-gradient-to-br from-lux-card/95 via-lux-bg2/50 to-lux-bg/80 backdrop-blur-xl shadow-[0_0_48px_rgba(34,211,238,0.06)];
+  }
+  .lux-card-featured::before {
+    content: "";
+    @apply absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lux-cyan/50 to-transparent pointer-events-none;
+  }
+  .lux-gradient-text {
+    @apply bg-gradient-to-r from-lux-text via-lux-cyan to-lux-violet bg-clip-text text-transparent;
+  }
+  .lux-btn-glow {
+    @apply hover:shadow-[0_0_40px_rgba(34,211,238,0.22)] hover:-translate-y-px;
+  }
+  .lux-modal-panel {
+    @apply relative border border-white/[0.1] bg-gradient-to-b from-lux-card/95 to-lux-bg2/90 backdrop-blur-2xl rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.55)] overflow-hidden;
+  }
+  .lux-modal-panel::before {
+    content: "";
+    @apply absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lux-cyan/40 to-transparent pointer-events-none;
+  }
+  .lux-copy-btn {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[0.65rem] font-bold uppercase tracking-wider text-lux-cyan border border-lux-cyan/25 bg-lux-cyan/10 hover:bg-lux-cyan/20 hover:border-lux-cyan/40 hover:shadow-[0_0_16px_rgba(34,211,238,0.15)] transition-all;
+  }
+  .lux-toast-success {
+    @apply px-5 py-3 rounded-full text-sm font-semibold lux-card border-lux-cyan/35 text-lux-cyan shadow-[0_8px_32px_rgba(34,211,238,0.12)];
+  }
+  .lux-skeleton {
+    @apply relative overflow-hidden bg-lux-bg2/60 rounded-xl;
+  }
+  .lux-skeleton::after {
+    content: "";
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent;
+    animation: shimmer 1.8s ease-in-out infinite;
   }
   .section-kicker {
     @apply text-[0.65rem] font-bold uppercase tracking-widest text-ind flex items-center gap-2;

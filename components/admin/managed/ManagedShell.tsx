@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import LuxSelect from "@/components/ui/LuxSelect";
+import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import { cn } from "@/lib/utils";
 
 export type ManagedNavItem = {
@@ -44,7 +45,8 @@ export default function ManagedShell({
   }
 
   return (
-    <div className="min-h-screen h-screen bg-lux-bg flex overflow-hidden">
+    <div className="min-h-screen h-screen bg-lux-bg flex overflow-hidden relative">
+      <WorkspaceAmbient />
       <aside className="hidden lg:flex w-[240px] flex-col border-r border-white/[0.06] bg-lux-bg2/80 shrink-0">
         <div className="px-5 py-5 border-b border-white/[0.06]">
           <Link href="/admin" className="text-[0.65rem] text-lux-muted hover:text-lux-cyan uppercase tracking-widest">
@@ -74,7 +76,7 @@ export default function ManagedShell({
                     className={cn(
                       "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors border-l-2",
                       isActive(item)
-                        ? "border-lux-cyan bg-lux-blue/15 text-lux-cyan"
+                        ? "border-lux-cyan bg-gradient-to-r from-lux-cyan/12 via-lux-blue/8 to-transparent text-lux-cyan shadow-[inset_0_1px_0_rgba(34,211,238,0.12)]"
                         : "border-transparent text-lux-muted hover:text-lux-text hover:bg-white/[0.03]"
                     )}
                   >

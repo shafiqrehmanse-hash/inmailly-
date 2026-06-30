@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import { cn } from "@/lib/utils";
 
 const HUB_NAV = [
@@ -27,7 +28,8 @@ export default function AdminHubShell({
   }
 
   return (
-    <div className="min-h-screen h-screen bg-lux-bg flex overflow-hidden">
+    <div className="min-h-screen h-screen bg-lux-bg flex overflow-hidden relative">
+      <WorkspaceAmbient />
       <aside className="hidden lg:flex w-[220px] flex-col border-r border-white/[0.06] bg-lux-bg2/80 shrink-0">
         <div className="px-5 py-6 border-b border-white/[0.06]">
           <div className="flex items-center gap-2.5">

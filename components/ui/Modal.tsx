@@ -32,10 +32,14 @@ export default function Modal({
 
   return createPortal(
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/75 backdrop-blur-md"
+        onClick={onClose}
+        aria-hidden
+      />
       <div
         className={cn(
-          "relative lux-card w-full max-h-[90vh] overflow-y-auto z-10",
+          "relative lux-modal-panel w-full max-h-[90vh] overflow-y-auto z-10 animate-slide-up",
           wide ? "max-w-3xl" : "max-w-lg"
         )}
       >
@@ -44,7 +48,8 @@ export default function Modal({
             <h2 className="font-bricolage font-extrabold text-lg text-lux-text">{title}</h2>
             <button
               onClick={onClose}
-              className="text-lux-muted hover:text-lux-text text-xl leading-none"
+              className="w-9 h-9 rounded-xl border border-white/10 bg-white/[0.05] text-lux-muted hover:text-lux-text hover:border-lux-cyan/30 transition-colors"
+              aria-label="Close"
             >
               ×
             </button>

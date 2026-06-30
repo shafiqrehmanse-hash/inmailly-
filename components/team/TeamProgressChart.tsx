@@ -60,7 +60,7 @@ export default function TeamProgressChart({
   const maxVal = Math.max(1, ...points.map((p) => Math.max(p.leads, p.links)));
 
   return (
-    <div className="lux-card p-5 sm:p-6">
+    <div className="lux-card-elite p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
           <p className="text-[0.65rem] uppercase tracking-[0.2em] text-lux-cyan font-semibold mb-1">
@@ -85,12 +85,12 @@ export default function TeamProgressChart({
           <div key={p.day} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
             <div className="w-full flex items-end justify-center gap-0.5 h-[100px]">
               <div
-                className="w-[42%] bg-lux-blue/80 transition-all"
+                className="w-[42%] rounded-t-sm bg-gradient-to-t from-lux-blue to-lux-cyan/80 transition-all shadow-[0_0_12px_rgba(34,211,238,0.15)]"
                 style={{ height: `${(p.leads / maxVal) * 100}%`, minHeight: p.leads ? 4 : 0 }}
                 title={`${p.leads} leads`}
               />
               <div
-                className="w-[42%] bg-lux-cyan/70 transition-all"
+                className="w-[42%] rounded-t-sm bg-gradient-to-t from-lux-violet/80 to-lux-cyan/60 transition-all shadow-[0_0_12px_rgba(139,92,246,0.12)]"
                 style={{ height: `${(p.links / maxVal) * 100}%`, minHeight: p.links ? 4 : 0 }}
                 title={`${p.links} links used`}
               />

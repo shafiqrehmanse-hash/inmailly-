@@ -133,12 +133,58 @@ export function followupScripts(): Record<string, ScriptPayload> {
   return out;
 }
 
+function buildInmailEntry(
+  db: {
+    inmail?: string;
+    inmail_subject?: string;
+    inmail_body?: string;
+  }
+): ScriptPayload {
+  const meta = {
+    label: "InMail",
+    subtitle: "Sales Navigator direct message",
+    icon: "📨",
+    badge: `Up to ${SCRIPT_LIMITS.inmail.toLocaleString()} chars`,
+    limit: SCRIPT_LIMITS.inmail,
+    tone: "inmail" as const,
+  };
+
+  let subject = db.inmail_subject?.trim() || "";
+  let body = db.inmail_body?.trim() || "";
+  const legacy = db.inmail?.trim() || "";
+
+  if (!subject && !body && legacy) {
+    const parts = parseScriptParts(legacy);
+    subject = parts.subject;
+    body = parts.body;
+  }
+
+  const content = subject ? `Subject: ${subject}\n\n${body}` : body;
+  const length = body.length;
+  const limit = meta.limit;
+
+  return {
+    key: "inmail",
+    ...meta,
+    content,
+    subject,
+    body,
+    has_subject: subject.length > 0,
+    length,
+    remaining: Math.max(0, limit - length),
+    pct: limit > 0 ? Math.min(100, Math.round((length / limit) * 100)) : 0,
+    empty: body.trim() === "" && subject.trim() === "",
+    tone: meta.tone,
+  };
+}
+
 export function buildScriptsPayload(db: {
   add_note?: string;
   inmail?: string;
+  inmail_subject?: string;
+  inmail_body?: string;
 }): Record<string, ScriptPayload> {
   const addNote = db.add_note?.trim() || "";
-  const inmail = db.inmail?.trim() || "";
 
   const core: Record<string, ScriptPayload> = {
     add_note: buildEntry(
@@ -153,18 +199,7 @@ export function buildScriptsPayload(db: {
       },
       addNote
     ),
-    inmail: buildEntry(
-      "inmail",
-      {
-        label: "InMail",
-        subtitle: "Sales Navigator direct message",
-        icon: "📨",
-        badge: `Up to ${SCRIPT_LIMITS.inmail.toLocaleString()} chars`,
-        limit: SCRIPT_LIMITS.inmail,
-        tone: "inmail",
-      },
-      inmail
-    ),
+    inmail: buildInmailEntry(db),
   };
 
   return { ...core, ...followupScripts() };

@@ -19,7 +19,7 @@ type NavItem = {
 const sections: { label: string; tone: string; items: NavItem[] }[] = [
   {
     label: "Main",
-    tone: "text-cyan-400/70",
+    tone: "text-lux-cyan/70",
     items: [
       { id: "hub", href: "/team/hub", label: "Home", icon: "⌂", accent: "cyan" },
       { id: "links", href: "/team/links", label: "Work Links", icon: "⛓", badge: true, accent: "cyan" },
@@ -28,7 +28,7 @@ const sections: { label: string; tone: string; items: NavItem[] }[] = [
   },
   {
     label: "Outreach",
-    tone: "text-violet-400/70",
+    tone: "text-lux-violet/70",
     items: [
       { id: "responses", href: "/team/responses", label: "Responses", icon: "💬", accent: "violet" },
       { id: "referrals", href: "/team/referrals", label: "Earn & Refer", icon: "✦", accent: "amber" },
@@ -42,11 +42,11 @@ const sections: { label: string; tone: string; items: NavItem[] }[] = [
 ];
 
 const activeStyles: Record<NonNullable<NavItem["accent"]>, string> = {
-  cyan: "border-cyan-400 bg-gradient-to-r from-cyan-500/20 via-cyan-500/8 to-transparent text-white shadow-[inset_0_1px_0_rgba(34,211,238,0.15)]",
+  cyan: "border-lux-cyan bg-gradient-to-r from-lux-cyan/18 via-lux-cyan/6 to-transparent text-white shadow-[inset_0_1px_0_rgba(34,211,238,0.18),0_0_20px_rgba(34,211,238,0.08)]",
   violet:
-    "border-violet-400 bg-gradient-to-r from-violet-500/20 via-violet-500/8 to-transparent text-white shadow-[inset_0_1px_0_rgba(167,139,250,0.15)]",
+    "border-lux-violet bg-gradient-to-r from-lux-violet/18 via-lux-violet/6 to-transparent text-white shadow-[inset_0_1px_0_rgba(167,139,250,0.15),0_0_20px_rgba(139,92,246,0.08)]",
   amber:
-    "border-amber-400 bg-gradient-to-r from-amber-500/15 via-amber-500/6 to-transparent text-white shadow-[inset_0_1px_0_rgba(251,191,36,0.12)]",
+    "border-amber-400 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent text-white shadow-[inset_0_1px_0_rgba(251,191,36,0.12)]",
 };
 
 export default function Sidebar({

@@ -23,7 +23,7 @@ export default function Toast({
   return createPortal(
     <div
       className={cn(
-        "fixed bottom-6 right-6 z-[300] px-5 py-3 rounded-xl lux-card text-sm font-medium animate-slide-up",
+        "fixed bottom-6 right-6 z-[300] px-5 py-3 rounded-xl lux-card-elite text-sm font-medium animate-slide-up shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
         type === "success" && "border-lux-cyan/40 text-lux-cyan",
         type === "error" && "border-red-500/40 text-red-400",
         type === "info" && "border-lux-blue/40 text-lux-text"
