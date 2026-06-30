@@ -133,7 +133,7 @@ export default function ClientDashboard({
 
   return (
     <div
-      className={`relative border border-white/[0.08] bg-lux-card/95 backdrop-blur-xl overflow-hidden shadow-[0_0_80px_rgba(37,99,235,0.12)] ${className}`}
+      className={`relative z-10 border border-white/[0.08] bg-lux-card/95 backdrop-blur-xl overflow-visible shadow-[0_0_80px_rgba(37,99,235,0.12)] min-h-[480px] ${className}`}
     >
       <div className="flex items-center justify-between px-4 lg:px-5 py-2.5 border-b border-white/[0.06] bg-lux-bg2/90">
         <div className="flex items-center gap-2">
@@ -340,10 +340,12 @@ function OverviewPanel({
 }) {
   const teamTotal = teamSent ?? sent;
   const sentDiffers = teamTotal > sent;
-  const points = velocity || [20, 35, 30, 55, 45, 70, 60, 85];
+  const points =
+    velocity && velocity.length > 1 ? velocity : [12, 22, 18, 35, 28, 45, 38, 55];
   const pathPoints = points
     .map((p, i) => {
-      const x = (i / (points.length - 1)) * 300;
+      const denom = Math.max(1, points.length - 1);
+      const x = (i / denom) * 300;
       const y = 70 - (p / 100) * 62;
       return `${i === 0 ? "M" : "L"}${x},${y}`;
     })
@@ -414,7 +416,7 @@ function OverviewPanel({
             animate={{ opacity: 1 }}
           />
           <motion.polyline
-            points={points.map((p, i) => `${(i / (points.length - 1)) * 300},${70 - (p / 100) * 62}`).join(" ")}
+            points={points.map((p, i) => `${(i / Math.max(1, points.length - 1)) * 300},${70 - (p / 100) * 62}`).join(" ")}
             fill="none"
             stroke="rgba(34,211,238,0.85)"
             strokeWidth="2"

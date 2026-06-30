@@ -15,13 +15,29 @@ export async function GET() {
     return NextResponse.json({ error: "Could not load your project. Please try again." }, { status: 500 });
   }
 
-  const { data: responses } = await admin
+  const { data: responsesRaw, error: responsesError } = await admin
     .from("leads")
     .select("id, name, company, position, profile_url, status, notes, client_followup_message, client_followup_at, created_at")
     .eq("project_id", project.id)
     .eq("visible_to_client", true)
     .order("created_at", { ascending: false })
     .limit(100);
+
+  let responses = responsesRaw;
+  if (responsesError?.message?.includes("client_followup")) {
+    const { data: fallback } = await admin
+      .from("leads")
+      .select("id, name, company, position, profile_url, status, notes, created_at")
+      .eq("project_id", project.id)
+      .eq("visible_to_client", true)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    responses = (fallback || []).map((r) => ({
+      ...r,
+      client_followup_message: null,
+      client_followup_at: null,
+    }));
+  }
 
   const { data: proofRows } = await admin
     .from("send_proofs")

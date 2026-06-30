@@ -138,7 +138,7 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
     title: [r.position, r.company].filter(Boolean).join(" · ") || r.company || "LinkedIn lead",
     preview: r.notes || "—",
     time: formatDate(r.created_at),
-    status: r.status.replace("_", " "),
+    status: (r.status || "replied").replace("_", " "),
     unread: i < 3 && ["interested", "replied"].includes(r.status),
     profileUrl: r.profile_url?.trim() || null,
     clientFollowupMessage: r.client_followup_message?.trim() || null,

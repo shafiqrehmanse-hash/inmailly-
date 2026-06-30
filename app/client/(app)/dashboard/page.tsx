@@ -103,7 +103,7 @@ export default function ClientDashboardPage() {
           </div>
         </div>
       </header>
-      <main className="max-w-[1400px] mx-auto px-6 lg:px-10 py-8">
+      <main className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-10 py-8">
         {isPreview && !usingDemoFill && (
           <div className="mb-6 lux-card p-4 border-lux-cyan/25">
             <p className="text-[0.65rem] uppercase tracking-widest text-lux-cyan font-semibold mb-1">

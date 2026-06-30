@@ -7,16 +7,44 @@ import {
 import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 
 export function hasRealCampaignData(live: ClientDashboardLiveData) {
-  return live.stats.total > 0 || live.proofs.length > 0;
+  return live.responses.length > 0;
 }
 
-/** Client login dashboard: show rich demo-style UI until team logs real data. */
+/** Client login dashboard: show rich demo-style UI until team logs real responses. */
 export function buildClientDisplayDashboard(live: ClientDashboardLiveData): {
   display: ClientDashboardLiveData;
   usingDemoFill: boolean;
 } {
   if (hasRealCampaignData(live)) {
     return { display: live, usingDemoFill: false };
+  }
+
+  const hasProofs = live.proofs.length > 0;
+
+  if (hasProofs) {
+    const activity = live.latestActivity || {
+      name: DEMO_ACTIVITY[0].name,
+      action: DEMO_ACTIVITY[0].action,
+      time: DEMO_ACTIVITY[0].time,
+    };
+    return {
+      usingDemoFill: true,
+      display: {
+        ...live,
+        stats: {
+          ...live.stats,
+          total: 0,
+          teamResponses: live.stats.teamResponses ?? 0,
+          interested: 0,
+          replied: 0,
+          replyRate: 0,
+        },
+        responses: DEMO_RESPONSES,
+        pipeline: live.pipeline,
+        velocity: live.velocity.length > 1 ? live.velocity : [22, 38, 34, 52, 48, 68, 61, 82],
+        latestActivity: activity,
+      },
+    };
   }
 
   const activity = DEMO_ACTIVITY[0];

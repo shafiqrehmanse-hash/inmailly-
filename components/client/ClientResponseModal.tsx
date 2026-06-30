@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 export type ClientResponseDetail = {
   id: string;
@@ -26,14 +26,20 @@ export default function ClientResponseModal({
   response: ClientResponseDetail | null;
   onClose: () => void;
   onSaved?: (updated: Pick<ClientResponseDetail, "id" | "clientFollowupMessage" | "clientFollowupAt">) => void;
-  /** Demo / preview mode — show UI but don't submit */
   readOnly?: boolean;
 }) {
-  const linkedIn = normalizeLinkedInUrl(response?.profileUrl);
+  const [mounted, setMounted] = useState(false);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  const linkedIn = normalizeLinkedInUrl(response?.profileUrl);
+  const hasExisting = Boolean(response?.clientFollowupMessage);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!response) return;
@@ -41,6 +47,24 @@ export default function ClientResponseModal({
     setError("");
     setSuccess(false);
   }, [response]);
+
+  useEffect(() => {
+    if (!response) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [response]);
+
+  useEffect(() => {
+    if (!response) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [response, onClose]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,16 +98,22 @@ export default function ClientResponseModal({
     setSaving(false);
   }
 
-  const hasExisting = Boolean(response?.clientFollowupMessage);
+  if (!mounted) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {response && (
-        <>
+        <motion.div
+          key={response.id}
+          className="fixed inset-0 z-[200] flex items-start justify-center p-4 pt-[5vh] sm:pt-[8vh]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
           <motion.button
             type="button"
             aria-label="Close"
-            className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/75 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -92,13 +122,14 @@ export default function ClientResponseModal({
           <motion.div
             role="dialog"
             aria-modal="true"
-            className="fixed inset-x-4 top-[6vh] sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[81] w-full sm:max-w-lg max-h-[88vh] overflow-y-auto"
+            className="relative z-10 w-full sm:max-w-lg max-h-[90vh] overflow-y-auto"
             initial={{ opacity: 0, y: 24, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ type: "spring", damping: 26, stiffness: 320 }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="lux-card border-lux-cyan/25 shadow-[0_0_60px_rgba(34,211,238,0.12)] overflow-hidden">
+            <div className="lux-card border-lux-cyan/25 shadow-[0_0_60px_rgba(34,211,238,0.12)] overflow-hidden bg-lux-card">
               <div className="px-5 py-4 border-b border-white/[0.06] bg-lux-bg2/80 flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[0.62rem] uppercase tracking-[0.24em] text-lux-cyan font-semibold mb-1">
@@ -180,9 +211,7 @@ export default function ClientResponseModal({
                       <span>Last sent {formatDate(response.clientFollowupAt)}</span>
                     )}
                   </div>
-                  {error && (
-                    <p className="text-sm text-red-400">{error}</p>
-                  )}
+                  {error && <p className="text-sm text-red-400">{error}</p>}
                   {success && (
                     <p className="text-sm text-emerald-400">
                       Sent to your team — they&apos;ll follow up on LinkedIn shortly.
@@ -209,9 +238,10 @@ export default function ClientResponseModal({
               </div>
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
