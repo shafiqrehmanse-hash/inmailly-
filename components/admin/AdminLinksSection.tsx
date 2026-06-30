@@ -5,10 +5,12 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
 import Pagination from "@/components/ui/Pagination";
+import PageSizeSelect from "@/components/ui/PageSizeSelect";
 import type { OutreachLink, TeamMember } from "@/lib/types";
-import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
+import { DEFAULT_PAGE_SIZE, readStoredPageSize, storePageSize } from "@/lib/pagination";
 import { useFetchGeneration } from "@/lib/use-fetch-generation";
-import { formatDate, truncateUrl } from "@/lib/utils";
+import { useVisitedLinks } from "@/lib/use-visited-links";
+import { cn, formatDate, truncateUrl } from "@/lib/utils";
 
 type LinkRow = OutreachLink & {
   team_members?: { name: string } | { name: string }[] | null;
@@ -40,7 +42,8 @@ export default function AdminLinksSection({
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const pageSize = DEFAULT_PAGE_SIZE;
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const { isVisited, markVisited } = useVisitedLinks();
   const { nextGeneration, isLatest } = useFetchGeneration();
 
   const outreachMembers = members.filter((m) => m.role !== "campaign_manager" && m.is_active);
@@ -87,6 +90,14 @@ export default function AdminLinksSection({
   );
 
   useEffect(() => {
+    setPageSize(readStoredPageSize("inmailly:page-size:admin-links"));
+  }, []);
+
+  useEffect(() => {
+    storePageSize("inmailly:page-size:admin-links", pageSize);
+  }, [pageSize]);
+
+  useEffect(() => {
     load();
   }, [load]);
 
@@ -97,7 +108,12 @@ export default function AdminLinksSection({
   useEffect(() => {
     setPage(1);
     setSelected(new Set());
-  }, [statusFilter, memberFilter]);
+  }, [statusFilter, memberFilter, pageSize]);
+
+  function handlePageSizeChange(size: number) {
+    setPageSize(size);
+    setPage(1);
+  }
 
   function memberName(link: LinkRow) {
     if (!link.member_id) return "—";
@@ -316,6 +332,7 @@ export default function AdminLinksSection({
             ...members.map((m) => ({ value: m.id, label: m.name })),
           ]}
         />
+        <PageSizeSelect value={pageSize} onChange={handlePageSizeChange} />
         <span className="text-xs text-lux-muted ml-auto tabular-nums">
           {total} links · page {page} of {totalPages}
           {statusFilter === "available" && total === 0 && (
@@ -352,8 +369,16 @@ export default function AdminLinksSection({
                     </td>
                   </tr>
                 ) : (
-                  links.map((link) => (
-                    <tr key={link.id} className="border-b border-white/[0.06]">
+                  links.map((link) => {
+                    const opened = isVisited(link.id);
+                    return (
+                    <tr
+                      key={link.id}
+                      className={cn(
+                        "border-b border-white/[0.06]",
+                        opened && "bg-emerald-500/[0.04]"
+                      )}
+                    >
                       <td className="px-3 py-3">
                         <input
                           type="checkbox"
@@ -367,10 +392,17 @@ export default function AdminLinksSection({
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-lux-cyan hover:underline"
+                          onClick={() => markVisited(link.id)}
+                          className={cn(
+                            "hover:underline transition-colors",
+                            opened ? "text-emerald-400/90" : "text-lux-cyan"
+                          )}
                         >
                           {truncateUrl(link.url, 36)}
                         </a>
+                        {opened && (
+                          <span className="block text-[0.65rem] text-emerald-400/70 mt-0.5">Opened</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">{link.smart_label || "—"}</td>
                       <td className="px-4 py-3">
@@ -386,7 +418,8 @@ export default function AdminLinksSection({
                         )}
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>

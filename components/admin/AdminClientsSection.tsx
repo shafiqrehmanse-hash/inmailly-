@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import Pagination from "@/components/ui/Pagination";
+import PageSizeSelect from "@/components/ui/PageSizeSelect";
 import AdminClientEmailPanel from "@/components/admin/AdminClientEmailPanel";
 import type { Client } from "@/lib/types";
-import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
+import { DEFAULT_PAGE_SIZE, readStoredPageSize, storePageSize } from "@/lib/pagination";
 import { formatDate } from "@/lib/utils";
 
 export default function AdminClientsSection({
@@ -35,7 +36,7 @@ export default function AdminClientsSection({
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const pageSize = DEFAULT_PAGE_SIZE;
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [form, setForm] = useState({ name: "", company_name: "", email: "", notes: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", company_name: "", email: "", notes: "" });
@@ -53,8 +54,21 @@ export default function AdminClientsSection({
   }, [adminKey, page, pageSize]);
 
   useEffect(() => {
+    setPageSize(readStoredPageSize("inmailly:page-size:admin-clients"));
+  }, []);
+
+  useEffect(() => {
+    storePageSize("inmailly:page-size:admin-clients", pageSize);
+  }, [pageSize]);
+
+  useEffect(() => {
     load();
   }, [load]);
+
+  function handlePageSizeChange(size: number) {
+    setPageSize(size);
+    setPage(1);
+  }
 
   async function createClient() {
     if (!form.name.trim()) {
@@ -166,9 +180,12 @@ export default function AdminClientsSection({
       </section>
 
       <section>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <p className="admin-section-title">All clients</p>
-          <span className="text-xs text-lux-muted">{total} total · page {page} of {totalPages}</span>
+          <div className="flex items-center gap-3">
+            <PageSizeSelect value={pageSize} onChange={handlePageSizeChange} />
+            <span className="text-xs text-lux-muted tabular-nums">{total} total · page {page} of {totalPages}</span>
+          </div>
         </div>
         <div className="space-y-3">
           {clients.length === 0 ? (

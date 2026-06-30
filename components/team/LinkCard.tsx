@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { categoryIcon } from "@/lib/links";
 import type { OutreachLink } from "@/lib/types";
-import { formatDate, truncateUrl } from "@/lib/utils";
+import { getVisitedLinkIds, markLinkVisited } from "@/lib/visited-links";
+import { cn, formatDate, truncateUrl } from "@/lib/utils";
 
 export default function LinkCard({
   link,
@@ -21,14 +23,46 @@ export default function LinkCard({
   onRelease?: () => void;
   onAddLead?: () => void;
 }) {
+  const [opened, setOpened] = useState(false);
+
+  useEffect(() => {
+    setOpened(getVisitedLinkIds().has(link.id));
+  }, [link.id]);
+
+  function handleOpen() {
+    markLinkVisited(link.id);
+    setOpened(true);
+  }
+
+  const isUsed = link.status === "used" || mode === "used";
+
   return (
-    <div className="lux-card p-4 hover:border-lux-cyan/30 transition-all">
+    <div
+      className={cn(
+        "lux-card p-4 transition-all",
+        isUsed
+          ? "border-white/[0.06] opacity-80"
+          : opened
+            ? "border-emerald-500/35 bg-emerald-500/[0.06]"
+            : "hover:border-lux-cyan/30"
+      )}
+    >
       <div className="flex flex-wrap items-center gap-2 mb-2">
         <span className="text-lg">{categoryIcon(link.category)}</span>
-        <span className="font-bricolage font-bold text-sm text-lux-text">
+        <span
+          className={cn(
+            "font-bricolage font-bold text-sm",
+            opened && !isUsed ? "text-emerald-300/90" : "text-lux-text"
+          )}
+        >
           {link.smart_label || "Link"}
         </span>
         <Badge variant={link.category}>{link.category}</Badge>
+        {opened && !isUsed && (
+          <span className="text-[0.65rem] font-bold uppercase tracking-wide text-emerald-400/90 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full">
+            Opened
+          </span>
+        )}
         {link.batch_name && (
           <span className="text-[0.65rem] text-lux-muted bg-white/[0.04] border border-white/[0.08] px-2 py-0.5 rounded-full">
             {link.batch_name}
@@ -43,7 +77,13 @@ export default function LinkCard({
         href={link.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-sm text-lux-cyan hover:underline block truncate mb-3"
+        onClick={handleOpen}
+        className={cn(
+          "text-sm block truncate mb-3 transition-colors",
+          opened
+            ? "text-emerald-400/85 hover:text-emerald-300"
+            : "text-lux-cyan hover:underline"
+        )}
       >
         {truncateUrl(link.url, 60)}
       </a>
@@ -67,9 +107,9 @@ export default function LinkCard({
       )}
 
       <div className="flex flex-wrap gap-2">
-        <a href={link.url} target="_blank" rel="noopener noreferrer">
-          <Button variant="lux-ghost" size="sm">
-            Open ↗
+        <a href={link.url} target="_blank" rel="noopener noreferrer" onClick={handleOpen}>
+          <Button variant="lux-ghost" size="sm" className={opened ? "text-emerald-400/90" : ""}>
+            {opened ? "Open again ↗" : "Open ↗"}
           </Button>
         </a>
         {mode === "pool" && onClaim && (

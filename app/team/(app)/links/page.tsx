@@ -6,9 +6,10 @@ import LinkCard from "@/components/team/LinkCard";
 import StatCard from "@/components/team/StatCard";
 import Toast, { ToastType } from "@/components/team/Toast";
 import Pagination from "@/components/ui/Pagination";
+import PageSizeSelect from "@/components/ui/PageSizeSelect";
 import { createClient } from "@/lib/supabase/client";
 import type { OutreachLink, TeamMember } from "@/lib/types";
-import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
+import { DEFAULT_PAGE_SIZE, readStoredPageSize, storePageSize } from "@/lib/pagination";
 import { useFetchGeneration } from "@/lib/use-fetch-generation";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +28,7 @@ export default function LinksPage() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const memberRef = useRef<TeamMember | null>(null);
-  const pageSize = DEFAULT_PAGE_SIZE;
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const { nextGeneration, isLatest } = useFetchGeneration();
 
   const showToast = (message: string, type: ToastType = "success") =>
@@ -141,12 +142,25 @@ export default function LinksPage() {
   );
 
   useEffect(() => {
+    setPageSize(readStoredPageSize("inmailly:page-size:team-links"));
+  }, []);
+
+  useEffect(() => {
+    storePageSize("inmailly:page-size:team-links", pageSize);
+  }, [pageSize]);
+
+  useEffect(() => {
     setLoading(true);
     refresh(tab, page);
-  }, [tab, page, refresh]);
+  }, [tab, page, pageSize, refresh]);
 
   function selectTab(next: Tab) {
     setTab(next);
+    setPage(1);
+  }
+
+  function handlePageSizeChange(size: number) {
+    setPageSize(size);
     setPage(1);
   }
 
@@ -245,8 +259,9 @@ export default function LinksPage() {
         <strong className="text-lux-cyan text-[0.7rem] uppercase tracking-wide block mb-1.5">
           ✨ Smart workflow tips
         </strong>
-        Newest links appear first. Use pagination below — 10 links per page. Always mark{" "}
-        <strong className="text-lux-text">Used</strong> after outreach so admin can track progress.
+        Newest links appear first. Choose <strong className="text-lux-text">10 or 25 per page</strong> below.
+        Opened links turn <strong className="text-emerald-400/90">green</strong> so you know what you already visited.
+        Always mark <strong className="text-lux-text">Used</strong> after outreach.
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -274,8 +289,9 @@ export default function LinksPage() {
             {t.label} ({t.count})
           </button>
         ))}
+        <PageSizeSelect value={pageSize} onChange={handlePageSizeChange} className="w-[7.5rem]" />
         <span className="ml-auto text-xs text-lux-muted tabular-nums">
-          Page {page} of {totalPages}
+          Page {page} of {totalPages} · {listTotal} total
         </span>
       </div>
 
