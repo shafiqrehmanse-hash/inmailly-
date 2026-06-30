@@ -60,18 +60,12 @@ function TeamLinksInner() {
         </div>
       )}
 
-      {stats?.memberPills && stats.memberPills.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {stats.memberPills.map((m) => (
-            <span
-              key={m.id}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.08] text-lux-muted"
-            >
-              {m.name}: <span className="text-lux-cyan">{m.claimed} claimed</span> · {m.used} used
-            </span>
-          ))}
-        </div>
-      )}
+      <p className="text-xs text-lux-muted">
+        Per-member claimed & used stats →{" "}
+        <a href="/admin/team/performance" className="text-lux-cyan font-semibold hover:underline">
+          Team performance
+        </a>
+      </p>
 
       <AdminLinksSection
         adminKey={adminKey}

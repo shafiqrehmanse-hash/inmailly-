@@ -59,6 +59,7 @@ export default function TeamOverviewPage() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {[
+          { href: "/admin/team/performance", label: "Team performance", desc: "Leaderboard & activity" },
           { href: "/admin/team/links", label: "Work links", desc: "Import, assign, release" },
           { href: "/admin/team/leads", label: "Outreach leads", desc: "Your marketing pipeline" },
           { href: "/admin/team/responses", label: "Responses", desc: "Reply on behalf of team" },

@@ -5,6 +5,7 @@ export const TEAM_ADMIN_NAV: ManagedNavGroup[] = [
     title: "Dashboard",
     items: [
       { href: "/admin/team", label: "Overview", icon: "◫" },
+      { href: "/admin/team/performance", label: "Team performance", icon: "📊" },
       { href: "/admin/team/leads", label: "Outreach leads", icon: "📋" },
       { href: "/admin/team/responses", label: "Responses", icon: "💬" },
       { href: "/admin/team/members", label: "Team members", icon: "👥" },
