@@ -82,7 +82,7 @@ export default function ResponsesPage() {
                 </p>
               )}
               <Button
-                variant="lux-ghost"
+                variant="lux-cyan"
                 size="sm"
                 className="mt-3"
                 onClick={() => {

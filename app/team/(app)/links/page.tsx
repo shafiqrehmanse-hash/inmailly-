@@ -248,14 +248,14 @@ export default function LinksPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">🔗 Outreach Links</h1>
+        <h1 className="font-bricolage font-extrabold text-2xl lux-gradient-text">🔗 Outreach Links</h1>
         <p className="text-lux-muted text-[0.88rem] mt-2 leading-relaxed max-w-2xl">
           Pick a profile link from the pool admin shared — claim it, run outreach on LinkedIn,
           mark <strong className="text-lux-text">Used</strong>, then add as a Lead when they reply.
         </p>
       </div>
 
-      <div className="lux-card p-4 text-lux-muted text-[0.84rem] leading-relaxed">
+      <div className="lux-card-elite p-4 text-lux-muted text-[0.84rem] leading-relaxed">
         <strong className="text-lux-cyan text-[0.7rem] uppercase tracking-wide block mb-1.5">
           ✨ Smart workflow tips
         </strong>
@@ -277,10 +277,8 @@ export default function LinksPage() {
             key={t.id}
             onClick={() => selectTab(t.id)}
             className={cn(
-              "px-4 py-2 rounded-full border text-[0.8rem] font-bold transition-colors",
-              tab === t.id
-                ? "bg-lux-cyan/15 text-lux-cyan border-lux-cyan/40"
-                : "bg-white/[0.03] text-lux-muted border-white/[0.08] hover:border-lux-cyan/25"
+              "lux-tab-pill",
+              tab === t.id && "lux-tab-pill-active"
             )}
           >
             {t.id === "pool" && "📥 "}
@@ -296,9 +294,13 @@ export default function LinksPage() {
       </div>
 
       {loading ? (
-        <p className="text-lux-muted text-center py-12">Loading links…</p>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="lux-skeleton h-36 rounded-2xl" />
+          ))}
+        </div>
       ) : links.length === 0 ? (
-        <div className="lux-card text-center py-12 px-6 border-dashed border-white/[0.12]">
+        <div className="lux-card-elite text-center py-14 px-6 border-dashed border-lux-cyan/20">
           <div className="text-4xl mb-3">{tab === "pool" ? "📭" : "✨"}</div>
           <p className="text-lux-muted text-sm">
             {tab === "pool"
