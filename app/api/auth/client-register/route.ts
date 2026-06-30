@@ -209,18 +209,27 @@ export async function POST(request: Request) {
       );
     }
 
-    const verify = await sendVerificationEmail(admin, normalizedEmail, password, name.trim());
-    if ("error" in verify) {
-      return NextResponse.json({ error: verify.error }, { status: 400 });
-    }
-
-    void notifyAdminClientSignup({
+    const signupNotify = await notifyAdminClientSignup({
       name: name.trim(),
       email: normalizedEmail,
       company: companyName,
     });
 
-    return NextResponse.json({ success: true, verifyEmail: true });
+    const verify = await sendVerificationEmail(admin, normalizedEmail, password, name.trim());
+    if ("error" in verify) {
+      return NextResponse.json({
+        error: verify.error,
+        partial: true,
+        adminNotified: signupNotify.ok,
+      }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      verifyEmail: true,
+      adminNotified: signupNotify.ok,
+      adminNotifySkipped: signupNotify.skipped === true,
+    });
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

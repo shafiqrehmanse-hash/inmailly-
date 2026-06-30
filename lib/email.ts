@@ -2,7 +2,9 @@ import { Resend } from "resend";
 import {
   adminClientSignupEmail,
   adminContactEmail,
-  clientCampaignLiveEmail,
+  clientCampaignStartedEmail,
+  clientCampaignFinishedEmail,
+  clientCustomEmail,
   clientNewResponseEmail,
   clientSendProofEmail,
   clientVerifyEmail,
@@ -95,13 +97,19 @@ export async function notifyAdminClientSignup(data: {
   email: string;
   company?: string | null;
 }) {
-  return sendEmailSafe({
+  const result = await sendEmailSafe({
     to: getNotifyEmail(),
     replyTo: data.email,
     subject: `New client signup: ${data.name}`,
     html: adminClientSignupEmail(data),
     text: `New client signup: ${data.name} (${data.email})`,
   });
+  if (!result.ok && !result.skipped) {
+    console.error("[email] admin signup notify failed:", result.error);
+  } else if (result.skipped) {
+    console.warn("[email] admin signup notify skipped — RESEND_API_KEY not set");
+  }
+  return result;
 }
 
 export async function sendClientVerificationEmail(data: {
@@ -134,11 +142,49 @@ export async function notifyClientCampaignLive(data: {
   clientName: string;
   projectName: string;
 }) {
+  return notifyClientCampaignStarted(data);
+}
+
+export async function notifyClientCampaignStarted(data: {
+  email: string;
+  clientName: string;
+  projectName: string;
+}) {
   return sendEmailSafe({
     to: data.email,
-    subject: `Campaign live: ${data.projectName}`,
-    html: clientCampaignLiveEmail(data),
-    text: `Your campaign "${data.projectName}" is now live.`,
+    replyTo: getNotifyEmail(),
+    subject: `We've started your campaign: ${data.projectName}`,
+    html: clientCampaignStartedEmail(data),
+    text: `Hi ${data.clientName}, we've started your campaign "${data.projectName}".`,
+  });
+}
+
+export async function notifyClientCampaignFinished(data: {
+  email: string;
+  clientName: string;
+  projectName: string;
+}) {
+  return sendEmailSafe({
+    to: data.email,
+    replyTo: getNotifyEmail(),
+    subject: `Campaign complete: ${data.projectName}`,
+    html: clientCampaignFinishedEmail(data),
+    text: `Hi ${data.clientName}, your campaign "${data.projectName}" has finished.`,
+  });
+}
+
+export async function notifyClientCustom(data: {
+  email: string;
+  clientName: string;
+  subject: string;
+  message: string;
+}) {
+  return sendEmailSafe({
+    to: data.email,
+    replyTo: getNotifyEmail(),
+    subject: data.subject,
+    html: clientCustomEmail(data),
+    text: data.message,
   });
 }
 
@@ -199,6 +245,47 @@ export async function getClientEmailForProject(projectId: string): Promise<{
   }
 
   return { email, clientName, projectName };
+}
+
+export async function getClientEmailById(clientId: string): Promise<{
+  email: string | null;
+  clientName: string;
+  companyName: string | null;
+  latestProject: { id: string; name: string; status: string } | null;
+  projects: { id: string; name: string; status: string }[];
+}> {
+  const admin = createAdminClient();
+  const { data: client } = await admin
+    .from("clients")
+    .select("name, email, user_id, company_name, projects(id, name, status, created_at)")
+    .eq("id", clientId)
+    .maybeSingle();
+
+  if (!client) {
+    return { email: null, clientName: "there", companyName: null, latestProject: null, projects: [] };
+  }
+
+  const projectRows = Array.isArray(client.projects) ? client.projects : [];
+  const sorted = [...projectRows].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+  const projects = sorted.map((p) => ({ id: p.id, name: p.name, status: p.status }));
+  const latestProject = projects[0] || null;
+
+  let email = client.email?.trim() || null;
+  if (!email && client.user_id) {
+    const { data: userData } = await admin.auth.admin.getUserById(client.user_id);
+    email = userData.user?.email || null;
+  }
+
+  const clientName = client.name?.split(" ")[0] || "there";
+  return {
+    email,
+    clientName,
+    companyName: client.company_name,
+    latestProject,
+    projects,
+  };
 }
 
 export async function getProjectManagerEmails(projectId: string): Promise<string[]> {

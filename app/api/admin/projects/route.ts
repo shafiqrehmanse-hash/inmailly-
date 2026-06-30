@@ -243,7 +243,7 @@ export async function PATCH(request: NextRequest) {
     if (newStatus === "active" && existing?.status !== "active") {
       const client = await getClientEmailForProject(project_id);
       if (client.email) {
-        void notifyClientCampaignLive({
+        await notifyClientCampaignLive({
           email: client.email,
           clientName: client.clientName,
           projectName: client.projectName,

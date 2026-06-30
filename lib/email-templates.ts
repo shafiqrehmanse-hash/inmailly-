@@ -169,14 +169,63 @@ export function adminContactEmail(data: {
 }
 
 export function clientCampaignLiveEmail(data: { clientName: string; projectName: string }) {
+  return clientCampaignStartedEmail(data);
+}
+
+export function clientCampaignStartedEmail(data: { clientName: string; projectName: string }) {
   const site = getSiteUrl();
   return emailLayout({
+    preheader: `We've started your InMail campaign: ${data.projectName}`,
     eyebrow: "Campaign update",
-    title: "Your campaign is live",
-    bodyHtml: p(
-      `Hi ${esc(data.clientName)}, <strong style="color:#fafafa;">${esc(data.projectName)}</strong> is now active. Responses and send proofs will appear in your dashboard as your team logs them.`
-    ),
-    cta: { href: `${site}/client/dashboard`, label: "View live dashboard →" },
+    title: "We've started your campaign",
+    bodyHtml: [
+      p(
+        `Hi ${esc(data.clientName)}, great news — your InMailly team has kicked off <strong style="color:#fafafa;">${esc(data.projectName)}</strong>.`
+      ),
+      p(
+        "Outreach is now in progress on verified LinkedIn accounts. As your team sends InMails and logs replies, you'll see live send proofs and responses in your dashboard."
+      ),
+      p("We'll keep you updated as hot leads come in. You can also submit follow-up messages from any response card."),
+    ].join(""),
+    cta: { href: `${site}/client/dashboard`, label: "Open your dashboard →" },
+    footerNote: "Questions? Reply to this email — we're here to help.",
+  });
+}
+
+export function clientCampaignFinishedEmail(data: { clientName: string; projectName: string }) {
+  const site = getSiteUrl();
+  return emailLayout({
+    preheader: `Your campaign ${data.projectName} is complete`,
+    eyebrow: "Campaign complete",
+    title: "Your campaign has finished",
+    bodyHtml: [
+      p(
+        `Hi ${esc(data.clientName)}, <strong style="color:#fafafa;">${esc(data.projectName)}</strong> has wrapped up.`
+      ),
+      p(
+        "Log in to review your final stats — total InMails sent, responses, hot leads, and send proofs are all saved in your dashboard."
+      ),
+      p("Want to run another wave or start a new audience? Reply to this email and we'll plan the next phase with you."),
+    ].join(""),
+    cta: { href: `${site}/client/dashboard`, label: "View final results →" },
+    secondaryCta: { href: `${site}/contact`, label: "Book a follow-up call →" },
+    footerNote: "Reply directly — we'd love to hear how the campaign performed.",
+  });
+}
+
+export function clientCustomEmail(data: { clientName: string; subject: string; message: string }) {
+  const site = getSiteUrl();
+  const body = esc(data.message).replace(/\n/g, "<br/>");
+  return emailLayout({
+    preheader: data.subject,
+    eyebrow: "InMailly",
+    title: data.subject,
+    bodyHtml: [
+      p(`Hi ${esc(data.clientName)},`),
+      `<div style="margin:0 0 14px;padding:16px 18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);font-size:15px;line-height:1.65;color:#e4e4e7;">${body}</div>`,
+    ].join(""),
+    cta: { href: `${site}/client/dashboard`, label: "Open dashboard →" },
+    footerNote: "Reply to this email with your answer — it goes straight to your InMailly team.",
   });
 }
 

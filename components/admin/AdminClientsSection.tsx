@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
+import AdminClientEmailPanel from "@/components/admin/AdminClientEmailPanel";
 import type { Client } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
@@ -302,6 +303,24 @@ export default function AdminClientsSection({
                     {c.notes && (
                       <p className="text-sm text-lux-muted mt-2 line-clamp-2">{c.notes}</p>
                     )}
+                    <AdminClientEmailPanel
+                      client={{
+                        id: c.id,
+                        name: c.name,
+                        email: c.email,
+                        company_name: c.company_name,
+                        latest_project: c.latest_project
+                          ? {
+                              id: c.latest_project.id,
+                              name: c.latest_project.name,
+                              status: c.latest_project.status,
+                            }
+                          : null,
+                      }}
+                      adminKey={adminKey}
+                      onToast={onToast}
+                      onProjectUpdated={load}
+                    />
                   </>
                 )}
               </div>
