@@ -72,12 +72,18 @@ function LoginForm() {
     }
 
     const meData = await meRes.json().catch(() => ({}));
+    if (meData.error === "team_account") {
+      router.push("/team/hub");
+      router.refresh();
+      return;
+    }
+
     await supabase.auth.signOut();
     setLoading(false);
     setError(
-      meData.error === "team_account"
-        ? "This is a team account. Use /team/login instead."
-        : "No client account found. Register at /client/register or run migration 008 in Supabase."
+      meData.error === "no_client"
+        ? "No client account found. Register at /client/register or run migration 008 in Supabase."
+        : "No client account found for this email."
     );
   }
 

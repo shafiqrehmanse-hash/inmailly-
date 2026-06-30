@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { resolveVerifiedHome } from "@/lib/account-redirect";
 
 function isEmailVerified(user: { email_confirmed_at?: string | null }) {
   return Boolean(user.email_confirmed_at);
@@ -63,6 +64,19 @@ export async function middleware(request: NextRequest) {
 
   if (pathname.startsWith("/client/dashboard") && user && !verified) {
     return NextResponse.redirect(new URL("/client/login?verify=required", request.url));
+  }
+
+  if (user && verified) {
+    const isClientArea =
+      pathname.startsWith("/client/dashboard") ||
+      pathname === "/client/login" ||
+      pathname === "/client/register";
+    if (isClientArea) {
+      const home = await resolveVerifiedHome(user.id);
+      if (home && !home.startsWith("/client")) {
+        return NextResponse.redirect(new URL(home, request.url));
+      }
+    }
   }
 
   if (isClientAuth && user && verified) {

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { resolvePostVerifyRedirect } from "@/lib/account-redirect";
 import { handlePostEmailVerification } from "@/lib/post-verification";
 
 export async function GET(request: NextRequest) {
@@ -7,9 +8,9 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type");
-  const next = searchParams.get("next") || "/client/dashboard";
+  const nextParam = searchParams.get("next");
 
-  const response = NextResponse.redirect(new URL(next, origin));
+  let response = NextResponse.redirect(new URL("/team/login?verified=1", origin));
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      const isTeam = next.startsWith("/team");
+      const isTeam = nextParam?.startsWith("/team") || nextParam?.startsWith("/campaign");
       return NextResponse.redirect(
         new URL(`${isTeam ? "/team" : "/client"}/login?error=verify_failed`, origin)
       );
@@ -48,14 +49,14 @@ export async function GET(request: NextRequest) {
       type: type as "signup" | "email" | "recovery" | "email_change" | "magiclink",
     });
     if (error) {
-      const isTeam = next.startsWith("/team");
+      const isTeam = nextParam?.startsWith("/team") || nextParam?.startsWith("/campaign");
       return NextResponse.redirect(
         new URL(`${isTeam ? "/team" : "/client"}/login?error=verify_failed`, origin)
       );
     }
     verified = true;
   } else {
-    return NextResponse.redirect(new URL("/client/login?error=missing_token", origin));
+    return NextResponse.redirect(new URL("/team/login?error=missing_token", origin));
   }
 
   if (verified) {
@@ -68,6 +69,13 @@ export async function GET(request: NextRequest) {
       } catch (e) {
         console.error("[auth/callback] post-verification notify failed:", e);
       }
+
+      const destination = await resolvePostVerifyRedirect(user.id, nextParam);
+      const redirect = NextResponse.redirect(new URL(destination, origin));
+      response.cookies.getAll().forEach((cookie) => {
+        redirect.cookies.set(cookie);
+      });
+      response = redirect;
     }
   }
 

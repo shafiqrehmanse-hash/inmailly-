@@ -12,6 +12,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const verifyRequired = searchParams.get("verify") === "required";
   const verifyFailed = searchParams.get("error") === "verify_failed";
+  const verified = searchParams.get("verified") === "1";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -104,6 +105,11 @@ function LoginForm() {
       {verifyFailed && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm mb-5">
           Verification link expired or invalid. Request a new one below.
+        </div>
+      )}
+      {verified && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-xl px-4 py-3 text-sm mb-5">
+          Email verified — you&apos;re in. Log in to open your workspace.
         </div>
       )}
       {info && (
