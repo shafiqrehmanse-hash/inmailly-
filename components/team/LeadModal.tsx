@@ -37,7 +37,7 @@ export default function LeadModal({
   open,
   onClose,
   mode,
-  memberId,
+  memberId: _memberId,
   memberName,
   lead,
   prefill,
@@ -57,6 +57,7 @@ export default function LeadModal({
   adminKey?: string;
 }) {
   const supabase = useMemo(() => createClient(), []);
+  void _memberId;
   const [form, setForm] = useState<LeadForm>({
     name: "",
     profile_url: "",
@@ -69,6 +70,7 @@ export default function LeadModal({
   });
   const [messages, setMessages] = useState<LeadMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [msgContent, setMsgContent] = useState("");
   const [msgType, setMsgType] = useState<LeadMessage["msg_type"]>("message");
   const [msgSender, setMsgSender] = useState<"team" | "lead">("team");
@@ -113,10 +115,12 @@ export default function LeadModal({
   async function handleAddLead() {
     if (!form.name.trim()) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("leads")
-      .insert({
-        member_id: memberId,
+    setSaveError(null);
+
+    const res = await fetch("/api/team/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         name: form.name.trim(),
         profile_url: form.profile_url || null,
         company: form.company || null,
@@ -126,12 +130,16 @@ export default function LeadModal({
         notes: form.notes || null,
         status: form.status,
         source_link_id: (form as LeadForm & { source_link_id?: string }).source_link_id || null,
-      })
-      .select()
-      .single();
+      }),
+    });
+    const data = await res.json();
     setLoading(false);
-    if (!error && data) {
-      setCurrentLead(data as Lead);
+    if (!res.ok) {
+      setSaveError(data.error || "Could not save lead");
+      return;
+    }
+    if (data.lead) {
+      setCurrentLead(data.lead as Lead);
       onSaved?.();
       onClose();
     }
@@ -268,6 +276,7 @@ export default function LeadModal({
           <Button variant="lux" onClick={handleAddLead} disabled={loading} className="w-full">
             {loading ? "Saving…" : "Add Lead"}
           </Button>
+          {saveError && <p className="text-sm text-red-400">{saveError}</p>}
         </div>
       ) : currentLead ? (
         <div className="space-y-6">

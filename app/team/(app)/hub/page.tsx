@@ -33,7 +33,8 @@ export default async function HubPage() {
     supabase
       .from("leads")
       .select("*", { count: "exact", head: true })
-      .eq("member_id", member.id),
+      .eq("member_id", member.id)
+      .is("project_id", null),
     supabase
       .from("referrals")
       .select("*", { count: "exact", head: true })

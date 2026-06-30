@@ -52,56 +52,30 @@ function LeadsWorkspaceInner() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const load = useCallback(async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data: m } = await supabase.from("team_members").select("*").eq("user_id", user.id).single();
-    if (!m) return;
-    setMember(m as TeamMember);
+    const res = await fetch("/api/team/leads");
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 401) {
+        setFormMsg({
+          text: data.error || "Please log in and verify your email to manage leads.",
+          type: "error",
+        });
+      }
+      return;
+    }
+
+    const m = data.member as TeamMember;
+    const rows = (data.leads as Lead[]) || [];
+    setMember(m);
 
     const today = new Date().toISOString().slice(0, 10);
-    const [allLeads, todayC, intC, repC, closedC] = await Promise.all([
-      supabase
-        .from("leads")
-        .select("*")
-        .eq("member_id", m.id)
-        .is("project_id", null)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("member_id", m.id)
-        .is("project_id", null)
-        .gte("created_at", `${today}T00:00:00`),
-      supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("member_id", m.id)
-        .is("project_id", null)
-        .eq("status", "interested"),
-      supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("member_id", m.id)
-        .is("project_id", null)
-        .eq("status", "replied"),
-      supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("member_id", m.id)
-        .is("project_id", null)
-        .eq("deal_closed", true),
-    ]);
-
-    const rows = (allLeads.data as Lead[]) || [];
     setLeads(rows);
     setStats({
       total: rows.length,
-      today: todayC.count || 0,
-      interested: intC.count || 0,
-      replied: repC.count || 0,
-      closed: closedC.count || 0,
+      today: rows.filter((l) => l.created_at >= `${today}T00:00:00`).length,
+      interested: rows.filter((l) => l.status === "interested").length,
+      replied: rows.filter((l) => l.status === "replied").length,
+      closed: rows.filter((l) => l.deal_closed).length,
     });
 
     const leadIds = rows.map((l) => l.id);
@@ -126,7 +100,7 @@ function LeadsWorkspaceInner() {
       const { first, last } = splitName(name || "");
       setForm((f) => ({
         ...f,
-        first_name: first,
+        first_name: first || name || "",
         last_name: last,
         profile_url: url || f.profile_url,
       }));
@@ -140,27 +114,33 @@ function LeadsWorkspaceInner() {
 
   async function addLead(e: React.FormEvent) {
     e.preventDefault();
-    if (!member) return;
-    if (!form.first_name.trim() || !form.last_name.trim()) {
-      setFormMsg({ text: "First name and last name are required.", type: "error" });
+    if (!member) {
+      setFormMsg({ text: "Your team profile is loading — wait a moment and try again.", type: "error" });
+      return;
+    }
+    const name = [form.first_name.trim(), form.last_name.trim()].filter(Boolean).join(" ");
+    if (!name) {
+      setFormMsg({ text: "Enter at least a first name (or full name).", type: "error" });
       return;
     }
     setSaving(true);
-    const name = `${form.first_name.trim()} ${form.last_name.trim()}`;
-    const { error } = await supabase.from("leads").insert({
-      member_id: member.id,
-      project_id: null,
-      visible_to_client: false,
-      name,
-      profile_url: form.profile_url || null,
-      email: form.email || null,
-      phone: form.phone || null,
-      status: form.status,
-      notes: form.notes || null,
+    const res = await fetch("/api/team/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        first_name: form.first_name,
+        last_name: form.last_name,
+        profile_url: form.profile_url,
+        email: form.email,
+        phone: form.phone,
+        status: form.status,
+        notes: form.notes,
+      }),
     });
+    const data = await res.json();
     setSaving(false);
-    if (error) {
-      setFormMsg({ text: error.message, type: "error" });
+    if (!res.ok) {
+      setFormMsg({ text: data.error || "Could not save lead", type: "error" });
       return;
     }
     setFormMsg({ text: "Lead added successfully!", type: "success" });
@@ -178,7 +158,7 @@ function LeadsWorkspaceInner() {
 
   async function deleteLead(id: string) {
     if (!confirm("Delete this lead permanently?")) return;
-    await supabase.from("leads").delete().eq("id", id);
+    await fetch(`/api/team/leads?id=${id}`, { method: "DELETE" });
     load();
   }
 
@@ -246,7 +226,7 @@ function LeadsWorkspaceInner() {
           <form onSubmit={addLead} className="space-y-3.5">
             <div className="grid grid-cols-2 gap-2.5">
               <Field label="First name *" value={form.first_name} onChange={(v) => setForm({ ...form, first_name: v })} />
-              <Field label="Last name *" value={form.last_name} onChange={(v) => setForm({ ...form, last_name: v })} />
+              <Field label="Last name" value={form.last_name} onChange={(v) => setForm({ ...form, last_name: v })} />
             </div>
             <Field label="LinkedIn profile link" value={form.profile_url} onChange={(v) => setForm({ ...form, profile_url: v })} />
             <div className="grid grid-cols-2 gap-2.5">
