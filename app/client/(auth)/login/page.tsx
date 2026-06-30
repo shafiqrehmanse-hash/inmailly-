@@ -57,6 +57,13 @@ function LoginForm() {
       return;
     }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user?.email_confirmed_at) {
+      void fetch("/api/auth/complete-verification", { method: "POST" });
+    }
+
     const meRes = await fetch("/api/client/me");
     if (meRes.ok) {
       router.push("/client/dashboard");

@@ -65,6 +65,9 @@ function LoginForm() {
       setError("Please verify your email before logging in. Resend the link below.");
       return;
     }
+    if (user?.email_confirmed_at) {
+      void fetch("/api/auth/complete-verification", { method: "POST" });
+    }
     if (user) {
       const { data: member } = await supabase
         .from("team_members")

@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (user?.email_confirmed_at) {
+    if (user) {
       try {
         await handlePostEmailVerification(user);
       } catch (e) {
