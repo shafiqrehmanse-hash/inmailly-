@@ -42,8 +42,8 @@ export default function ScriptsWorkspace({ scripts }: { scripts: ScriptPayload[]
       </div>
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[220] lux-toast-success select-none">
-          {toast}
+        <div className="lux-toast-anchor" role="status">
+          <div className="lux-toast-success text-center select-none">{toast}</div>
         </div>
       )}
     </div>

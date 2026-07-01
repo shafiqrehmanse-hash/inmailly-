@@ -108,7 +108,9 @@ export default function LeaderWorkspace({ leaderName }: { leaderName: string }) 
   return (
     <div className="space-y-8">
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 lux-toast-success">{toast}</div>
+        <div className="lux-toast-anchor" role="status">
+          <div className="lux-toast-success text-center">{toast}</div>
+        </div>
       )}
 
       <div>

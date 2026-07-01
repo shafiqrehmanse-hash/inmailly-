@@ -137,7 +137,9 @@ export default function TeamBroadcastComposer({
   return (
     <div className="space-y-6">
       {toast && mode === "leader" && (
-        <div className="fixed bottom-6 right-6 z-50 lux-toast-success">{toast}</div>
+        <div className="lux-toast-anchor" role="status">
+          <div className="lux-toast-success text-center">{toast}</div>
+        </div>
       )}
 
       <div className="grid lg:grid-cols-[minmax(0,380px)_1fr] gap-6 items-start">

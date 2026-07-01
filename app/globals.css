@@ -101,6 +101,9 @@ body {
   .lux-toast-success {
     @apply px-5 py-3 rounded-full text-sm font-semibold lux-card border-lux-cyan/35 text-lux-cyan shadow-[0_8px_32px_rgba(34,211,238,0.12)];
   }
+  .lux-toast-anchor {
+    @apply fixed top-6 left-1/2 -translate-x-1/2 z-[9999] max-w-[min(92vw,28rem)] pointer-events-none animate-slide-down;
+  }
   .lux-skeleton {
     @apply relative overflow-hidden bg-lux-bg2/60 rounded-xl;
   }
