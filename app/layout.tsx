@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   title: "InMailly — Premium LinkedIn Outreach Infrastructure",
   description:
     "Reach thousands of decision makers on LinkedIn without enterprise InMail pricing. Human-operated outreach at scale.",
+  icons: {
+    icon: [{ url: "/icon.png", type: "image/png" }],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({
