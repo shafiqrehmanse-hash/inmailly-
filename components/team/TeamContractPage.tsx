@@ -117,7 +117,24 @@ export default function TeamContractPage() {
         <Link href="/team/hub" className="text-xs text-lux-cyan hover:underline">
           ← Back to home
         </Link>
-        <h1 className="font-bricolage font-extrabold text-2xl text-lux-text mt-2">Your employment offer</h1>
+        {pending && (
+          <div className="mt-4 lux-card-elite p-4 border-red-500/45 bg-red-500/[0.08] flex items-start gap-3">
+            <span
+              className="admin-alert-dot shrink-0 mt-1.5 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_16px_rgba(239,68,68,0.95)]"
+              aria-hidden
+            />
+            <div>
+              <p className="text-sm font-extrabold uppercase tracking-wide text-red-400">
+                Signature required
+              </p>
+              <p className="text-sm font-bold text-red-300 mt-1 leading-relaxed">
+                Read the full agreement below, tick the confirmation box, draw your signature, and submit.
+                This is <span className="text-red-200">not permanent employment</span>.
+              </p>
+            </div>
+          </div>
+        )}
+        <h1 className="font-bricolage font-extrabold text-2xl text-lux-text mt-4">Your employment offer</h1>
         <p className="text-sm text-lux-muted mt-1">Review all terms, sign electronically, and keep a copy.</p>
       </div>
 
@@ -161,11 +178,21 @@ export default function TeamContractPage() {
       {pending && form && (
         <>
           <div className="lux-card-elite p-5 sm:p-6 space-y-3 max-h-[50vh] overflow-y-auto lux-scrollbar-hide text-sm text-lux-muted leading-relaxed">
-            <p className="text-[0.62rem] font-bold uppercase tracking-widest text-amber-400 sticky top-0 bg-inherit py-1">
+            <p className="text-[0.62rem] font-extrabold uppercase tracking-widest text-red-400 sticky top-0 bg-inherit py-1 flex items-center gap-2">
+              <span
+                className="admin-alert-dot w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.85)]"
+                aria-hidden
+              />
               Read before signing — ref {pending.reference_no}
             </p>
             {paragraphs.map((para, i) => {
               if (!para) return <div key={i} className="h-2" />;
+              const isLegal =
+                para === "Nature of engagement — important" ||
+                para === "Electronic acceptance" ||
+                (para.startsWith("•") &&
+                  (paragraphs.slice(0, i).includes("Nature of engagement — important") ||
+                    paragraphs.slice(0, i).includes("Electronic acceptance")));
               if (
                 para === "Position details" ||
                 para === "Compensation" ||
@@ -176,7 +203,11 @@ export default function TeamContractPage() {
                 return (
                   <p
                     key={i}
-                    className={`text-xs font-bold uppercase tracking-wide ${para.includes("Nature") ? "text-amber-400" : "text-lux-violet"}`}
+                    className={`text-xs font-bold uppercase tracking-wide ${
+                      para.includes("Nature") || para === "Electronic acceptance"
+                        ? "text-red-400 font-extrabold"
+                        : "text-lux-violet"
+                    }`}
                   >
                     {para}
                   </p>
@@ -189,36 +220,49 @@ export default function TeamContractPage() {
                   </p>
                 );
               }
+              if (isLegal) {
+                return (
+                  <p key={i} className="text-sm font-bold text-red-400/95 leading-relaxed">
+                    {para}
+                  </p>
+                );
+              }
               return <p key={i}>{para}</p>;
             })}
           </div>
 
-          <div className="lux-card-elite p-5 border-amber-500/25 bg-amber-500/[0.04]">
+          <div className="lux-card-elite p-5 border-red-500/40 bg-red-500/[0.06]">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                className="mt-1"
+                className="mt-1 accent-red-500"
               />
-              <span className="text-sm text-lux-muted leading-relaxed">
-                I confirm this is <strong className="text-amber-300">not permanent employment</strong>. I understand
+              <span className="text-sm font-bold text-red-400 leading-relaxed">
+                I confirm this is <span className="text-red-300">NOT permanent employment</span>. I understand
                 InMailly may end work at any time based on performance, revenue, and business outcomes, and that only
-                approved earnings up to termination date may be payable.
+                approved earnings up to termination date may be payable. I agree to sign electronically.
               </span>
             </label>
           </div>
 
-          <div className="lux-card-elite p-5 space-y-3">
-            <p className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-cyan">Your signature</p>
+          <div className="lux-card-elite p-5 space-y-3 border-red-500/25">
+            <p className="text-[0.62rem] font-extrabold uppercase tracking-widest text-red-400 flex items-center gap-2">
+              <span
+                className="admin-alert-dot w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.85)]"
+                aria-hidden
+              />
+              Your signature — required
+            </p>
             <SignaturePad onChange={setSignature} />
             <Button
               variant="lux-cyan"
-              className="w-full"
+              className="w-full !bg-red-600 hover:!bg-red-500 !border-red-500/50 font-bold"
               onClick={submitSign}
               disabled={busy || !agreed || !signature}
             >
-              {busy ? "Submitting…" : "Sign & submit to InMailly"}
+              {busy ? "Submitting…" : "Sign & submit agreement"}
             </Button>
           </div>
         </>

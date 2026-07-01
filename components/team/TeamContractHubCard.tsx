@@ -23,13 +23,23 @@ export default function TeamContractHubCard() {
     return (
       <Link
         href="/team/contract"
-        className="lux-card-elite p-5 block border-amber-500/40 bg-gradient-to-r from-amber-500/[0.1] to-lux-cyan/[0.05] hover:border-amber-400/50 transition-colors"
+        className="lux-card-elite p-5 block border-red-500/50 bg-gradient-to-r from-red-500/[0.12] via-red-600/[0.06] to-transparent hover:border-red-400/70 transition-colors shadow-[0_0_28px_rgba(239,68,68,0.15)]"
       >
-        <p className="text-[0.62rem] font-bold uppercase tracking-widest text-amber-400 mb-1">
-          Action required
+        <div className="flex items-center gap-2.5 mb-2">
+          <span
+            className="admin-alert-dot shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_14px_rgba(239,68,68,0.9)]"
+            aria-hidden
+          />
+          <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-red-400">
+            Action required — sign agreement
+          </p>
+        </div>
+        <p className="font-bricolage font-extrabold text-red-300 text-lg leading-snug">
+          Sign your employment offer now →
         </p>
-        <p className="font-bricolage font-bold text-lux-text">Sign your employment offer →</p>
-        <p className="text-xs text-lux-muted mt-1">Review terms and submit your signature in the dashboard.</p>
+        <p className="text-sm font-bold text-red-400/90 mt-2 leading-relaxed">
+          You must review all terms and submit your signature before you can continue working.
+        </p>
       </Link>
     );
   }
