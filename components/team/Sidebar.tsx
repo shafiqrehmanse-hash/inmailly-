@@ -64,9 +64,6 @@ export default function Sidebar({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const leader = isTeamLeader(member.role);
-  const mainSections = sections.filter((s) => s.label !== "Account");
-  const accountSections = sections.filter((s) => s.label === "Account");
-
   const leaderNav = leader
     ? [
         {
@@ -78,28 +75,28 @@ export default function Sidebar({
         },
       ]
     : [];
-  const workersNav = leader
-    ? accountSections
-    : [
-        ...mainSections,
-        ...(teamLeaders.length > 0
-          ? [
-              {
-                label: "Team leaders",
-                tone: "text-amber-400/70",
-                items: teamLeaders.map((l) => ({
-                  id: `leader-${l.id}`,
-                  href: `mailto:${l.email}`,
-                  label: l.name,
-                  icon: "★",
-                  accent: "amber" as const,
-                  external: true,
-                })),
-              },
-            ]
-          : []),
-        ...accountSections,
-      ];
+
+  const otherLeaders = teamLeaders.filter((l) => l.id !== member.id);
+  const workersNav = [
+    ...sections.filter((s) => s.label !== "Account"),
+    ...(!leader && otherLeaders.length > 0
+      ? [
+          {
+            label: "Team leaders",
+            tone: "text-amber-400/70",
+            items: otherLeaders.map((l) => ({
+              id: `leader-${l.id}`,
+              href: `mailto:${l.email}`,
+              label: l.name,
+              icon: "★",
+              accent: "amber" as const,
+              external: true,
+            })),
+          },
+        ]
+      : []),
+    ...sections.filter((s) => s.label === "Account"),
+  ];
   const navSections = [...leaderNav, ...workersNav];
   const initials = member.name
     .split(" ")

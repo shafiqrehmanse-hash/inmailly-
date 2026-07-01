@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import StatCard from "@/components/team/StatCard";
 import TeamLeadersCard from "@/components/team/TeamLeadersCard";
 import TeamProgressChart from "@/components/team/TeamProgressChart";
@@ -11,7 +10,6 @@ import { getCurrentMember } from "@/lib/team";
 export default async function HubPage() {
   const member = await getCurrentMember();
   if (!member) return null;
-  if (isTeamLeader(member.role)) redirect("/team/leader");
 
   const admin = createAdminClient();
   const { data: teamLeaders } = await admin
@@ -20,6 +18,10 @@ export default async function HubPage() {
     .eq("role", "team_leader")
     .eq("is_active", true)
     .order("name");
+
+  const visibleLeaders = isTeamLeader(member.role)
+    ? []
+    : (teamLeaders || []).filter((l) => l.id !== member.id);
 
   const supabase = createServerSupabase();
   const fourteenDaysAgo = new Date();
@@ -129,7 +131,7 @@ export default async function HubPage() {
         </p>
       </div>
 
-      <TeamLeadersCard leaders={teamLeaders || []} />
+      <TeamLeadersCard leaders={visibleLeaders} />
 
       <div className="grid sm:grid-cols-2 gap-3.5">
         {quickNav.map((item) => (

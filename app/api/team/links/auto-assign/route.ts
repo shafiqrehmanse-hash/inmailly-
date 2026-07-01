@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { LINK_AUTO_ASSIGN, autoAssignBlockMessage } from "@/lib/link-auto-assign";
-import { isCampaignManager, isTeamLeader } from "@/lib/roles";
+import { isCampaignManager } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/team";
@@ -10,9 +10,6 @@ export async function GET() {
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (isCampaignManager(member.role)) {
     return NextResponse.json({ error: "Not available for campaign managers" }, { status: 403 });
-  }
-  if (isTeamLeader(member.role)) {
-    return NextResponse.json({ error: "Not available for team leaders" }, { status: 403 });
   }
 
   const supabase = createServerSupabase();
@@ -51,9 +48,6 @@ export async function POST() {
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (isCampaignManager(member.role)) {
     return NextResponse.json({ error: "Not available for campaign managers" }, { status: 403 });
-  }
-  if (isTeamLeader(member.role)) {
-    return NextResponse.json({ error: "Not available for team leaders" }, { status: 403 });
   }
 
   const admin = createAdminClient();

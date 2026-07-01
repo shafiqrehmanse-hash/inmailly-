@@ -11,14 +11,13 @@ export function isTeamLeader(role: string): boolean {
   return role === "team_leader";
 }
 
-/** Outreach workers only — not team leaders or campaign managers. */
+/** Outreach team (includes team leaders who also work links). Excludes campaign managers only. */
 export function isOutreachWorker(role: string): boolean {
-  return role === "member" || role === "senior" || role === "admin";
+  return role === "member" || role === "senior" || role === "admin" || role === "team_leader";
 }
 
 export function getLoginRedirect(role: MemberRole): string {
   if (isCampaignManager(role)) return "/campaign/hub";
-  if (isTeamLeader(role)) return "/team/leader";
   return "/team/hub";
 }
 

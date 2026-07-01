@@ -6,7 +6,6 @@ import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
 import type { TeamMember } from "@/lib/types";
-import { isOutreachWorker } from "@/lib/roles";
 import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 
 type MemberRow = TeamMember & { active_links: number; leads_count: number; deals_closed?: number };
@@ -125,7 +124,7 @@ export default function AdminTeamMembersSection() {
     showToast("Invite code generated from label");
   }
 
-  const outreachMembers = members.filter((m) => m.is_active && isOutreachWorker(m.role));
+  const outreachMembers = members.filter((m) => m.is_active && m.role !== "campaign_manager");
   const totalLeads = outreachMembers.reduce((s, m) => s + m.leads_count, 0);
   const totalDeals = outreachMembers.reduce((s, m) => s + (m.deals_closed || 0), 0);
   const totalLinks = outreachMembers.reduce((s, m) => s + m.active_links, 0);
