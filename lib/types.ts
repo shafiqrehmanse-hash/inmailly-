@@ -10,6 +10,7 @@ export type TeamMember = {
   invite_code: string | null;
   joined_at: string;
   last_login: string | null;
+  live_chat_agent?: boolean;
 };
 
 export type OutreachLink = {

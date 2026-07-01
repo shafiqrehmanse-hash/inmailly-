@@ -21,6 +21,11 @@ export function isLeaderAssignableWorker(role: string): boolean {
   return role === "member" || role === "senior" || role === "admin";
 }
 
+/** Outreach members who can open live chat (not team leaders or campaign managers). */
+export function canOpenLiveChat(role: string): boolean {
+  return isLeaderAssignableWorker(role);
+}
+
 export function getLoginRedirect(role: MemberRole): string {
   if (isCampaignManager(role)) return "/campaign/hub";
   return "/team/hub";

@@ -16,6 +16,7 @@ export const TEAM_ADMIN_NAV: ManagedNavGroup[] = [
     items: [
       { href: "/admin/team/email", label: "Email team", icon: "✉" },
       { href: "/admin/team/tasks", label: "Team tasks", icon: "☑" },
+      { href: "/admin/team/live-chat", label: "Live chat", icon: "💬" },
     ],
   },
   {

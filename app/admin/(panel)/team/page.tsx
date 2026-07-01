@@ -79,6 +79,7 @@ export default function TeamOverviewPage() {
           { href: "/admin/team/links", label: "Work links", desc: "Import, assign, release" },
           { href: "/admin/team/leads", label: "Outreach leads", desc: "Your marketing pipeline" },
           { href: "/admin/team/responses", label: "Responses", desc: "Reply on behalf of team" },
+          { href: "/admin/team/live-chat", label: "Live chat", desc: "Assign leaders & monitor chats" },
           { href: "/admin/team/members", label: "Team members", desc: "Roles & invites" },
           { href: "/admin/team/offer-letter", label: "Offer letters", desc: "PDF offers — salary & commission" },
           { href: "/admin/team/email", label: "Email team", desc: "Broadcast with signature" },
