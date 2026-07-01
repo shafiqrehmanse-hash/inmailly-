@@ -43,7 +43,7 @@ export default async function TeamAppLayout({
 
   const chatMode = canOpenLiveChat(member.role)
     ? ("member" as const)
-    : isTeamLeader(member.role) && liveChatAgent
+    : isTeamLeader(member.role)
       ? ("leader" as const)
       : null;
 
@@ -60,7 +60,7 @@ export default async function TeamAppLayout({
       <div className="lg:ml-[240px] min-h-screen flex flex-col relative">
         <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-[1200px] mx-auto w-full">{children}</main>
       </div>
-      {chatMode && <LiveChatWidget mode={chatMode} />}
+      {chatMode && <LiveChatWidget mode={chatMode} agentEnabled={liveChatAgent} />}
     </div>
   );
 }

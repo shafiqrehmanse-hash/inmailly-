@@ -16,6 +16,7 @@ type NavItem = {
   badge?: boolean;
   accent?: "cyan" | "violet" | "amber";
   external?: boolean;
+  openChat?: boolean;
 };
 
 const sections: { label: string; tone: string; items: NavItem[] }[] = [
@@ -75,6 +76,9 @@ export default function Sidebar({
           tone: "text-amber-400/70",
           items: [
             { id: "leader", href: "/team/leader", label: "Leader workspace", icon: "★", accent: "amber" as const },
+            ...(showLiveChat
+              ? [{ id: "leader-livechat", href: "/team/leader", label: liveChatLabel, icon: "💬", accent: "amber" as const, openChat: true as const }]
+              : []),
           ],
         },
       ]
@@ -139,7 +143,7 @@ export default function Sidebar({
       </div>
 
       <nav className="flex-1 py-3 overflow-y-auto px-2 min-h-0 lux-scrollbar-hide">
-        {showLiveChat && (
+        {showLiveChat && !leader && (
           <div className="mb-3 px-2">
             <button
               type="button"
@@ -183,6 +187,20 @@ export default function Sidebar({
                   )}
                 </>
               );
+              if ("openChat" in item && item.openChat) {
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      openLiveChat();
+                    }}
+                    className={cn(className, "w-full text-left")}
+                  >
+                    {inner}
+                  </button>
+                );
+              }
               if ("external" in item && item.external) {
                 return (
                   <a

@@ -8,7 +8,16 @@ import { cn } from "@/lib/utils";
 
 type Mode = "member" | "leader";
 
-export default function LiveChatWidget({ mode }: { mode: Mode }) {
+const PANEL_SHELL =
+  "!fixed z-[9999] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-lux-card/95 to-lux-bg2/90 backdrop-blur-xl shadow-[0_12px_48px_rgba(0,0,0,0.55)] inset-x-4 bottom-[5.5rem] max-h-[min(72vh,560px)] sm:inset-x-auto sm:right-6 sm:left-auto sm:bottom-24 sm:w-[min(100vw-3rem,400px)]";
+
+export default function LiveChatWidget({
+  mode,
+  agentEnabled = true,
+}: {
+  mode: Mode;
+  agentEnabled?: boolean;
+}) {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -23,6 +32,8 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
   const [leaderMessages, setLeaderMessages] = useState<LiveChatMessage[]>([]);
 
   const leaderSnapshot = useRef<string>("");
+  const openRef = useRef(false);
+  openRef.current = open;
 
   const refreshMember = useCallback(async () => {
     const res = await fetch("/api/team/live-chat");
@@ -34,6 +45,7 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
   }, []);
 
   const refreshLeaderThreads = useCallback(async () => {
+    if (!agentEnabled) return;
     const res = await fetch("/api/team/leader/live-chat");
     if (!res.ok) return;
     const data = await res.json();
@@ -44,7 +56,7 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
       .map((t) => `${t.id}:${t.last_message_at}:${t.assigned_leaders?.length ?? 0}`)
       .join("|");
     const prev = leaderSnapshot.current;
-    if (prev && prev !== snapshot && !open) {
+    if (prev && prev !== snapshot && !openRef.current) {
       const newest = list[0];
       if (newest?.member?.name) {
         setToast(`Live chat — ${newest.member.name} needs help`);
@@ -57,7 +69,7 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
       if (prev && list.some((t) => t.id === prev)) return prev;
       return list[0]?.id ?? null;
     });
-  }, [open]);
+  }, [agentEnabled]);
 
   const loadLeaderMessages = useCallback(async (threadId: string) => {
     const res = await fetch(`/api/team/leader/live-chat/${threadId}`);
@@ -75,10 +87,31 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
     setOpen(true);
     setToast(null);
     setUnread(0);
+    try {
+      sessionStorage.setItem("inmailly-live-chat-open", "1");
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function closeWidget() {
+    setOpen(false);
+    try {
+      sessionStorage.removeItem("inmailly-live-chat-open");
+    } catch {
+      /* ignore */
+    }
   }
 
   useEffect(() => {
     setMounted(true);
+    try {
+      if (sessionStorage.getItem("inmailly-live-chat-open") === "1") {
+        setOpen(true);
+      }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
@@ -88,11 +121,11 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
   }, []);
 
   useEffect(() => {
-    if (mode !== "leader") return;
+    if (mode !== "leader" || !agentEnabled) return;
     refreshLeaderThreads();
     const id = setInterval(refreshLeaderThreads, 5000);
     return () => clearInterval(id);
-  }, [mode, refreshLeaderThreads]);
+  }, [mode, agentEnabled, refreshLeaderThreads]);
 
   useEffect(() => {
     if (mode === "member") refreshMember();
@@ -141,12 +174,21 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
   if (!mounted) return null;
 
   const ui = (
-    <>
+    <div className="pointer-events-none">
+      {open && (
+        <button
+          type="button"
+          aria-label="Close chat backdrop"
+          className="!fixed inset-0 z-[9998] bg-black/40 pointer-events-auto sm:bg-transparent sm:pointer-events-none"
+          onClick={closeWidget}
+        />
+      )}
+
       {toast && !open && (
         <button
           type="button"
           onClick={openWidget}
-          className="fixed bottom-[5.5rem] right-5 z-[9999] max-w-[min(100vw-2.5rem,320px)] lux-card-elite px-4 py-3 border-lux-cyan/40 shadow-[0_8px_32px_rgba(34,211,238,0.2)] text-left"
+          className={cn(PANEL_SHELL, "pointer-events-auto h-auto p-4 border-lux-cyan/40 text-left")}
         >
           <p className="text-sm font-semibold text-lux-cyan">{toast}</p>
           <p className="text-xs text-lux-muted mt-0.5">Tap to open live chat</p>
@@ -154,12 +196,8 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
       )}
 
       {open && (
-        <div
-          className="fixed bottom-[5.5rem] right-5 z-[9999] w-[min(calc(100vw-2rem),380px)] lux-card-elite border-lux-violet/30 shadow-[0_12px_48px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col"
-          role="dialog"
-          aria-label="Live chat"
-        >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-gradient-to-r from-lux-violet/10 to-lux-cyan/5">
+        <div className={cn(PANEL_SHELL, "pointer-events-auto min-h-[320px]")} role="dialog" aria-label="Live chat">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-gradient-to-r from-lux-violet/10 to-lux-cyan/5 shrink-0">
             <div>
               <p className="text-sm font-semibold text-white">
                 {mode === "member" ? "Team support" : "Live chat inbox"}
@@ -168,7 +206,7 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
             </div>
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={closeWidget}
               className="w-8 h-8 rounded-lg text-lux-muted hover:text-white hover:bg-white/10 transition-colors"
               aria-label="Close chat"
             >
@@ -179,7 +217,7 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
           {mode === "member" && (
             <>
               {!memberLoading && assigned === 0 && (
-                <div className="px-4 py-2.5 border-b border-amber-500/25 bg-amber-500/10 flex items-center gap-2.5">
+                <div className="px-4 py-2.5 border-b border-amber-500/25 bg-amber-500/10 flex items-center gap-2.5 shrink-0">
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400" />
@@ -188,34 +226,48 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
                 </div>
               )}
               {!memberLoading && assigned > 0 && (
-                <div className="px-4 py-2 border-b border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-200">
+                <div className="px-4 py-2 border-b border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-200 shrink-0">
                   Connected with {thread?.assigned_leaders?.map((l) => l.name).join(", ")}
                 </div>
               )}
               {memberLoading ? (
-                <p className="text-sm text-lux-muted p-6 text-center">Opening chat…</p>
+                <p className="text-sm text-lux-muted p-6 text-center flex-1">Opening chat…</p>
               ) : (
-                <LiveChatPanel
-                  compact
-                  messages={messages}
-                  onSend={sendMember}
-                  onRefresh={refreshMember}
-                  disabled={thread?.status !== "open"}
-                  emptyHint="Describe your issue — we are finding a team leader for you."
-                />
+                <div className="flex-1 min-h-0 flex flex-col">
+                  <LiveChatPanel
+                    compact
+                    messages={messages}
+                    onSend={sendMember}
+                    onRefresh={refreshMember}
+                    disabled={thread?.status !== "open"}
+                    emptyHint="Describe your issue — we are finding a team leader for you."
+                  />
+                </div>
               )}
             </>
           )}
 
           {mode === "leader" && (
             <>
-              {threads.length === 0 ? (
-                <p className="text-sm text-lux-muted p-6 text-center">
-                  No chats assigned yet. Admin will route member requests to you.
-                </p>
+              {!agentEnabled ? (
+                <div className="p-6 text-center space-y-2 flex-1">
+                  <p className="text-sm text-amber-200 font-medium">Chat agent access not enabled yet</p>
+                  <p className="text-xs text-lux-muted leading-relaxed">
+                    Ask admin to open <strong className="text-lux-text">Admin → Live chat</strong> and check your
+                    name under <strong className="text-lux-text">Chat agents</strong>.
+                  </p>
+                </div>
+              ) : threads.length === 0 ? (
+                <div className="p-6 text-center flex-1 flex flex-col justify-center gap-2">
+                  <p className="text-sm text-lux-text font-medium">No chats assigned yet</p>
+                  <p className="text-xs text-lux-muted leading-relaxed">
+                    When an outreach member opens live chat, admin assigns their thread to you — it will appear here
+                    instantly.
+                  </p>
+                </div>
               ) : (
                 <>
-                  <div className="flex gap-1 p-2 border-b border-white/[0.06] overflow-x-auto lux-scrollbar-hide">
+                  <div className="flex gap-1 p-2 border-b border-white/[0.06] overflow-x-auto lux-scrollbar-hide shrink-0">
                     {threads.map((t) => (
                       <button
                         key={t.id}
@@ -232,16 +284,18 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
                       </button>
                     ))}
                   </div>
-                  <LiveChatPanel
-                    compact
-                    messages={leaderMessages}
-                    onSend={sendLeader}
-                    onRefresh={refreshLeaderChat}
-                    ownSenderTypes={["leader"]}
-                    disabled={!selected || selected.status !== "open"}
-                    placeholder="Reply to member…"
-                    emptyHint="Member is waiting — say hello."
-                  />
+                  <div className="flex-1 min-h-0 flex flex-col">
+                    <LiveChatPanel
+                      compact
+                      messages={leaderMessages}
+                      onSend={sendLeader}
+                      onRefresh={refreshLeaderChat}
+                      ownSenderTypes={["leader"]}
+                      disabled={!selected || selected.status !== "open"}
+                      placeholder="Reply to member…"
+                      emptyHint="Member is waiting — say hello."
+                    />
+                  </div>
                 </>
               )}
             </>
@@ -249,17 +303,17 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
         </div>
       )}
 
-      <div className="fixed bottom-5 right-5 z-[9999]">
+      <div className="!fixed z-[9999] bottom-5 right-5 sm:bottom-6 sm:right-6 pointer-events-auto">
         <button
           type="button"
-          onClick={() => (open ? setOpen(false) : openWidget())}
+          onClick={openWidget}
           className={cn(
             "relative w-14 h-14 rounded-full flex items-center justify-center text-xl",
             "bg-gradient-to-br from-lux-cyan to-lux-violet text-white",
             "shadow-[0_4px_24px_rgba(34,211,238,0.45)] ring-2 ring-lux-cyan/40",
             "hover:scale-105 active:scale-95 transition-transform"
           )}
-          aria-label={open ? "Close live chat" : "Open live chat"}
+          aria-label="Open live chat"
           title="Live chat (team only)"
         >
           💬
@@ -270,7 +324,7 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
           )}
         </button>
       </div>
-    </>
+    </div>
   );
 
   return createPortal(ui, document.body);

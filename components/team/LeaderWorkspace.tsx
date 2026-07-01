@@ -8,6 +8,7 @@ import LeaderAssignTasks from "@/components/team/leader/LeaderAssignTasks";
 import LeaderFocusPanel from "@/components/team/leader/LeaderFocusPanel";
 import LeaderInviteFunnel from "@/components/team/leader/LeaderInviteFunnel";
 import LeaderResponsesFeed from "@/components/team/leader/LeaderResponsesFeed";
+import LeaderLiveChatInbox from "@/components/team/LeaderLiveChatInbox";
 import LeaderTeamPulse from "@/components/team/leader/LeaderTeamPulse";
 import LeaderWeeklyGoal from "@/components/team/leader/LeaderWeeklyGoal";
 import type { TeamTask } from "@/lib/types";
@@ -21,19 +22,26 @@ type InviteCode = {
   created_at: string;
 };
 
-type TabId = "tasks" | "team" | "assign" | "invites" | "email" | "focus" | "responses";
+type TabId = "tasks" | "team" | "assign" | "invites" | "email" | "focus" | "responses" | "livechat";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "tasks", label: "My tasks" },
   { id: "team", label: "Team pulse" },
   { id: "assign", label: "Assign tasks" },
+  { id: "livechat", label: "Live chat" },
   { id: "invites", label: "Invites" },
   { id: "email", label: "Email team" },
   { id: "focus", label: "Focus banner" },
   { id: "responses", label: "Responses" },
 ];
 
-export default function LeaderWorkspace({ leaderName }: { leaderName: string }) {
+export default function LeaderWorkspace({
+  leaderName,
+  liveChatAgent = false,
+}: {
+  leaderName: string;
+  liveChatAgent?: boolean;
+}) {
   const [tasks, setTasks] = useState<TeamTask[]>([]);
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [inviteLabel, setInviteLabel] = useState("");
@@ -162,6 +170,8 @@ export default function LeaderWorkspace({ leaderName }: { leaderName: string }) 
       {tab === "focus" && <LeaderFocusPanel />}
 
       {tab === "responses" && <LeaderResponsesFeed />}
+
+      {tab === "livechat" && <LeaderLiveChatInbox agentEnabled={liveChatAgent} />}
 
       {tab === "tasks" && (
         <section className="space-y-4">

@@ -7,7 +7,7 @@ import type { LiveChatMessage, LiveChatThread } from "@/lib/live-chat";
 import { formatRelative } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
-export default function LeaderLiveChatInbox() {
+export default function LeaderLiveChatInbox({ agentEnabled = true }: { agentEnabled?: boolean }) {
   const [threads, setThreads] = useState<LiveChatThread[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<LiveChatMessage[]>([]);
@@ -15,6 +15,10 @@ export default function LeaderLiveChatInbox() {
   const [error, setError] = useState("");
 
   const loadThreads = useCallback(async () => {
+    if (!agentEnabled) {
+      setLoading(false);
+      return;
+    }
     const res = await fetch("/api/team/leader/live-chat");
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -29,7 +33,7 @@ export default function LeaderLiveChatInbox() {
       if (prev && list.some((t) => t.id === prev)) return prev;
       return list[0]?.id ?? null;
     });
-  }, []);
+  }, [agentEnabled]);
 
   const loadMessages = useCallback(async (threadId: string) => {
     const res = await fetch(`/api/team/leader/live-chat/${threadId}`);
@@ -68,6 +72,26 @@ export default function LeaderLiveChatInbox() {
   }
 
   const selected = threads.find((t) => t.id === selectedId) ?? null;
+
+  if (!agentEnabled) {
+    return (
+      <div className="lux-card-elite p-8 border-amber-500/25 text-center space-y-3">
+        <p className="text-lg font-semibold text-amber-200">Live chat — waiting for admin access</p>
+        <p className="text-sm text-lux-muted max-w-md mx-auto leading-relaxed">
+          Admin must enable you as a <strong className="text-lux-text">chat agent</strong> under{" "}
+          <strong className="text-lux-text">Admin → Live chat</strong>. After that, chats assigned to you will show
+          here and in the 💬 bubble bottom-right.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event("inmailly:open-live-chat"))}
+          className="text-sm text-lux-cyan hover:underline mt-2"
+        >
+          Open live chat panel →
+        </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return <p className="text-sm text-lux-muted">Loading inbox…</p>;

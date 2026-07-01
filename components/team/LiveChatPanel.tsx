@@ -52,7 +52,7 @@ export default function LiveChatPanel({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden ${compact ? "h-[340px] border-0 rounded-none bg-transparent" : "lux-card-elite h-[min(70vh,560px)] border-lux-violet/20"}`}
+      className={`flex flex-col overflow-hidden min-h-0 ${compact ? "flex-1 h-full min-h-[240px]" : "lux-card-elite h-[min(70vh,560px)] border-lux-violet/20"}`}
     >
       <div className="flex-1 overflow-y-auto p-4 space-y-3 lux-scrollbar-hide">
         {messages.length === 0 && (
