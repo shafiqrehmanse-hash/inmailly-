@@ -28,6 +28,7 @@ export const TEAM_ADMIN_NAV: ManagedNavGroup[] = [
   {
     title: "Finance",
     items: [
+      { href: "/admin/team/offer-letter", label: "Offer letters", icon: "📄" },
       { href: "/admin/team/referrals", label: "Referrals", icon: "✦" },
       { href: "/admin/team/funds", label: "Funds & invite", icon: "💰" },
     ],

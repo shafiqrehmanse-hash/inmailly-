@@ -25,6 +25,7 @@ type SendEmailInput = {
   html: string;
   text?: string;
   replyTo?: string;
+  attachments?: { filename: string; content: Buffer | string }[];
 };
 
 let resendClient: Resend | null = null;
@@ -62,6 +63,13 @@ export async function sendEmail(input: SendEmailInput) {
     html: input.html,
     text: input.text,
     replyTo: input.replyTo,
+    attachments: input.attachments?.map((a) => ({
+      filename: a.filename,
+      content:
+        typeof a.content === "string"
+          ? a.content
+          : Buffer.from(a.content).toString("base64"),
+    })),
   });
 
   if (error) {
