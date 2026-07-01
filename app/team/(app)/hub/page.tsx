@@ -1,7 +1,11 @@
 import Link from "next/link";
 import StatCard from "@/components/team/StatCard";
+import HubFocusBanner from "@/components/team/HubFocusBanner";
+import LeaderTeamSnapshot from "@/components/team/LeaderTeamSnapshot";
 import TeamLeadersCard from "@/components/team/TeamLeadersCard";
 import TeamProgressChart from "@/components/team/TeamProgressChart";
+import TeamWeeklyGoalBar from "@/components/team/TeamWeeklyGoalBar";
+import WorkerTasksCard from "@/components/team/WorkerTasksCard";
 import { isTeamLeader } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -130,6 +134,14 @@ export default async function HubPage() {
           then jump into a section below.
         </p>
       </div>
+
+      <HubFocusBanner />
+
+      <TeamWeeklyGoalBar />
+
+      {isTeamLeader(member.role) && <LeaderTeamSnapshot />}
+
+      {!isTeamLeader(member.role) && <WorkerTasksCard />}
 
       <TeamLeadersCard leaders={visibleLeaders} />
 

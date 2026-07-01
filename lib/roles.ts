@@ -16,6 +16,11 @@ export function isOutreachWorker(role: string): boolean {
   return role === "member" || role === "senior" || role === "admin" || role === "team_leader";
 }
 
+/** Workers a team leader can assign tasks to (not other leaders). */
+export function isLeaderAssignableWorker(role: string): boolean {
+  return role === "member" || role === "senior" || role === "admin";
+}
+
 export function getLoginRedirect(role: MemberRole): string {
   if (isCampaignManager(role)) return "/campaign/hub";
   return "/team/hub";

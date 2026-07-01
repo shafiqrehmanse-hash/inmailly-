@@ -164,3 +164,20 @@ export type TeamTask = {
   created_at: string;
   updated_at: string;
 };
+
+export type TeamFocusAnnouncement = {
+  id: string;
+  message: string;
+  created_by_member_id: string;
+  expires_at: string;
+  created_at: string;
+};
+
+export type TeamWeeklyGoal = {
+  id: string;
+  week_start: string;
+  target_leads: number;
+  set_by: string;
+  created_at: string;
+  updated_at: string;
+};

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import AdminStatCard from "@/components/admin/AdminStatCard";
+import AdminWeeklyGoalCard from "@/components/admin/AdminWeeklyGoalCard";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { useAdminKey } from "@/lib/admin-context";
@@ -105,6 +106,8 @@ export default function AdminTeamPerformanceSection() {
           24h+, stale claimed links (48h+), or many claims with zero completions.
         </div>
       )}
+
+      <AdminWeeklyGoalCard />
 
       {data && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">

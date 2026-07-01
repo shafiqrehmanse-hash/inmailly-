@@ -4,6 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
 import TeamBroadcastComposer from "@/components/team/TeamBroadcastComposer";
+import LeaderAssignTasks from "@/components/team/leader/LeaderAssignTasks";
+import LeaderFocusPanel from "@/components/team/leader/LeaderFocusPanel";
+import LeaderInviteFunnel from "@/components/team/leader/LeaderInviteFunnel";
+import LeaderResponsesFeed from "@/components/team/leader/LeaderResponsesFeed";
+import LeaderTeamPulse from "@/components/team/leader/LeaderTeamPulse";
+import LeaderWeeklyGoal from "@/components/team/leader/LeaderWeeklyGoal";
 import type { TeamTask } from "@/lib/types";
 
 type InviteCode = {
@@ -14,6 +20,18 @@ type InviteCode = {
   used_count: number;
   created_at: string;
 };
+
+type TabId = "tasks" | "team" | "assign" | "invites" | "email" | "focus" | "responses";
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "tasks", label: "My tasks" },
+  { id: "team", label: "Team pulse" },
+  { id: "assign", label: "Assign tasks" },
+  { id: "invites", label: "Invites" },
+  { id: "email", label: "Email team" },
+  { id: "focus", label: "Focus banner" },
+  { id: "responses", label: "Responses" },
+];
 
 export default function LeaderWorkspace({ leaderName }: { leaderName: string }) {
   const [tasks, setTasks] = useState<TeamTask[]>([]);
@@ -26,13 +44,13 @@ export default function LeaderWorkspace({ leaderName }: { leaderName: string }) 
   const [sendNote, setSendNote] = useState("");
   const [toast, setToast] = useState("");
   const [siteOrigin, setSiteOrigin] = useState("");
-  const [tab, setTab] = useState<"tasks" | "invites" | "email">("tasks");
+  const [tab, setTab] = useState<TabId>("team");
 
   useEffect(() => {
     setSiteOrigin(window.location.origin);
   }, []);
 
-  const load = useCallback(async () => {
+  const loadCore = useCallback(async () => {
     const [tasksRes, codesRes] = await Promise.all([
       fetch("/api/team/leader/tasks"),
       fetch("/api/team/leader/invite-codes"),
@@ -47,8 +65,8 @@ export default function LeaderWorkspace({ leaderName }: { leaderName: string }) 
   }, [sendCode]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    loadCore();
+  }, [loadCore]);
 
   function flash(msg: string) {
     setToast(msg);
@@ -71,7 +89,7 @@ export default function LeaderWorkspace({ leaderName }: { leaderName: string }) 
       setGeneratedCode(data.code?.code || "");
       setSendCode(data.code?.code || "");
       flash("Invite code created");
-      load();
+      loadCore();
     }
   }
 
@@ -96,7 +114,7 @@ export default function LeaderWorkspace({ leaderName }: { leaderName: string }) 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ taskId, status }),
     });
-    load();
+    loadCore();
   }
 
   const statusOptions = [
@@ -116,18 +134,14 @@ export default function LeaderWorkspace({ leaderName }: { leaderName: string }) 
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">Leader workspace</h1>
         <p className="text-sm text-lux-muted mt-1">
-          Tasks, invite codes, and custom emails to your team — with your name in the signature.
+          Team pulse, tasks, invites, nudges, focus banner, and team email — all in one place.
         </p>
       </div>
 
+      <LeaderWeeklyGoal />
+
       <div className="flex flex-wrap gap-2">
-        {(
-          [
-            { id: "tasks" as const, label: "My tasks" },
-            { id: "invites" as const, label: "Invites" },
-            { id: "email" as const, label: "Email team" },
-          ] as const
-        ).map((t) => (
+        {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -139,13 +153,21 @@ export default function LeaderWorkspace({ leaderName }: { leaderName: string }) 
         ))}
       </div>
 
-      {tab === "email" && (
-        <TeamBroadcastComposer mode="leader" leaderName={leaderName} />
-      )}
+      {tab === "team" && <LeaderTeamPulse />}
+
+      {tab === "assign" && <LeaderAssignTasks />}
+
+      {tab === "email" && <TeamBroadcastComposer mode="leader" leaderName={leaderName} />}
+
+      {tab === "focus" && <LeaderFocusPanel />}
+
+      {tab === "responses" && <LeaderResponsesFeed />}
 
       {tab === "tasks" && (
         <section className="space-y-4">
-          <h2 className="text-[0.65rem] font-bold uppercase tracking-widest text-lux-violet/80">My tasks</h2>
+          <h2 className="text-[0.65rem] font-bold uppercase tracking-widest text-lux-violet/80">
+            Tasks from admin
+          </h2>
           {tasks.length === 0 ? (
             <div className="lux-card-elite p-6 text-sm text-lux-muted">No tasks assigned yet.</div>
           ) : (
@@ -156,7 +178,9 @@ export default function LeaderWorkspace({ leaderName }: { leaderName: string }) 
                     <div className="font-semibold text-lux-text">{t.title}</div>
                     {t.description && <p className="text-sm text-lux-muted mt-1">{t.description}</p>}
                     {t.due_at && (
-                      <p className="text-[0.68rem] text-lux-muted mt-2">Due {new Date(t.due_at).toLocaleDateString()}</p>
+                      <p className="text-[0.68rem] text-lux-muted mt-2">
+                        Due {new Date(t.due_at).toLocaleDateString()}
+                      </p>
                     )}
                   </div>
                   <LuxSelect
@@ -175,6 +199,8 @@ export default function LeaderWorkspace({ leaderName }: { leaderName: string }) 
 
       {tab === "invites" && (
         <>
+          <LeaderInviteFunnel />
+
           <section className="grid lg:grid-cols-2 gap-4">
             <div className="lux-card-elite p-5 space-y-3">
               <h2 className="font-bricolage font-bold text-lux-text">Generate invite code</h2>
