@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import LiveChatPanel from "@/components/team/LiveChatPanel";
 import type { LiveChatMessage, LiveChatThread } from "@/lib/live-chat";
 import { cn } from "@/lib/utils";
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils";
 type Mode = "member" | "leader";
 
 export default function LiveChatWidget({ mode }: { mode: Mode }) {
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [unread, setUnread] = useState(0);
@@ -69,9 +71,21 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
     if (selectedId) await loadLeaderMessages(selectedId);
   }, [refreshLeaderThreads, loadLeaderMessages, selectedId]);
 
+  function openWidget() {
+    setOpen(true);
+    setToast(null);
+    setUnread(0);
+  }
+
   useEffect(() => {
-    if (mode === "member") refreshMember();
-  }, [mode, refreshMember]);
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleOpen = () => openWidget();
+    window.addEventListener("inmailly:open-live-chat", handleOpen);
+    return () => window.removeEventListener("inmailly:open-live-chat", handleOpen);
+  }, []);
 
   useEffect(() => {
     if (mode !== "leader") return;
@@ -79,6 +93,10 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
     const id = setInterval(refreshLeaderThreads, 5000);
     return () => clearInterval(id);
   }, [mode, refreshLeaderThreads]);
+
+  useEffect(() => {
+    if (mode === "member") refreshMember();
+  }, [mode, refreshMember]);
 
   useEffect(() => {
     if (mode !== "leader" || !selectedId) {
@@ -93,12 +111,6 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
     const id = setTimeout(() => setToast(null), 12000);
     return () => clearTimeout(id);
   }, [toast]);
-
-  function openWidget() {
-    setOpen(true);
-    setToast(null);
-    setUnread(0);
-  }
 
   async function sendMember(body: string) {
     const res = await fetch("/api/team/live-chat", {
@@ -126,13 +138,15 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
   const assigned = thread?.assigned_leaders?.length ?? 0;
   const selected = threads.find((t) => t.id === selectedId) ?? null;
 
-  return (
+  if (!mounted) return null;
+
+  const ui = (
     <>
       {toast && !open && (
         <button
           type="button"
           onClick={openWidget}
-          className="fixed bottom-[5.5rem] right-5 z-[70] max-w-[min(100vw-2.5rem,320px)] lux-card-elite px-4 py-3 border-lux-cyan/40 shadow-[0_8px_32px_rgba(34,211,238,0.2)] text-left"
+          className="fixed bottom-[5.5rem] right-5 z-[9999] max-w-[min(100vw-2.5rem,320px)] lux-card-elite px-4 py-3 border-lux-cyan/40 shadow-[0_8px_32px_rgba(34,211,238,0.2)] text-left"
         >
           <p className="text-sm font-semibold text-lux-cyan">{toast}</p>
           <p className="text-xs text-lux-muted mt-0.5">Tap to open live chat</p>
@@ -141,7 +155,7 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
 
       {open && (
         <div
-          className="fixed bottom-[5.5rem] right-5 z-[70] w-[min(calc(100vw-2rem),380px)] lux-card-elite border-lux-violet/30 shadow-[0_12px_48px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col"
+          className="fixed bottom-[5.5rem] right-5 z-[9999] w-[min(calc(100vw-2rem),380px)] lux-card-elite border-lux-violet/30 shadow-[0_12px_48px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col"
           role="dialog"
           aria-label="Live chat"
         >
@@ -235,25 +249,29 @@ export default function LiveChatWidget({ mode }: { mode: Mode }) {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => (open ? setOpen(false) : openWidget())}
-        className={cn(
-          "fixed bottom-5 right-5 z-[70] relative w-14 h-14 rounded-full flex items-center justify-center text-xl",
-          "bg-gradient-to-br from-lux-cyan to-lux-violet text-white",
-          "shadow-[0_4px_24px_rgba(34,211,238,0.35)] ring-2 ring-lux-cyan/30",
-          "hover:scale-105 active:scale-95 transition-transform"
-        )}
-        aria-label={open ? "Close live chat" : "Open live chat"}
-        title="Live chat (team only)"
-      >
-        💬
-        {unread > 0 && !open && (
-          <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[0.65rem] font-bold border-2 border-lux-bg">
-            {unread > 9 ? "9+" : unread}
-          </span>
-        )}
-      </button>
+      <div className="fixed bottom-5 right-5 z-[9999]">
+        <button
+          type="button"
+          onClick={() => (open ? setOpen(false) : openWidget())}
+          className={cn(
+            "relative w-14 h-14 rounded-full flex items-center justify-center text-xl",
+            "bg-gradient-to-br from-lux-cyan to-lux-violet text-white",
+            "shadow-[0_4px_24px_rgba(34,211,238,0.45)] ring-2 ring-lux-cyan/40",
+            "hover:scale-105 active:scale-95 transition-transform"
+          )}
+          aria-label={open ? "Close live chat" : "Open live chat"}
+          title="Live chat (team only)"
+        >
+          💬
+          {unread > 0 && !open && (
+            <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[0.65rem] font-bold border-2 border-lux-bg">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </button>
+      </div>
     </>
   );
+
+  return createPortal(ui, document.body);
 }

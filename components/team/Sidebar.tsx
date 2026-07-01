@@ -56,10 +56,14 @@ export default function Sidebar({
   member,
   poolCount,
   teamLeaders = [],
+  showLiveChat = false,
+  liveChatLabel = "Live support",
 }: {
   member: TeamMember;
   poolCount: number;
   teamLeaders?: { id: string; name: string; email: string }[];
+  showLiveChat?: boolean;
+  liveChatLabel?: string;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -75,6 +79,11 @@ export default function Sidebar({
         },
       ]
     : [];
+
+  function openLiveChat() {
+    window.dispatchEvent(new Event("inmailly:open-live-chat"));
+    setOpen(false);
+  }
 
   const otherLeaders = teamLeaders.filter((l) => l.id !== member.id);
   const workersNav = [
@@ -130,6 +139,18 @@ export default function Sidebar({
       </div>
 
       <nav className="flex-1 py-3 overflow-y-auto px-2 min-h-0 lux-scrollbar-hide">
+        {showLiveChat && (
+          <div className="mb-3 px-2">
+            <button
+              type="button"
+              onClick={openLiveChat}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium border border-lux-cyan/30 bg-gradient-to-r from-lux-cyan/15 to-lux-violet/10 text-white hover:border-lux-cyan/50 transition-colors"
+            >
+              <span className="text-base">💬</span>
+              <span>{liveChatLabel}</span>
+            </button>
+          </div>
+        )}
         {navSections.map((section) => (
           <div key={section.label} className="mb-2">
             <div
