@@ -15,6 +15,7 @@ type NavItem = {
   icon: string;
   badge?: boolean;
   accent?: "cyan" | "violet" | "amber";
+  external?: boolean;
 };
 
 const sections: { label: string; tone: string; items: NavItem[] }[] = [
@@ -54,13 +55,19 @@ const activeStyles: Record<NonNullable<NavItem["accent"]>, string> = {
 export default function Sidebar({
   member,
   poolCount,
+  teamLeaders = [],
 }: {
   member: TeamMember;
   poolCount: number;
+  teamLeaders?: { id: string; name: string; email: string }[];
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const leaderNav = isTeamLeader(member.role)
+  const leader = isTeamLeader(member.role);
+  const mainSections = sections.filter((s) => s.label !== "Account");
+  const accountSections = sections.filter((s) => s.label === "Account");
+
+  const leaderNav = leader
     ? [
         {
           label: "Leadership",
@@ -71,7 +78,29 @@ export default function Sidebar({
         },
       ]
     : [];
-  const navSections = [...leaderNav, ...sections];
+  const workersNav = leader
+    ? accountSections
+    : [
+        ...mainSections,
+        ...(teamLeaders.length > 0
+          ? [
+              {
+                label: "Team leaders",
+                tone: "text-amber-400/70",
+                items: teamLeaders.map((l) => ({
+                  id: `leader-${l.id}`,
+                  href: `mailto:${l.email}`,
+                  label: l.name,
+                  icon: "★",
+                  accent: "amber" as const,
+                  external: true,
+                })),
+              },
+            ]
+          : []),
+        ...accountSections,
+      ];
+  const navSections = [...leaderNav, ...workersNav];
   const initials = member.name
     .split(" ")
     .map((n) => n[0])
@@ -115,27 +144,47 @@ export default function Sidebar({
               {section.label}
             </div>
             {section.items.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(item.href + "/");
+              const active =
+                !("external" in item && item.external) &&
+                (pathname === item.href || pathname.startsWith(item.href + "/"));
               const accent = item.accent || "cyan";
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all mb-0.5 border-l-[3px]",
-                    active
-                      ? activeStyles[accent]
-                      : "border-transparent text-slate-400 hover:text-white hover:bg-lux-violet/[0.06]"
-                  )}
-                >
+              const className = cn(
+                "flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all mb-0.5 border-l-[3px]",
+                active
+                  ? activeStyles[accent]
+                  : "border-transparent text-slate-400 hover:text-white hover:bg-lux-violet/[0.06]"
+              );
+              const inner = (
+                <>
                   <span className="w-[18px] text-center shrink-0 text-base">{item.icon}</span>
-                  <span className="flex-1 font-medium">{item.label}</span>
+                  <span className="flex-1 font-medium truncate">{item.label}</span>
                   {"badge" in item && item.badge && poolCount > 0 && (
                     <span className="min-w-[1.4rem] h-[1.4rem] px-1 flex items-center justify-center rounded-full bg-red-500/15 text-red-400 text-[0.62rem] font-bold border border-red-500/45 shadow-[0_0_14px_rgba(239,68,68,0.22)] tabular-nums">
                       {poolCount}
                     </span>
                   )}
+                </>
+              );
+              if ("external" in item && item.external) {
+                return (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={className}
+                  >
+                    {inner}
+                  </a>
+                );
+              }
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={className}
+                >
+                  {inner}
                 </Link>
               );
             })}

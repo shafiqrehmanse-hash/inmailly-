@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isCampaignManager } from "@/lib/roles";
+import { isCampaignManager, isTeamLeader } from "@/lib/roles";
 import { createServerSupabase } from "@/lib/supabase/server";
 import type { TeamMember } from "@/lib/types";
 
@@ -29,6 +29,6 @@ export async function getOutreachTeamMember(): Promise<TeamMember | null> {
     member = (viaAdmin as TeamMember | null) ?? null;
   }
 
-  if (!member || isCampaignManager(member.role)) return null;
+  if (!member || isCampaignManager(member.role) || isTeamLeader(member.role)) return null;
   return member;
 }

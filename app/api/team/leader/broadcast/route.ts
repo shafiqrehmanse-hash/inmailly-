@@ -19,9 +19,10 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   let query = admin
     .from("team_members")
-    .select("id, name, email")
+    .select("id, name, email, role")
     .eq("is_active", true)
-    .neq("role", "campaign_manager");
+    .in("role", ["member", "senior", "admin"])
+    .neq("id", member.id);
 
   if (!send_to_all && Array.isArray(member_ids) && member_ids.length > 0) {
     query = query.in("id", member_ids);
@@ -29,13 +30,20 @@ export async function POST(request: Request) {
 
   const { data: members, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!members?.length) return NextResponse.json({ error: "No members to email" }, { status: 400 });
+  if (!members?.length) {
+    return NextResponse.json({ error: "No outreach members to email" }, { status: 400 });
+  }
+
+  const outreachOnly = members.filter((m) => m.role !== "team_leader");
+  if (!outreachOnly.length) {
+    return NextResponse.json({ error: "No outreach members to email" }, { status: 400 });
+  }
 
   const signature = leaderBroadcastSignature(member.name);
   let sent = 0;
   const failures: string[] = [];
 
-  for (const m of members) {
+  for (const m of outreachOnly) {
     if (!m.email) continue;
     const result = await sendEmail({
       to: m.email,
@@ -51,7 +59,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     success: true,
     sent,
-    total: members.length,
+    total: outreachOnly.length,
     failures,
     configured: Boolean(process.env.RESEND_API_KEY),
   });

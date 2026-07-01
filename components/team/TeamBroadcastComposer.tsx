@@ -168,7 +168,7 @@ export default function TeamBroadcastComposer({
           <div className="flex flex-wrap gap-4 items-center text-sm">
             <label className="flex items-center gap-2 cursor-pointer text-lux-muted">
               <input type="radio" checked={sendToAll} onChange={() => setSendToAll(true)} />
-              All active members
+              {mode === "leader" ? "All outreach workers" : "All active members"}
             </label>
             <label className="flex items-center gap-2 cursor-pointer text-lux-muted">
               <input type="radio" checked={!sendToAll} onChange={() => setSendToAll(false)} />

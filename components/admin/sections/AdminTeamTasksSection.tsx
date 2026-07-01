@@ -26,12 +26,10 @@ export default function AdminTeamTasksSection() {
   const [form, setForm] = useState({ title: "", description: "", assignedTo: "", dueAt: "" });
 
   const leaders = members.filter((m) => m.role === "team_leader" && m.is_active);
-  const assignOptions = members
-    .filter((m) => m.is_active && m.role !== "campaign_manager")
-    .map((m) => ({
-      value: m.id,
-      label: `${m.name}${m.role === "team_leader" ? " · Team leader" : ""}`,
-    }));
+  const assignOptions = leaders.map((m) => ({
+    value: m.id,
+    label: m.name,
+  }));
 
   const load = useCallback(async () => {
     const [membersRes, tasksRes] = await Promise.all([

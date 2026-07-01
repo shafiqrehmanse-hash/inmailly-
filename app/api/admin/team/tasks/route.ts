@@ -54,6 +54,17 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
+
+  const { data: assignee } = await admin
+    .from("team_members")
+    .select("id, role, is_active")
+    .eq("id", assignedTo)
+    .maybeSingle();
+
+  if (!assignee?.is_active || assignee.role !== "team_leader") {
+    return NextResponse.json({ error: "Tasks can only be assigned to an active team leader" }, { status: 400 });
+  }
+
   const { data, error } = await admin
     .from("team_tasks")
     .insert({
@@ -86,7 +97,18 @@ export async function PATCH(request: NextRequest) {
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (title?.trim()) updates.title = title.trim();
   if (description !== undefined) updates.description = description?.trim() || null;
-  if (assignedTo) updates.assigned_to = assignedTo;
+  if (assignedTo) {
+    const admin = createAdminClient();
+    const { data: assignee } = await admin
+      .from("team_members")
+      .select("id, role, is_active")
+      .eq("id", assignedTo)
+      .maybeSingle();
+    if (!assignee?.is_active || assignee.role !== "team_leader") {
+      return NextResponse.json({ error: "Tasks can only be assigned to an active team leader" }, { status: 400 });
+    }
+    updates.assigned_to = assignedTo;
+  }
   if (status) updates.status = status;
   if (dueAt !== undefined) updates.due_at = dueAt || null;
 

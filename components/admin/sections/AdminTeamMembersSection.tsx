@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
 import type { TeamMember } from "@/lib/types";
+import { isOutreachWorker } from "@/lib/roles";
 import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 
 type MemberRow = TeamMember & { active_links: number; leads_count: number; deals_closed?: number };
@@ -124,7 +125,7 @@ export default function AdminTeamMembersSection() {
     showToast("Invite code generated from label");
   }
 
-  const outreachMembers = members.filter((m) => m.role !== "campaign_manager");
+  const outreachMembers = members.filter((m) => m.is_active && isOutreachWorker(m.role));
   const totalLeads = outreachMembers.reduce((s, m) => s + m.leads_count, 0);
   const totalDeals = outreachMembers.reduce((s, m) => s + (m.deals_closed || 0), 0);
   const totalLinks = outreachMembers.reduce((s, m) => s + m.active_links, 0);
@@ -200,7 +201,16 @@ export default function AdminTeamMembersSection() {
               ) : (
                 members.map((m) => (
                   <tr key={m.id} className="border-b border-white/[0.06] last:border-0 hover:bg-lux-bg2/50">
-                    <td className="px-4 py-3 font-medium text-lux-text">{m.name}</td>
+                    <td className="px-4 py-3 font-medium text-lux-text">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {m.name}
+                        {m.role === "team_leader" && (
+                          <span className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                            Team leader
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-lux-muted">{m.email}</td>
                     <td className="px-4 py-3">
                       <LuxSelect size="sm" className="min-w-[160px]" value={m.role} onChange={(role) => updateRole(m.id, role)} options={roleOptions} />
