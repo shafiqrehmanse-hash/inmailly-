@@ -1,15 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
-import { teamBroadcastHtmlBody, teamBroadcastPlainBody } from "@/lib/admin-email-signature";
-import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
+import { leaderBroadcastSignature, teamBroadcastHtmlBody, teamBroadcastPlainBody } from "@/lib/admin-email-signature";
+import { getCurrentMember } from "@/lib/team";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isTeamLeader } from "@/lib/roles";
 
-function checkKey(request: NextRequest) {
-  const key = request.headers.get("x-admin-key") || request.nextUrl.searchParams.get("key");
-  return verifyAdminKey(key);
-}
-
-export async function POST(request: NextRequest) {
-  if (!checkKey(request)) {
+export async function POST(request: Request) {
+  const member = await getCurrentMember();
+  if (!member || !member.is_active || !isTeamLeader(member.role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -19,14 +17,21 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
-  let query = admin.from("team_members").select("id, name, email").eq("is_active", true);
+  let query = admin
+    .from("team_members")
+    .select("id, name, email")
+    .eq("is_active", true)
+    .neq("role", "campaign_manager");
+
   if (!send_to_all && Array.isArray(member_ids) && member_ids.length > 0) {
     query = query.in("id", member_ids);
   }
+
   const { data: members, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!members?.length) return NextResponse.json({ error: "No members to email" }, { status: 400 });
 
+  const signature = leaderBroadcastSignature(member.name);
   let sent = 0;
   const failures: string[] = [];
 
@@ -35,8 +40,9 @@ export async function POST(request: NextRequest) {
     const result = await sendEmail({
       to: m.email,
       subject: subject.trim(),
-      text: teamBroadcastPlainBody(m.name, message, subject),
-      html: teamBroadcastHtmlBody(m.name, message, subject),
+      replyTo: member.email,
+      text: teamBroadcastPlainBody(m.name, message, subject, signature),
+      html: teamBroadcastHtmlBody(m.name, message, subject, signature),
     });
     if (result.ok) sent += 1;
     else failures.push(m.name);

@@ -8,5 +8,5 @@ export default async function LeaderPage() {
   if (!member) redirect("/team/login");
   if (!isTeamLeader(member.role)) redirect("/team/hub");
 
-  return <LeaderWorkspace />;
+  return <LeaderWorkspace leaderName={member.name} />;
 }

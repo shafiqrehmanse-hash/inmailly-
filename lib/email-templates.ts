@@ -120,6 +120,100 @@ function founderWelcomeSignature() {
   </table>`;
 }
 
+export type BroadcastSignature = {
+  name: string;
+  title: string;
+  tagline?: string;
+  replyLine?: string;
+};
+
+export function broadcastSignatureBlock(sig: BroadcastSignature) {
+  const tagline = sig.tagline
+    ? `<p style="margin:2px 0 0;font-size:11px;color:#71717a;">${esc(sig.tagline)}</p>`
+    : "";
+  const reply = sig.replyLine
+    ? `<p style="margin:14px 0 0;font-size:12px;color:#52525b;">${esc(sig.replyLine)}</p>`
+    : "";
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 0;">
+    <tr><td style="padding:20px 18px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-left:3px solid #22d3ee;">
+      <p style="margin:0;font-size:14px;font-weight:700;color:#fafafa;">${esc(sig.name)}</p>
+      <p style="margin:4px 0 0;font-size:12px;color:#22d3ee;">${esc(sig.title)}</p>
+      ${tagline}
+      ${reply}
+    </td></tr>
+  </table>`;
+}
+
+function messageParagraphs(message: string) {
+  const blocks = message.trim().split(/\n\n+/).filter(Boolean);
+  if (!blocks.length) {
+    return p('<span style="color:#71717a;font-style:italic;">Your message will appear here…</span>');
+  }
+  return blocks
+    .map((block) => {
+      const html = esc(block).replace(/\n/g, "<br/>");
+      return p(html);
+    })
+    .join("");
+}
+
+export const FOUNDER_BROADCAST_SIGNATURE: BroadcastSignature = {
+  name: "Shafiq Rehman",
+  title: "Founder, InMailly",
+  tagline: "Shafiq's Marketing Automations Valley",
+  replyLine: "Reply to this email anytime — it comes straight to me.",
+};
+
+export function leaderBroadcastSignature(leaderName: string): BroadcastSignature {
+  return {
+    name: leaderName,
+    title: "Team Leader, InMailly",
+    replyLine: "Reply to this email anytime — I'm here to help.",
+  };
+}
+
+/** Dark HTML broadcast — same lux layout as welcome email. */
+export function teamBroadcastEmail(data: {
+  recipientFirstName: string;
+  subject: string;
+  message: string;
+  signature: BroadcastSignature;
+}) {
+  const first = esc(data.recipientFirstName);
+  return emailLayout({
+    preheader: data.message.trim().slice(0, 140) || data.subject,
+    eyebrow: "Team message",
+    title: data.subject.trim() || "Update from your team",
+    bodyHtml: [
+      p(`Hey <strong style="color:#fafafa;">${first}</strong>,`),
+      messageParagraphs(data.message),
+      broadcastSignatureBlock(data.signature),
+    ].join(""),
+    footerNote: "You're on the InMailly outreach team — built for ambitious closers.",
+  });
+}
+
+export function teamBroadcastPlainText(data: {
+  recipientFirstName: string;
+  subject: string;
+  message: string;
+  signature: BroadcastSignature;
+}) {
+  const first = data.recipientFirstName.trim().split(/\s+/)[0] || data.recipientFirstName;
+  const sigLines = [
+    "",
+    "Warm regards,",
+    "",
+    data.signature.name,
+    data.signature.title,
+    data.signature.tagline || "",
+    data.signature.replyLine || "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return `Hey ${first},\n\n${data.message.trim()}${sigLines}`;
+}
+
 export function detailRow(label: string, value: string) {
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 8px;">
     <tr>

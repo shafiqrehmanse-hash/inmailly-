@@ -85,17 +85,6 @@ export default function AdminTeamMembersSection() {
     showToast("Password reset email sent");
   }
 
-  async function sendWelcome(email: string) {
-    const res = await fetch(`/api/admin/team/welcome-email?key=${adminKey}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ email }),
-    });
-    const data = await res.json();
-    if (data.error) showToast(data.error, "error");
-    else showToast(data.skipped ? "Skipped — Resend not configured" : `Welcome sent to ${email}`);
-  }
-
   async function deleteMember(member: MemberRow) {
     const warn =
       member.active_links > 0 || member.leads_count > 0
@@ -228,7 +217,6 @@ export default function AdminTeamMembersSection() {
                           <Button variant="lux-ghost" size="sm">Links</Button>
                         </Link>
                         <Button variant="lux-ghost" size="sm" onClick={() => resetPassword(m.email)}>Reset pwd</Button>
-                        <Button variant="lux-ghost" size="sm" onClick={() => sendWelcome(m.email)}>Welcome</Button>
                         <Button variant="lux-ghost" size="sm" onClick={() => deleteMember(m)} className="text-red-400 hover:text-red-300">
                           Delete
                         </Button>

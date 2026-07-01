@@ -1,5 +1,5 @@
-import AdminWelcomeEmailSection from "@/components/admin/sections/AdminWelcomeEmailSection";
+import { redirect } from "next/navigation";
 
-export default function TeamWelcomeEmailPage() {
-  return <AdminWelcomeEmailSection />;
+export default function TeamWelcomeEmailRedirect() {
+  redirect("/admin/team/email");
 }
