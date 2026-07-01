@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
+import AdminContractsPanel from "@/components/admin/AdminContractsPanel";
 import {
   defaultOfferLetterForm,
   OFFER_PRESETS,
@@ -26,7 +27,7 @@ export default function AdminOfferLetterSection() {
   const [pickMember, setPickMember] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailNote, setEmailNote] = useState("");
-  const [busy, setBusy] = useState<"pdf" | "send" | "print" | null>(null);
+  const [busy, setBusy] = useState<"pdf" | "send" | "print" | "dashboard" | null>(null);
 
   useEffect(() => {
     try {
@@ -113,6 +114,28 @@ export default function AdminOfferLetterSection() {
       a.click();
       URL.revokeObjectURL(url);
       showToast("PDF downloaded");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function sendToDashboard() {
+    if (!form.candidateName.trim() || !form.candidateEmail.trim()) {
+      showToast("Name and email required", "error");
+      return;
+    }
+    setBusy("dashboard");
+    try {
+      const res = await fetch(`/api/admin/contracts?key=${adminKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ form }),
+      });
+      const data = await res.json();
+      if (data.error) showToast(data.error, "error");
+      else if (data.emailSkipped) showToast("Sent to dashboard (email skipped — no RESEND key)", "error");
+      else showToast(`Offer sent — they sign at team dashboard`);
+      window.dispatchEvent(new Event("inmailly-contracts-updated"));
     } finally {
       setBusy(null);
     }
@@ -370,8 +393,15 @@ export default function AdminOfferLetterSection() {
             <Button variant="lux-soft" onClick={printPreview} disabled={!!busy}>
               {busy === "print" ? "Opening…" : "Print"}
             </Button>
-            <Button variant="lux" onClick={sendEmail} disabled={!!busy || !form.candidateEmail}>
-              {busy === "send" ? "Sending…" : "Email PDF to candidate"}
+            <Button
+              variant="lux"
+              onClick={sendToDashboard}
+              disabled={!!busy || !form.candidateEmail}
+            >
+              {busy === "dashboard" ? "Sending…" : "Send to dashboard for signature"}
+            </Button>
+            <Button variant="lux-soft" onClick={sendEmail} disabled={!!busy || !form.candidateEmail}>
+              {busy === "send" ? "Sending…" : "Email PDF only"}
             </Button>
           </div>
         </div>
@@ -391,6 +421,8 @@ export default function AdminOfferLetterSection() {
           </p>
         </div>
       </div>
+
+      <AdminContractsPanel />
     </div>
   );
 }

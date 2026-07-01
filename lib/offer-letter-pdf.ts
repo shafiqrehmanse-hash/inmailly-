@@ -61,7 +61,10 @@ function drawWrapped(
   return cy;
 }
 
-export async function generateOfferLetterPdf(form: OfferLetterForm): Promise<Uint8Array> {
+export async function generateOfferLetterPdf(
+  form: OfferLetterForm,
+  opts?: { signaturePngBase64?: string; signedAt?: string }
+): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.setTitle(`Offer Letter — ${form.candidateName}`);
   doc.setAuthor(form.signerName);
@@ -165,6 +168,8 @@ export async function generateOfferLetterPdf(form: OfferLetterForm): Promise<Uin
       para.endsWith("details") ||
       para === "Compensation" ||
       para === "Additional terms" ||
+      para === "Nature of engagement — important" ||
+      para === "Electronic acceptance" ||
       para === "Warm regards,";
     const isDear = para.startsWith("Dear ");
     const size = isDear ? 11 : isSection ? 10 : 9.5;
@@ -185,6 +190,39 @@ export async function generateOfferLetterPdf(form: OfferLetterForm): Promise<Uin
       y = drawWrapped(page, useFont, size, color, MARGIN, y, CONTENT_W, lh, para);
     }
     y -= 4;
+  }
+
+  // Candidate signature block
+  if (opts?.signaturePngBase64) {
+    if (y < 140) {
+      page = doc.addPage([PAGE_W, PAGE_H]);
+      y = PAGE_H - MARGIN;
+    }
+    y -= 12;
+    page.drawText("Candidate acceptance", { x: MARGIN, y, size: 9, font: bold, color: violet });
+    y -= 14;
+    try {
+      const pngBytes = Uint8Array.from(Buffer.from(opts.signaturePngBase64.replace(/^data:image\/png;base64,/, ""), "base64"));
+      const png = await doc.embedPng(pngBytes);
+      const sigW = 160;
+      const sigH = (png.height / png.width) * sigW;
+      page.drawImage(png, { x: MARGIN, y: y - sigH, width: sigW, height: sigH });
+      y -= sigH + 8;
+    } catch {
+      page.drawText("[Signature on file]", { x: MARGIN, y, size: 9, font, color: ink });
+      y -= 14;
+    }
+    page.drawText(form.candidateName, { x: MARGIN, y, size: 9, font: bold, color: ink });
+    y -= 12;
+    if (opts.signedAt) {
+      page.drawText(`Signed electronically: ${formatLetterDate(opts.signedAt.slice(0, 10))}`, {
+        x: MARGIN,
+        y,
+        size: 8,
+        font,
+        color: muted,
+      });
+    }
   }
 
   // Footer on last page

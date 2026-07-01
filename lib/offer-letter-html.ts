@@ -19,8 +19,9 @@ export function offerLetterPreviewHtml(form: OfferLetterForm) {
   const body = paragraphs
     .map((p) => {
       if (!p) return `<div style="height:8px"></div>`;
-      if (p === "Position details" || p === "Compensation" || p === "Additional terms") {
-        return `<p style="margin:18px 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#7c3aed;">${esc(p)}</p>`;
+      if (p === "Position details" || p === "Compensation" || p === "Additional terms" || p === "Nature of engagement — important" || p === "Electronic acceptance") {
+        const warn = p.includes("Nature");
+        return `<p style="margin:18px 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${warn ? "#f59e0b" : "#7c3aed"};">${esc(p)}</p>`;
       }
       if (p.startsWith("Dear ")) {
         return `<p style="margin:0 0 12px;font-size:15px;font-weight:700;color:#18181b;">${esc(p)}</p>`;

@@ -141,10 +141,15 @@ export function buildOfferBodyParagraphs(form: OfferLetterForm): string[] {
     `• Probation period: ${form.probationMonths} month(s)`,
     "",
     "Compensation",
-    `• Monthly fixed salary: ${formatPkr(form.monthlySalaryPkr)} (Pakistani Rupees), payable monthly upon satisfactory performance.`,
+    `• Monthly fixed salary: ${formatPkr(form.monthlySalaryPkr)} (Pakistani Rupees), payable monthly upon satisfactory performance and approved outcomes.`,
     `• Commission & incentives: ${form.commissionText}`,
     "",
-    "This offer is subject to successful completion of probation and continued adherence to InMailly team policies, including data confidentiality and professional conduct on all outreach channels.",
+    "Nature of engagement — important",
+    "• This engagement is NOT permanent employment. It is a flexible, performance-based working arrangement and does not create any guarantee of continued work.",
+    "• InMailly assumes no ongoing liability beyond compensation earned for completed, approved work in any given period.",
+    "• The company may pause, reduce, or stop all further work at any time — including within any calendar month — based on performance, revenue, business needs, or outreach results.",
+    "• The company may terminate this arrangement at any time by written notice. Upon termination, only approved earnings due up to the effective termination date will be considered for payment.",
+    "• This offer is subject to adherence to InMailly team policies, including data confidentiality and professional conduct on all outreach channels.",
   ];
 
   if (form.additionalTerms.trim()) {
@@ -153,7 +158,8 @@ export function buildOfferBodyParagraphs(form: OfferLetterForm): string[] {
 
   paras.push(
     "",
-    "Please confirm your acceptance by replying to this offer or signing below. We look forward to working with you.",
+    "Electronic acceptance",
+    "• By signing this offer in your team dashboard, you confirm you have read, understood, and agree to all terms above — including the non-permanent nature of this engagement and the company's right to end work based on performance and business outcomes.",
     "",
     "Warm regards,",
     form.signerName,
