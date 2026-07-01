@@ -162,7 +162,8 @@ export default function AdminLiveChatSection() {
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">Live chat</h1>
         <p className="text-sm text-lux-muted mt-1">
-          Grant team leaders chat access, assign outreach member threads, and monitor conversations.
+          Grant team leaders chat access. Member messages auto-assign to the least-busy agent — you can
+          reassign or add more leaders anytime.
         </p>
       </div>
 

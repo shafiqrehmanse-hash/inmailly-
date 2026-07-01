@@ -113,7 +113,7 @@ export default function LeaderLiveChatInbox({ agentEnabled = true }: { agentEnab
       {threads.length === 0 ? (
         <div className="lux-card-elite p-8 text-center border-lux-violet/20">
           <p className="text-lux-muted text-sm">No chats assigned yet.</p>
-          <p className="text-xs text-lux-muted mt-2">Admin will assign outreach member threads to you when ready.</p>
+          <p className="text-xs text-lux-muted mt-2">Member chats auto-route here when they send a message.</p>
         </div>
       ) : (
         <div className="grid lg:grid-cols-[280px_1fr] gap-4 min-h-[480px]">

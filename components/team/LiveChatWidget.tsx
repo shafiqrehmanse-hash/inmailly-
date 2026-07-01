@@ -223,6 +223,7 @@ export default function LiveChatWidget({
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400" />
                   </span>
                   <span className="text-xs text-amber-100 font-medium">Locating team leader…</span>
+                  <span className="text-[0.65rem] text-amber-200/80 ml-auto">Auto-assigns when you send</span>
                 </div>
               )}
               {!memberLoading && assigned > 0 && (
@@ -259,10 +260,10 @@ export default function LiveChatWidget({
                 </div>
               ) : threads.length === 0 ? (
                 <div className="p-6 text-center flex-1 flex flex-col justify-center gap-2">
-                  <p className="text-sm text-lux-text font-medium">No chats assigned yet</p>
+                  <p className="text-sm text-lux-text font-medium">Waiting for member chat</p>
                   <p className="text-xs text-lux-muted leading-relaxed">
-                    When an outreach member opens live chat, admin assigns their thread to you — it will appear here
-                    instantly.
+                    New outreach chats auto-assign to you when a member sends a message. If none appear,
+                    confirm admin enabled you under <strong className="text-lux-text">Chat agents</strong>.
                   </p>
                 </div>
               ) : (

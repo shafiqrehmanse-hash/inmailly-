@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canOpenLiveChat } from "@/lib/roles";
-import { enrichThreads, getOrCreateOpenThread } from "@/lib/live-chat-server";
+import { enrichThreads, getOrCreateOpenThread, autoAssignThreadIfNeeded } from "@/lib/live-chat-server";
 import { getCurrentMember } from "@/lib/team";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -22,6 +22,10 @@ export async function GET() {
     .eq("thread_id", thread.id)
     .order("created_at", { ascending: true })
     .limit(200);
+
+  if ((messages || []).some((m) => m.sender_type === "member")) {
+    await autoAssignThreadIfNeeded(thread.id);
+  }
 
   const [enriched] = await enrichThreads([thread]);
 
@@ -69,5 +73,7 @@ export async function POST(request: NextRequest) {
     .update({ last_message_at: now, updated_at: now })
     .eq("id", thread.id);
 
-  return NextResponse.json({ message });
+  const assigned = await autoAssignThreadIfNeeded(thread.id);
+
+  return NextResponse.json({ message, assigned });
 }
