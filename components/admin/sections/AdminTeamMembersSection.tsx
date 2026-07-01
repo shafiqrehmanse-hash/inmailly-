@@ -13,6 +13,7 @@ type MemberRow = TeamMember & { active_links: number; leads_count: number; deals
 const roleOptions = [
   { value: "member", label: "Outreach worker" },
   { value: "senior", label: "Senior worker" },
+  { value: "team_leader", label: "Team leader" },
   { value: "campaign_manager", label: "Campaign manager" },
   { value: "admin", label: "Team admin" },
 ];
@@ -82,6 +83,37 @@ export default function AdminTeamMembersSection() {
       body: JSON.stringify({ email }),
     });
     showToast("Password reset email sent");
+  }
+
+  async function sendWelcome(email: string) {
+    const res = await fetch(`/api/admin/team/welcome-email?key=${adminKey}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (data.error) showToast(data.error, "error");
+    else showToast(data.skipped ? "Skipped — Resend not configured" : `Welcome sent to ${email}`);
+  }
+
+  async function deleteMember(member: MemberRow) {
+    const warn =
+      member.active_links > 0 || member.leads_count > 0
+        ? `${member.name} has ${member.active_links} active links and ${member.leads_count} leads. Delete permanently?`
+        : `Delete ${member.name} permanently? This cannot be undone.`;
+    if (!confirm(warn)) return;
+
+    const res = await fetch(`/api/admin/members?key=${adminKey}`, {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({ memberId: member.id }),
+    });
+    const data = await res.json();
+    if (data.error) showToast(data.error, "error");
+    else {
+      showToast(`Deleted ${member.name}`);
+      loadMembers();
+    }
   }
 
   async function generateInvite() {
@@ -196,6 +228,10 @@ export default function AdminTeamMembersSection() {
                           <Button variant="lux-ghost" size="sm">Links</Button>
                         </Link>
                         <Button variant="lux-ghost" size="sm" onClick={() => resetPassword(m.email)}>Reset pwd</Button>
+                        <Button variant="lux-ghost" size="sm" onClick={() => sendWelcome(m.email)}>Welcome</Button>
+                        <Button variant="lux-ghost" size="sm" onClick={() => deleteMember(m)} className="text-red-400 hover:text-red-300">
+                          Delete
+                        </Button>
                       </div>
                     </td>
                   </tr>

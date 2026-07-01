@@ -83,18 +83,27 @@ export default function AdminOverviewPage() {
               />
             </div>
             {(ov?.projects?.needs_setup || 0) > 0 && (
-              <div className="lux-card p-5 border-amber-500/25 bg-amber-500/5">
-                <h3 className="font-bricolage font-bold text-amber-300 mb-1">
-                  {ov?.projects?.needs_setup} client{ov?.projects?.needs_setup === 1 ? "" : "s"} need setup
-                </h3>
-                <p className="text-sm text-lux-muted">
-                  Self-signup accounts still in preview — assign a manager, add scripts, and activate.
-                </p>
-                <Link href="/admin/clients/setup">
-                  <Button variant="lux-ghost" size="sm" className="mt-3">
-                    Open client setup →
-                  </Button>
-                </Link>
+              <div className="lux-card p-5 border-red-500/30 bg-red-500/[0.06] relative overflow-hidden">
+                <div className="flex items-start gap-3">
+                  <span
+                    className="admin-alert-dot mt-1.5 w-3 h-3 rounded-full bg-red-500 shadow-[0_0_14px_rgba(239,68,68,1)] shrink-0"
+                    aria-hidden
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bricolage font-bold text-red-300 mb-1 flex items-center gap-2">
+                      {ov?.projects?.needs_setup} client{ov?.projects?.needs_setup === 1 ? "" : "s"} need setup
+                      <span className="text-[0.6rem] font-bold uppercase tracking-wider text-red-400/90">Critical</span>
+                    </h3>
+                    <p className="text-sm text-lux-muted">
+                      Self-signup accounts still in preview — assign a manager, add scripts, and activate.
+                    </p>
+                    <Link href="/admin/clients/setup">
+                      <Button variant="lux-ghost" size="sm" className="mt-3 border-red-500/30 text-red-200 hover:text-red-100">
+                        Open client setup →
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               </div>
             )}
             <div className="grid grid-cols-3 gap-4">

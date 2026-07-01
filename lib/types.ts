@@ -5,7 +5,7 @@ export type TeamMember = {
   email: string;
   phone: string | null;
   photo_url: string | null;
-  role: "member" | "senior" | "admin" | "campaign_manager";
+  role: "member" | "senior" | "admin" | "campaign_manager" | "team_leader";
   is_active: boolean;
   invite_code: string | null;
   joined_at: string;
@@ -151,4 +151,16 @@ export type ProjectWithClient = Project & {
 export type AssignedProject = ProjectWithClient & {
   assignment_id: string;
   assigned_at: string;
+};
+
+export type TeamTask = {
+  id: string;
+  title: string;
+  description: string | null;
+  assigned_to: string;
+  assigned_by_member_id: string | null;
+  status: "pending" | "in_progress" | "done";
+  due_at: string | null;
+  created_at: string;
+  updated_at: string;
 };

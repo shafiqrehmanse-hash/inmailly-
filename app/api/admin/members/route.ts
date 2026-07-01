@@ -82,3 +82,39 @@ export async function PATCH(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }
+
+export async function DELETE(request: NextRequest) {
+  if (!checkKey(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { memberId } = await request.json();
+  if (!memberId) {
+    return NextResponse.json({ error: "memberId required" }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
+  const { data: member } = await admin
+    .from("team_members")
+    .select("id, user_id, name, email")
+    .eq("id", memberId)
+    .maybeSingle();
+
+  if (!member) {
+    return NextResponse.json({ error: "Member not found" }, { status: 404 });
+  }
+
+  if (member.user_id) {
+    const { error: authError } = await admin.auth.admin.deleteUser(member.user_id);
+    if (authError) {
+      return NextResponse.json({ error: authError.message }, { status: 400 });
+    }
+  } else {
+    const { error: rowError } = await admin.from("team_members").delete().eq("id", memberId);
+    if (rowError) {
+      return NextResponse.json({ error: rowError.message }, { status: 500 });
+    }
+  }
+
+  return NextResponse.json({ success: true, deleted: member.email });
+}

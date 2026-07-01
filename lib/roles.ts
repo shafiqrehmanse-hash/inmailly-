@@ -6,8 +6,12 @@ export function isCampaignManager(role: string): boolean {
   return role === "campaign_manager";
 }
 
+export function isTeamLeader(role: string): boolean {
+  return role === "team_leader";
+}
+
 export function isOutreachWorker(role: string): boolean {
-  return role === "member" || role === "senior" || role === "admin";
+  return role === "member" || role === "senior" || role === "admin" || role === "team_leader";
 }
 
 export function getLoginRedirect(role: MemberRole): string {

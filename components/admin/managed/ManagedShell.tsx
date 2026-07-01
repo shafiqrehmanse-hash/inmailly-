@@ -11,6 +11,7 @@ export type ManagedNavItem = {
   label: string;
   icon: string;
   match?: (pathname: string, search: string) => boolean;
+  critical?: boolean;
 };
 
 export type ManagedNavGroup = {
@@ -81,7 +82,13 @@ export default function ManagedShell({
                     )}
                   >
                     <span className="w-5 text-center">{item.icon}</span>
-                    <span>{item.label}</span>
+                    <span className="flex-1">{item.label}</span>
+                    {item.critical && (
+                      <span
+                        className="admin-alert-dot w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.9)] shrink-0"
+                        aria-label="Critical"
+                      />
+                    )}
                   </Link>
                 ))}
               </div>

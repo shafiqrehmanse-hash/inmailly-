@@ -236,6 +236,39 @@ export function teamWelcomeVerifiedEmail(data: { firstName: string }) {
   });
 }
 
+export function teamInviteProspectEmail(data: {
+  inviteCode: string;
+  leaderName: string;
+  registerUrl: string;
+  personalNote?: string | null;
+}) {
+  const site = getSiteUrl();
+  const leader = esc(data.leaderName);
+  const noteBlock = data.personalNote?.trim()
+    ? p(`<em style="color:#d4d4d8;">&ldquo;${esc(data.personalNote.trim())}&rdquo;</em> — <strong style="color:#fafafa;">${leader}</strong>`)
+    : p(`You've been invited to join the InMailly outreach team by <strong style="color:#fafafa;">${leader}</strong>.`);
+  return emailLayout({
+    preheader: `Join the InMailly team — your invite code is ${data.inviteCode}`,
+    eyebrow: "Team invitation",
+    title: "You're invited to join InMailly",
+    bodyHtml: [
+      heroBanner("✦", "Outreach team invite", "Use your personal code below to create your account."),
+      noteBlock,
+      `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
+        <tr><td align="center" style="padding:20px;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.25);">
+          <p style="margin:0 0 6px;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#71717a;">Your invite code</p>
+          <p style="margin:0;font-size:22px;font-weight:800;letter-spacing:0.08em;color:#22d3ee;font-family:ui-monospace,monospace;">${esc(data.inviteCode)}</p>
+        </td></tr>
+      </table>`,
+      p("Create your account, verify your email, then open <strong style=\"color:#fafafa;\">Work Links</strong> to start claiming profiles."),
+      founderWelcomeSignature(),
+    ].join(""),
+    cta: { href: data.registerUrl, label: "Join the team →" },
+    secondaryCta: { href: `${site}/team/login`, label: "Already have an account? Log in →" },
+    footerNote: "This code is single-use per signup batch. If you didn't expect this invite, you can ignore this email.",
+  });
+}
+
 export function clientWelcomeVerifiedEmail(data: { firstName: string; company?: string | null }) {
   const site = getSiteUrl();
   const name = esc(data.firstName);

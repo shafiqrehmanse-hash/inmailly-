@@ -125,37 +125,51 @@ export default function LinkCard({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 pl-1">
-        <a href={link.url} target="_blank" rel="noopener noreferrer" onClick={handleOpen}>
-          <Button variant="lux-soft" size="sm">
-            {opened ? "Open again ↗" : "Open profile ↗"}
-          </Button>
-        </a>
-        {mode === "pool" && onClaim && (
-          <Button variant="lux-cyan" size="sm" onClick={onClaim}>
-            Claim link
-          </Button>
-        )}
-        {mode === "mine" && (
-          <>
-            {onMarkUsed && (
-              <Button variant="lux-success" size="sm" onClick={onMarkUsed}>
+      {(() => {
+        const btnClass = "w-full h-9 min-h-9";
+        const count =
+          1 +
+          (mode === "pool" && onClaim ? 1 : 0) +
+          (mode === "mine" ? (onMarkUsed ? 1 : 0) + (onRelease ? 1 : 0) : 0) +
+          ((mode === "mine" || mode === "used") && onAddLead ? 1 : 0);
+        const cols = count >= 4 ? "grid-cols-2 sm:grid-cols-4" : count === 3 ? "grid-cols-3" : count === 2 ? "grid-cols-2" : "grid-cols-1";
+
+        return (
+          <div className={cn("grid gap-2 pl-1", cols)}>
+            <a
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleOpen}
+              className="min-w-0"
+            >
+              <Button variant="lux-soft" size="sm" className={btnClass}>
+                {opened ? "Open again ↗" : "Open profile ↗"}
+              </Button>
+            </a>
+            {mode === "pool" && onClaim && (
+              <Button variant="lux-cyan" size="sm" className={btnClass} onClick={onClaim}>
+                Claim link
+              </Button>
+            )}
+            {mode === "mine" && onMarkUsed && (
+              <Button variant="lux-success" size="sm" className={btnClass} onClick={onMarkUsed}>
                 Mark complete
               </Button>
             )}
-            {onRelease && (
-              <Button variant="lux-ghost" size="sm" onClick={onRelease}>
+            {mode === "mine" && onRelease && (
+              <Button variant="lux-ghost" size="sm" className={btnClass} onClick={onRelease}>
                 Release
               </Button>
             )}
-          </>
-        )}
-        {(mode === "mine" || mode === "used") && onAddLead && (
-          <Button variant="lux" size="sm" onClick={onAddLead}>
-            + Add as lead
-          </Button>
-        )}
-      </div>
+            {(mode === "mine" || mode === "used") && onAddLead && (
+              <Button variant="lux" size="sm" className={btnClass} onClick={onAddLead}>
+                + Add as lead
+              </Button>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

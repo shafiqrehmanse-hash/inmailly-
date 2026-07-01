@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import { cn } from "@/lib/utils";
+import { useAdminKey } from "@/lib/admin-context";
 
 const HUB_NAV = [
   { href: "/admin", label: "Overview", icon: "◫", exact: true },
   { href: "/admin/team", label: "Team", icon: "👥" },
-  { href: "/admin/clients", label: "Clients", icon: "◇" },
+  { href: "/admin/clients", label: "Clients", icon: "◇", criticalKey: "clients" as const },
   { href: "/admin/projects", label: "Projects", icon: "◎" },
   { href: "/admin/website", label: "Website", icon: "🌐" },
 ] as const;
@@ -21,6 +23,20 @@ export default function AdminHubShell({
   onLogout: () => void;
 }) {
   const pathname = usePathname();
+  const adminKey = useAdminKey();
+  const [needsSetup, setNeedsSetup] = useState(0);
+
+  const loadAlerts = useCallback(async () => {
+    const res = await fetch(`/api/admin/overview?key=${adminKey}`);
+    const data = await res.json();
+    if (res.ok) {
+      setNeedsSetup(data.projects?.needs_setup || 0);
+    }
+  }, [adminKey]);
+
+  useEffect(() => {
+    loadAlerts();
+  }, [loadAlerts]);
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
@@ -55,7 +71,14 @@ export default function AdminHubShell({
               )}
             >
               <span className="w-5 text-center">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="flex-1">{item.label}</span>
+              {"criticalKey" in item && item.criticalKey === "clients" && needsSetup > 0 && (
+                <span
+                  className="admin-alert-dot w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.9)] shrink-0"
+                  title={`${needsSetup} client(s) need setup`}
+                  aria-label={`${needsSetup} clients need setup`}
+                />
+              )}
             </Link>
           ))}
         </nav>

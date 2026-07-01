@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { TeamMember } from "@/lib/types";
+import { isTeamLeader } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -59,6 +60,18 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const leaderNav = isTeamLeader(member.role)
+    ? [
+        {
+          label: "Leadership",
+          tone: "text-amber-400/70",
+          items: [
+            { id: "leader", href: "/team/leader", label: "Leader workspace", icon: "★", accent: "amber" as const },
+          ],
+        },
+      ]
+    : [];
+  const navSections = [...leaderNav, ...sections];
   const initials = member.name
     .split(" ")
     .map((n) => n[0])
@@ -91,7 +104,7 @@ export default function Sidebar({
       </div>
 
       <nav className="flex-1 py-3 overflow-y-auto px-2 min-h-0 lux-scrollbar-hide">
-        {sections.map((section) => (
+        {navSections.map((section) => (
           <div key={section.label} className="mb-2">
             <div
               className={cn(
@@ -118,7 +131,7 @@ export default function Sidebar({
                 >
                   <span className="w-[18px] text-center shrink-0 text-base">{item.icon}</span>
                   <span className="flex-1 font-medium">{item.label}</span>
-                  {item.badge && poolCount > 0 && (
+                  {"badge" in item && item.badge && poolCount > 0 && (
                     <span className="min-w-[1.4rem] h-[1.4rem] px-1 flex items-center justify-center rounded-full bg-red-500/15 text-red-400 text-[0.62rem] font-bold border border-red-500/45 shadow-[0_0_14px_rgba(239,68,68,0.22)] tabular-nums">
                       {poolCount}
                     </span>
@@ -137,7 +150,9 @@ export default function Sidebar({
           </div>
           <div className="min-w-0">
             <div className="text-sm text-white font-medium truncate">{member.name}</div>
-            <div className="text-[0.65rem] text-lux-violet/60">Outreach member</div>
+            <div className="text-[0.65rem] text-lux-violet/60">
+              {isTeamLeader(member.role) ? "Team leader" : "Outreach member"}
+            </div>
           </div>
         </div>
         <button
