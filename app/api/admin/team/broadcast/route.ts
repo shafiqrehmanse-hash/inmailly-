@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
     const result = await sendEmail({
       to: m.email,
       subject: subject.trim(),
-      text: teamBroadcastPlainBody(m.name, message, subject),
-      html: teamBroadcastHtmlBody(m.name, message, subject),
+      text: teamBroadcastPlainBody(message, subject),
+      html: teamBroadcastHtmlBody(message, subject),
     });
     if (result.ok) sent += 1;
     else failures.push(m.name);

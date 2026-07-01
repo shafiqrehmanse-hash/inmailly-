@@ -25,14 +25,11 @@ Reply anytime. I'm in your corner.`;
 }
 
 export function teamBroadcastPlainBody(
-  memberName: string,
   message: string,
   subject: string,
   signature = FOUNDER_BROADCAST_SIGNATURE
 ) {
-  const first = memberName.trim().split(/\s+/)[0] || memberName;
   return teamBroadcastPlainText({
-    recipientFirstName: first,
     subject: subject.trim() || "Update from InMailly",
     message,
     signature,
@@ -40,14 +37,11 @@ export function teamBroadcastPlainBody(
 }
 
 export function teamBroadcastHtmlBody(
-  memberName: string,
   message: string,
   subject: string,
   signature: BroadcastSignature = FOUNDER_BROADCAST_SIGNATURE
 ) {
-  const first = memberName.trim().split(/\s+/)[0] || memberName;
   return teamBroadcastEmail({
-    recipientFirstName: first,
     subject: subject.trim() || "Update from InMailly",
     message,
     signature,

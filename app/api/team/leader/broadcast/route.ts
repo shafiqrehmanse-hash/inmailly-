@@ -41,8 +41,8 @@ export async function POST(request: Request) {
       to: m.email,
       subject: subject.trim(),
       replyTo: member.email,
-      text: teamBroadcastPlainBody(m.name, message, subject, signature),
-      html: teamBroadcastHtmlBody(m.name, message, subject, signature),
+      text: teamBroadcastPlainBody(message, subject, signature),
+      html: teamBroadcastHtmlBody(message, subject, signature),
     });
     if (result.ok) sent += 1;
     else failures.push(m.name);

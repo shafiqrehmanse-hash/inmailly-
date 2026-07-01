@@ -35,18 +35,14 @@ export default function TeamBroadcastComposer({
       ? FOUNDER_BROADCAST_SIGNATURE
       : leaderBroadcastSignature(leaderName || "Team Leader");
 
-  const previewMember = members[0];
-  const previewFirst = previewMember?.name.trim().split(/\s+/)[0] || "Team";
-
   const previewHtml = useMemo(
     () =>
       teamBroadcastEmail({
-        recipientFirstName: previewFirst,
         subject: subject.trim() || "Your subject line",
         message: message.trim() || "Your message will appear here…",
         signature,
       }),
-    [previewFirst, subject, message, signature]
+    [subject, message, signature]
   );
 
   function flash(msg: string, isError?: boolean) {
@@ -150,6 +146,7 @@ export default function TeamBroadcastComposer({
             <h2 className="font-bricolage font-bold text-lux-text">Compose</h2>
             <p className="text-xs text-lux-muted mt-1">
               Dark HTML email with signature: <span className="text-lux-cyan">{signerLine}</span>
+              <span className="block mt-1 text-lux-muted/80">Your message is sent exactly as written — no auto greeting added.</span>
             </p>
           </div>
 

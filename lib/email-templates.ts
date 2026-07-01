@@ -172,34 +172,26 @@ export function leaderBroadcastSignature(leaderName: string): BroadcastSignature
   };
 }
 
-/** Dark HTML broadcast — same lux layout as welcome email. */
+/** Dark HTML broadcast — same lux layout as welcome email. Message is sent exactly as written. */
 export function teamBroadcastEmail(data: {
-  recipientFirstName: string;
   subject: string;
   message: string;
   signature: BroadcastSignature;
 }) {
-  const first = esc(data.recipientFirstName);
   return emailLayout({
     preheader: data.message.trim().slice(0, 140) || data.subject,
     eyebrow: "Team message",
     title: data.subject.trim() || "Update from your team",
-    bodyHtml: [
-      p(`Hey <strong style="color:#fafafa;">${first}</strong>,`),
-      messageParagraphs(data.message),
-      broadcastSignatureBlock(data.signature),
-    ].join(""),
+    bodyHtml: [messageParagraphs(data.message), broadcastSignatureBlock(data.signature)].join(""),
     footerNote: "You're on the InMailly outreach team — built for ambitious closers.",
   });
 }
 
 export function teamBroadcastPlainText(data: {
-  recipientFirstName: string;
   subject: string;
   message: string;
   signature: BroadcastSignature;
 }) {
-  const first = data.recipientFirstName.trim().split(/\s+/)[0] || data.recipientFirstName;
   const sigLines = [
     "",
     "Warm regards,",
@@ -211,7 +203,7 @@ export function teamBroadcastPlainText(data: {
   ]
     .filter(Boolean)
     .join("\n");
-  return `Hey ${first},\n\n${data.message.trim()}${sigLines}`;
+  return `${data.message.trim()}${sigLines}`;
 }
 
 export function detailRow(label: string, value: string) {
