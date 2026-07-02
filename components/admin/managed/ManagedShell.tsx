@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import LuxSelect from "@/components/ui/LuxSelect";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
+import { InMaillyMark } from "@/components/brand/InMaillyLogo";
 import { cn } from "@/lib/utils";
 
 export type ManagedNavItem = {
@@ -54,9 +55,7 @@ export default function ManagedShell({
             ← Admin home
           </Link>
           <div className="flex items-center gap-2.5 mt-3">
-            <div className="w-8 h-8 border border-lux-blue/40 bg-lux-blue/10 flex items-center justify-center font-bricolage font-extrabold text-sm text-lux-blue">
-              I
-            </div>
+            <InMaillyMark size={32} />
             <div>
               <div className="font-bricolage font-extrabold text-lux-text text-sm">{areaTitle}</div>
               <div className="text-[0.58rem] text-lux-muted uppercase tracking-widest">{areaBadge}</div>

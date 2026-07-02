@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import MagneticButton from "./MagneticButton";
+import { InMaillyBrand } from "@/components/brand/InMaillyLogo";
 
 const LINKS = [
   { href: "#story", label: "Story" },
@@ -32,11 +33,8 @@ export default function LuxNav() {
       }`}
     >
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10 h-[72px] flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 border border-lux-blue/40 bg-lux-blue/10 flex items-center justify-center font-bricolage font-extrabold text-sm text-lux-blue group-hover:border-lux-cyan/50 transition-colors">
-            I
-          </div>
-          <span className="font-bricolage font-extrabold text-lg tracking-tight text-lux-text">InMailly</span>
+        <Link href="/" className="group">
+          <InMaillyBrand size="md" className="group-hover:opacity-90 transition-opacity" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">

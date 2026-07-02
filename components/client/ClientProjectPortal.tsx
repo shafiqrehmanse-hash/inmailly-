@@ -5,6 +5,7 @@ import Link from "next/link";
 import ClientDashboard from "@/components/client/ClientDashboard";
 import ClientPackageProgress from "@/components/client/ClientPackageProgress";
 import LuxBackground from "@/components/home/LuxBackground";
+import { InMaillyBrand } from "@/components/brand/InMaillyLogo";
 import { mapPortalToDashboard } from "@/lib/map-portal-to-dashboard";
 import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 
@@ -49,10 +50,7 @@ export default function ClientProjectPortal({ token }: { token: string }) {
       <header className="border-b border-white/[0.06] bg-lux-bg/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 h-[64px] flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 border border-lux-blue/40 bg-lux-blue/10 flex items-center justify-center font-bricolage font-extrabold text-sm text-lux-blue">
-              I
-            </div>
-            <span className="font-bricolage font-extrabold text-lux-text">InMailly</span>
+            <InMaillyBrand size="sm" />
             <span className="text-[0.6rem] uppercase tracking-wider text-amber-400/90 border border-amber-500/30 bg-amber-500/10 px-2 py-0.5">
               Team portal
             </span>

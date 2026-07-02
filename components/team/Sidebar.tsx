@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { InMaillyBrand } from "@/components/brand/InMaillyLogo";
 import type { TeamMember } from "@/lib/types";
 import { isTeamLeader } from "@/lib/roles";
 import { cn } from "@/lib/utils";
@@ -127,17 +128,10 @@ export default function Sidebar({
   const NavContent = () => (
     <>
       <div className="px-5 pt-5 pb-5 border-b border-lux-violet/15 bg-gradient-to-br from-lux-violet/[0.08] via-lux-cyan/[0.04] to-transparent">
-        <Link href="/team/hub" className="flex items-center gap-3" onClick={() => setOpen(false)}>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-lux-violet via-lux-blue to-lux-cyan flex items-center justify-center font-bricolage font-extrabold text-sm text-white shadow-lg shadow-lux-violet/25 ring-1 ring-lux-violet/30">
-            I
-          </div>
-          <div>
-            <div className="font-bricolage font-extrabold text-[0.95rem] text-white tracking-tight">
-              InMailly
-            </div>
-            <div className="text-[0.58rem] text-lux-violet/70 uppercase tracking-[0.2em] font-semibold">
-              Team workspace
-            </div>
+        <Link href="/team/hub" className="block" onClick={() => setOpen(false)}>
+          <InMaillyBrand size="sm" />
+          <div className="text-[0.58rem] text-lux-violet/70 uppercase tracking-[0.2em] font-semibold mt-1.5 pl-0.5">
+            Team workspace
           </div>
         </Link>
       </div>

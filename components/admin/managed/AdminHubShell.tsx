@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { InMaillyBrand } from "@/components/brand/InMaillyLogo";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import { cn } from "@/lib/utils";
 import { useAdminKey } from "@/lib/admin-context";
@@ -48,15 +49,8 @@ export default function AdminHubShell({
       <WorkspaceAmbient />
       <aside className="hidden lg:flex w-[220px] flex-col border-r border-white/[0.06] bg-lux-bg2/80 shrink-0">
         <div className="px-5 py-6 border-b border-white/[0.06]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 border border-lux-blue/40 bg-lux-blue/10 flex items-center justify-center font-bricolage font-extrabold text-sm text-lux-blue">
-              I
-            </div>
-            <div>
-              <div className="font-bricolage font-extrabold text-lux-text text-sm">InMailly</div>
-              <div className="text-[0.58rem] text-lux-muted uppercase tracking-widest">Admin</div>
-            </div>
-          </div>
+          <InMaillyBrand size="sm" textClassName="text-sm" />
+          <div className="text-[0.58rem] text-lux-muted uppercase tracking-widest mt-1 pl-0.5">Admin</div>
         </div>
         <nav className="flex-1 p-3 space-y-0.5">
           {HUB_NAV.map((item) => (

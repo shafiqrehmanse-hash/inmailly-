@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import LuxBackground from "@/components/home/LuxBackground";
+import { InMaillyBrand } from "@/components/brand/InMaillyLogo";
 import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function AdminLoginPage() {
@@ -33,14 +34,9 @@ export default function AdminLoginPage() {
     <div className="relative min-h-screen bg-lux-bg flex items-center justify-center p-6">
       <LuxBackground />
       <div className="relative w-full max-w-md lux-card p-8">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 border border-lux-blue/40 bg-lux-blue/10 flex items-center justify-center font-bricolage font-extrabold text-lux-blue">
-            I
-          </div>
-          <div>
-            <div className="font-bricolage font-extrabold text-lg text-lux-text">InMailly Admin</div>
-            <div className="text-xs text-lux-muted">Private access only</div>
-          </div>
+        <div className="mb-8">
+          <InMaillyBrand size="md" />
+          <div className="text-xs text-lux-muted mt-2">Admin · Private access only</div>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

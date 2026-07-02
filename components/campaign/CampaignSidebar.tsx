@@ -6,6 +6,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { TeamMember } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { InMaillyBrand } from "@/components/brand/InMaillyLogo";
 
 type NavItem = { id: string; href: string; label: string; icon: string };
 
@@ -72,13 +73,10 @@ export default function CampaignSidebar({ member }: { member: TeamMember }) {
   const NavContent = () => (
     <>
       <div className="px-5 pb-5 border-b border-white/[0.08]">
-        <Link href="/campaign/hub" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-lux-violet to-lux-cyan flex items-center justify-center font-bricolage font-extrabold text-sm text-white">
-            I
-          </div>
-          <div>
-            <div className="font-bricolage font-extrabold text-sm text-lux-text">InMailly</div>
-            <div className="text-[0.58rem] text-lux-muted uppercase tracking-widest">Campaign department</div>
+        <Link href="/campaign/hub" className="block" onClick={() => setOpen(false)}>
+          <InMaillyBrand size="sm" />
+          <div className="text-[0.58rem] text-lux-muted uppercase tracking-widest mt-1.5 pl-0.5">
+            Campaign department
           </div>
         </Link>
       </div>
