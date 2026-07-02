@@ -55,7 +55,7 @@ export default function ManagedShell({
             ← Admin home
           </Link>
           <div className="flex items-center gap-2.5 mt-3">
-            <InMaillyMark size={32} />
+            <InMaillyMark height={32} />
             <div>
               <div className="font-bricolage font-extrabold text-lux-text text-sm">{areaTitle}</div>
               <div className="text-[0.58rem] text-lux-muted uppercase tracking-widest">{areaBadge}</div>

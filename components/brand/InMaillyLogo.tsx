@@ -5,18 +5,19 @@ import { cn } from "@/lib/utils";
 
 /** Stylized "i" mark — cyan orb, signal rings, white stem. */
 export function InMaillyMark({
-  size = 36,
+  height = 18,
   className,
 }: {
-  size?: number;
+  /** Pixel height — sized to match InMailly cap height in wordmark. */
+  height?: number;
   className?: string;
 }) {
   const uid = useId().replace(/:/g, "");
-  const height = Math.round(size * (56 / 48));
+  const width = Math.round(height * (48 / 56));
 
   return (
     <svg
-      width={size}
+      width={width}
       height={height}
       viewBox="0 0 48 56"
       fill="none"
@@ -71,16 +72,16 @@ export function InMaillyBrand({
   className?: string;
   textClassName?: string;
 }) {
-  const markSize = { sm: 28, md: 36, lg: 40 }[size];
+  const markHeight = { sm: 14, md: 17, lg: 20 }[size];
   const textSize = {
-    sm: "text-base",
-    md: "text-lg",
-    lg: "text-xl",
+    sm: "text-base leading-none",
+    md: "text-lg leading-none",
+    lg: "text-xl leading-none",
   }[size];
 
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <InMaillyMark size={markSize} />
+    <span className={cn("inline-flex items-center gap-2", className)}>
+      <InMaillyMark height={markHeight} className="translate-y-[0.5px]" />
       {showText && (
         <span
           className={cn(
