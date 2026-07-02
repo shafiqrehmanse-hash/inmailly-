@@ -122,6 +122,8 @@ export type Project = {
   inmail_package_size: number | null;
   status: ProjectStatus;
   portal_token: string | null;
+  embed_token: string | null;
+  whitelabel_enabled: boolean;
   created_at: string;
   updated_at: string;
 };
