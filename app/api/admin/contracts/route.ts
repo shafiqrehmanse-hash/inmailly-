@@ -3,6 +3,7 @@ import { sendEmail } from "@/lib/email";
 import { emailLayout, p } from "@/lib/email-templates";
 import type { OfferLetterForm } from "@/lib/offer-letter";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
+import { getContractDashboardPath } from "@/lib/roles";
 import { getSiteUrl } from "@/lib/site-url";
 
 function checkKey(request: NextRequest) {
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
 
   const { data: member } = await admin
     .from("team_members")
-    .select("id, name, email")
+    .select("id, name, email, role")
     .eq("email", email)
     .maybeSingle();
 
@@ -79,12 +80,14 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const signUrl = `${getSiteUrl()}/team/contract`;
+  const signPath = member ? getContractDashboardPath(member.role) : "/team/contract";
+  const signUrl = `${getSiteUrl()}${signPath}`;
+  const dashboardLabel = member?.role === "campaign_manager" ? "campaign dashboard" : "team dashboard";
   const html = emailLayout({
     eyebrow: "Employment offer",
     title: "Review & sign your offer",
     bodyHtml: `${p(`Hi ${form.candidateName.split(" ")[0]},`)}
-      ${p(`Your offer for <strong style="color:#fafafa;">${form.roleTitle}</strong> is ready in your InMailly team dashboard. Please log in, read all terms carefully (including non-permanent engagement terms), and sign electronically.`)}
+      ${p(`Your offer for <strong style="color:#fafafa;">${form.roleTitle}</strong> is ready in your InMailly ${dashboardLabel}. Please log in, read all terms carefully (including non-permanent engagement terms), and sign electronically.`)}
       ${p(`Monthly salary: <strong style="color:#22d3ee;">PKR ${Number(form.monthlySalaryPkr).toLocaleString("en-PK")}</strong>`)}`,
     cta: { href: signUrl, label: "Open dashboard to sign" },
     footerNote: `Contract ref: ${form.referenceNo}. Questions? Reply to this email.`,

@@ -47,6 +47,12 @@ export function getLoginRedirect(role: MemberRole): string {
   return "/team/hub";
 }
 
+/** Where employment contracts are signed in the dashboard for each role. */
+export function getContractDashboardPath(role: string): string {
+  if (isCampaignManager(role)) return "/campaign/contract";
+  return "/team/contract";
+}
+
 export function roleLabel(role: string): string {
   if (isTeamLeader(role)) return "Team leader";
   if (isCampaignManager(role)) return "Campaign manager";

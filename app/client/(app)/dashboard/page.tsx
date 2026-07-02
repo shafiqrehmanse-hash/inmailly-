@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ClientDashboard from "@/components/client/ClientDashboard";
+import ClientContractHubCard from "@/components/client/ClientContractHubCard";
 import ClientPackageProgress from "@/components/client/ClientPackageProgress";
 import LuxBackground from "@/components/home/LuxBackground";
 import { buildClientDisplayDashboard } from "@/lib/client-dashboard-display";
@@ -129,6 +130,7 @@ export default function ClientDashboardPage() {
           <h1 className="font-bricolage font-extrabold text-3xl text-lux-text">{live.projectName}</h1>
           <p className="text-lux-muted mt-2 text-sm capitalize">Status: {live.status}</p>
         </div>
+        <ClientContractHubCard />
         <ClientDashboard mode="full" live={live} usingDemoFill={usingDemoFill} />
         {live.packageProgress && (
           <div className="mt-8">

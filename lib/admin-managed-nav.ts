@@ -41,6 +41,7 @@ export const CLIENTS_ADMIN_NAV: ManagedNavGroup[] = [
     title: "Clients",
     items: [
       { href: "/admin/clients", label: "All clients", icon: "◇" },
+      { href: "/admin/clients/contracts", label: "Service agreements", icon: "📄" },
       { href: "/admin/clients/email", label: "Send email", icon: "✉" },
       { href: "/admin/clients/setup", label: "Needs setup", icon: "⚠" },
     ],

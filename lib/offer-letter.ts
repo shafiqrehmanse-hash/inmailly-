@@ -1,4 +1,4 @@
-export type OfferLetterPreset = "outreach_worker" | "senior_outreach" | "team_leader" | "custom";
+export type OfferLetterPreset = "outreach_worker" | "senior_outreach" | "team_leader" | "campaign_manager" | "custom";
 
 export type OfferLetterForm = {
   candidateName: string;
@@ -72,6 +72,22 @@ export const OFFER_PRESETS: Record<
       workingHours: "Leadership duties plus personal outreach quota",
       additionalTerms:
         "• Leader workspace access: team pulse, invites, nudges, and worker task assignment.\n• Responsible for team activity and onboarding support.\n• Reports directly to founder.",
+    },
+  },
+  campaign_manager: {
+    label: "Campaign manager",
+    patch: {
+      roleTitle: "Campaign Manager",
+      department: "Client Campaigns & Outreach",
+      monthlySalaryPkr: "75000",
+      commissionText:
+        "Performance bonus on client campaign delivery and outreach KPIs as agreed with management.",
+      employmentType: "Permanent / long-term engagement",
+      probationMonths: "3",
+      workLocation: "Remote — Pakistan",
+      workingHours: "Full professional schedule; client projects and outreach as assigned",
+      additionalTerms:
+        "• Client campaign management and InMailly outreach tools access.\n• Separate from outreach team leader reporting lines.\n• Confidentiality of all client data is required.",
     },
   },
   custom: {

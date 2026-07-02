@@ -65,18 +65,25 @@ export default function AdminOfferLetterSection() {
   function fillFromMember(memberId: string) {
     const m = members.find((x) => x.id === memberId);
     if (!m) return;
-    setForm((f) => ({
-      ...f,
-      candidateName: m.name,
-      candidateEmail: m.email,
-      roleTitle:
-        m.role === "team_leader"
+    const roleTitle =
+      m.role === "campaign_manager"
+        ? "Campaign Manager"
+        : m.role === "team_leader"
           ? "Team Leader"
           : m.role === "senior"
             ? "Senior Outreach Worker"
             : m.role === "admin"
               ? "Team Admin"
-              : "Outreach Worker",
+              : "Outreach Worker";
+    const presetPatch =
+      m.role === "campaign_manager" ? OFFER_PRESETS.campaign_manager.patch : {};
+    if (m.role === "campaign_manager") setPreset("campaign_manager");
+    setForm((f) => ({
+      ...f,
+      ...presetPatch,
+      candidateName: m.name,
+      candidateEmail: m.email,
+      roleTitle,
     }));
   }
 

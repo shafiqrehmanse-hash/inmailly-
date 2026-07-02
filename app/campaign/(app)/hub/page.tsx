@@ -1,5 +1,6 @@
 import Link from "next/link";
 import CampaignAssignedProjects from "@/components/campaign/CampaignAssignedProjects";
+import TeamContractHubCard from "@/components/team/TeamContractHubCard";
 import { getCurrentMember } from "@/lib/team";
 import { getMemberAssignedProjects } from "@/lib/team-projects";
 
@@ -41,6 +42,8 @@ export default async function CampaignHubPage() {
           </div>
         </div>
       </div>
+
+      <TeamContractHubCard contractHref="/campaign/contract" />
 
       <CampaignAssignedProjects projects={projects} />
     </div>
