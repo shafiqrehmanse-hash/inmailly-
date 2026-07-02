@@ -33,9 +33,12 @@ export default function AdminLinksSection({
   const [preview, setPreview] = useState<{
     new: number;
     duplicates: number;
+    duplicateInPaste?: number;
+    duplicateInDb?: number;
     invalid: number;
     parsed?: number;
     totalLines?: number;
+    rawUrlTokens?: number;
   } | null>(null);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -155,8 +158,10 @@ export default function AdminLinksSection({
       onToast(data.error, "error");
       return;
     }
+    const dupPaste = data.duplicateInPaste ? `, ${data.duplicateInPaste} repeated in paste` : "";
+    const dupDb = data.duplicateInDb ? `, ${data.duplicateInDb} already in pool` : "";
     onToast(
-      `Imported ${data.inserted} of ${data.parsed} parsed links (${data.duplicates} duplicates skipped${
+      `Imported ${data.inserted} of ${data.parsed} unique profiles (${data.rawUrlTokens ?? data.parsed} URLs found${dupPaste}${dupDb}${
         data.invalid ? `, ${data.invalid} invalid lines` : ""
       })`
     );
@@ -275,15 +280,21 @@ export default function AdminLinksSection({
           </Button>
         </div>
         {preview && (
-          <p className="text-sm text-lux-muted">
-            {preview.parsed ?? preview.new + preview.duplicates} URLs parsed · {preview.new} new ·{" "}
-            {preview.duplicates} already in pool · {preview.invalid} invalid lines
-            {preview.totalLines != null ? ` (${preview.totalLines} non-empty lines)` : ""}
+          <p className="text-sm text-lux-muted leading-relaxed">
+            <strong className="text-lux-text">{preview.rawUrlTokens ?? preview.parsed}</strong> URLs found →{" "}
+            <strong className="text-lux-text">{preview.parsed}</strong> unique profiles →{" "}
+            <strong className="text-emerald-400">{preview.new}</strong> new to import
+            {(preview.duplicateInPaste ?? 0) > 0 && (
+              <> · {preview.duplicateInPaste} repeated in paste (same LinkedIn profile)</>
+            )}
+            {(preview.duplicateInDb ?? 0) > 0 && <> · {preview.duplicateInDb} already in pool</>}
+            {preview.invalid > 0 && <> · {preview.invalid} lines with no URL</>}
           </p>
         )}
-        <p className="text-xs text-lux-muted">
-          Use <strong className="text-lux-text">Preview</strong> before import. The table below is paginated — check
-          the toast and <strong className="text-lux-text">Available</strong> total for the real count.
+        <p className="text-xs text-lux-muted leading-relaxed">
+          Use <strong className="text-lux-text">Preview</strong> first. Same profile with different URL formats counts
+          once (e.g. with/without <code className="text-lux-cyan/80">?trk=</code>). The table is paginated — check the
+          toast and <strong className="text-lux-text">Available</strong> total for the real count.
         </p>
       </div>
 
