@@ -12,6 +12,7 @@ export default function ConfirmDialog({
   cancelLabel = "Cancel",
   onConfirm,
   loading = false,
+  loadingLabel = "Working…",
   destructive = false,
 }: {
   open: boolean;
@@ -22,6 +23,7 @@ export default function ConfirmDialog({
   cancelLabel?: string;
   onConfirm: () => void | Promise<void>;
   loading?: boolean;
+  loadingLabel?: string;
   destructive?: boolean;
 }) {
   return (
@@ -38,7 +40,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={loading}
           >
-            {loading ? "Deleting…" : confirmLabel}
+            {loading ? loadingLabel : confirmLabel}
           </Button>
         </div>
       </div>

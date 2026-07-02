@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Modal from "@/components/ui/Modal";
 import LuxSelect from "@/components/ui/LuxSelect";
 import Pagination from "@/components/ui/Pagination";
 import PageSizeSelect from "@/components/ui/PageSizeSelect";
@@ -15,6 +17,75 @@ import { cn, formatDate, truncateUrl } from "@/lib/utils";
 type LinkRow = OutreachLink & {
   team_members?: { name: string } | { name: string }[] | null;
 };
+
+type LinkImportStats = {
+  new: number;
+  duplicates: number;
+  duplicateInPaste?: number;
+  duplicateInDb?: number;
+  invalid: number;
+  parsed?: number;
+  totalLines?: number;
+  rawUrlTokens?: number;
+  inserted?: number;
+  error?: string;
+};
+
+function ImportStatsSummary({ stats }: { stats: LinkImportStats }) {
+  const urlsFound = stats.rawUrlTokens ?? stats.parsed ?? 0;
+  const unique = stats.parsed ?? 0;
+  const dupPaste = stats.duplicateInPaste ?? 0;
+  const dupDb = stats.duplicateInDb ?? 0;
+  const invalid = stats.invalid ?? 0;
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-3">
+          <div className="text-[0.65rem] uppercase tracking-wider text-lux-muted mb-1">URLs found</div>
+          <div className="font-bricolage font-extrabold text-xl text-lux-text tabular-nums">{urlsFound}</div>
+        </div>
+        <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-3">
+          <div className="text-[0.65rem] uppercase tracking-wider text-lux-muted mb-1">Unique profiles</div>
+          <div className="font-bricolage font-extrabold text-xl text-lux-text tabular-nums">{unique}</div>
+        </div>
+        <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-3">
+          <div className="text-[0.65rem] uppercase tracking-wider text-emerald-400/90 mb-1">New to upload</div>
+          <div className="font-bricolage font-extrabold text-xl text-emerald-400 tabular-nums">
+            {stats.inserted ?? stats.new}
+          </div>
+        </div>
+        <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl p-3">
+          <div className="text-[0.65rem] uppercase tracking-wider text-amber-300/90 mb-1">Skipped (duplicates)</div>
+          <div className="font-bricolage font-extrabold text-xl text-amber-300 tabular-nums">
+            {dupPaste + dupDb}
+          </div>
+        </div>
+      </div>
+      <ul className="text-xs text-lux-muted space-y-1.5 pl-1">
+        {dupPaste > 0 && (
+          <li>
+            <span className="text-amber-300 font-semibold tabular-nums">{dupPaste}</span> repeated in your paste (same
+            LinkedIn profile, different URL)
+          </li>
+        )}
+        {dupDb > 0 && (
+          <li>
+            <span className="text-amber-300 font-semibold tabular-nums">{dupDb}</span> already in the link pool
+          </li>
+        )}
+        {invalid > 0 && (
+          <li>
+            <span className="text-red-400 font-semibold tabular-nums">{invalid}</span> lines with no recognizable URL
+          </li>
+        )}
+        {dupPaste === 0 && dupDb === 0 && invalid === 0 && (
+          <li>All URLs are unique and ready to import.</li>
+        )}
+      </ul>
+    </div>
+  );
+}
 
 export default function AdminLinksSection({
   adminKey,
@@ -30,16 +101,14 @@ export default function AdminLinksSection({
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const [paste, setPaste] = useState("");
   const [batchName, setBatchName] = useState("");
-  const [preview, setPreview] = useState<{
-    new: number;
-    duplicates: number;
-    duplicateInPaste?: number;
-    duplicateInDb?: number;
-    invalid: number;
-    parsed?: number;
-    totalLines?: number;
-    rawUrlTokens?: number;
-  } | null>(null);
+  const [preview, setPreview] = useState<LinkImportStats | null>(null);
+  const [confirmImportOpen, setConfirmImportOpen] = useState(false);
+  const [previewOnlyOpen, setPreviewOnlyOpen] = useState(false);
+  const [importResultOpen, setImportResultOpen] = useState(false);
+  const [importStats, setImportStats] = useState<LinkImportStats | null>(null);
+  const [importResult, setImportResult] = useState<LinkImportStats | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [memberFilter, setMemberFilter] = useState(initialMemberFilter || "all");
@@ -138,38 +207,78 @@ export default function AdminLinksSection({
     });
   }
 
-  async function handlePreview() {
+  async function fetchPreviewStats(): Promise<LinkImportStats | null> {
+    if (!paste.trim()) {
+      onToast("Paste some URLs first", "error");
+      return null;
+    }
+    setPreviewLoading(true);
     const res = await fetch(`/api/admin/links/preview?key=${adminKey}`, {
       method: "POST",
       headers,
       body: JSON.stringify({ paste }),
     });
-    setPreview(await res.json());
+    const data = await res.json();
+    setPreviewLoading(false);
+    if (!res.ok || data.error) {
+      onToast(data.error || "Preview failed", "error");
+      return null;
+    }
+    setPreview(data);
+    return data as LinkImportStats;
   }
 
-  async function handleImport() {
+  async function handlePreview() {
+    const data = await fetchPreviewStats();
+    if (data) {
+      setImportStats(data);
+      setPreviewOnlyOpen(true);
+    }
+  }
+
+  async function startImport() {
+    const data = await fetchPreviewStats();
+    if (!data) return;
+    setImportStats(data);
+    if (data.new === 0) {
+      setImportResult({ ...data, inserted: 0 });
+      setImportResultOpen(true);
+      return;
+    }
+    setConfirmImportOpen(true);
+  }
+
+  async function confirmImport() {
+    if (!importStats) return;
+    setImporting(true);
     const res = await fetch(`/api/admin/links/import?key=${adminKey}`, {
       method: "POST",
       headers,
       body: JSON.stringify({ paste, batchName }),
     });
     const data = await res.json();
-    if (data.error) {
-      onToast(data.error, "error");
+    setImporting(false);
+    setConfirmImportOpen(false);
+
+    if (!res.ok || data.error) {
+      onToast(data.error || "Import failed", "error");
       return;
     }
-    const dupPaste = data.duplicateInPaste ? `, ${data.duplicateInPaste} repeated in paste` : "";
-    const dupDb = data.duplicateInDb ? `, ${data.duplicateInDb} already in pool` : "";
-    onToast(
-      `Imported ${data.inserted} of ${data.parsed} unique profiles (${data.rawUrlTokens ?? data.parsed} URLs found${dupPaste}${dupDb}${
-        data.invalid ? `, ${data.invalid} invalid lines` : ""
-      })`
-    );
+
+    const result: LinkImportStats = { ...importStats, ...data, inserted: data.inserted };
+    setImportResult(result);
+    setImportResultOpen(true);
     setPaste("");
     setPreview(null);
+    setImportStats(null);
     setStatusFilter("available");
     setPage(1);
     load({ page: 1, status: "available" });
+  }
+
+  function closeImportResult() {
+    setImportResultOpen(false);
+    setImportResult(null);
   }
 
   async function resetLink(linkId: string) {
@@ -272,11 +381,11 @@ export default function AdminLinksSection({
           onChange={(e) => setBatchName(e.target.value)}
         />
         <div className="flex gap-3">
-          <Button variant="lux-ghost" onClick={handlePreview}>
-            Preview
+          <Button variant="lux-ghost" onClick={handlePreview} disabled={previewLoading || importing}>
+            {previewLoading ? "Checking…" : "Preview"}
           </Button>
-          <Button variant="lux" onClick={handleImport}>
-            Import
+          <Button variant="lux" onClick={startImport} disabled={previewLoading || importing}>
+            {importing ? "Uploading…" : "Import"}
           </Button>
         </div>
         {preview && (
@@ -292,11 +401,79 @@ export default function AdminLinksSection({
           </p>
         )}
         <p className="text-xs text-lux-muted leading-relaxed">
-          Use <strong className="text-lux-text">Preview</strong> first. Same profile with different URL formats counts
-          once (e.g. with/without <code className="text-lux-cyan/80">?trk=</code>). The table is paginated — check the
-          toast and <strong className="text-lux-text">Available</strong> total for the real count.
+          Click <strong className="text-lux-text">Import</strong> to see a breakdown popup, confirm upload, then a
+          success summary. Same LinkedIn profile in different URL formats counts once.
         </p>
       </div>
+
+      <Modal
+        open={previewOnlyOpen}
+        onClose={() => setPreviewOnlyOpen(false)}
+        title="Import preview"
+      >
+        {importStats && (
+          <div className="space-y-5">
+            <ImportStatsSummary stats={importStats} />
+            <div className="flex justify-end">
+              <Button variant="lux-ghost" onClick={() => setPreviewOnlyOpen(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        open={confirmImportOpen}
+        onClose={() => !importing && setConfirmImportOpen(false)}
+        title="Confirm link upload"
+        confirmLabel={
+          importStats
+            ? `Upload ${importStats.new} link${importStats.new === 1 ? "" : "s"}`
+            : "Upload"
+        }
+        loading={importing}
+        loadingLabel="Uploading…"
+        onConfirm={confirmImport}
+        description={
+          importStats ? (
+            <>
+              <p className="mb-4 text-lux-text">
+                Review the breakdown below. Only <strong>{importStats.new}</strong> new link
+                {importStats.new === 1 ? "" : "s"} will be added to the pool.
+              </p>
+              <ImportStatsSummary stats={importStats} />
+            </>
+          ) : null
+        }
+      />
+
+      <Modal open={importResultOpen} onClose={closeImportResult} title="Upload complete">
+        {importResult && (
+          <div className="space-y-5">
+            {importResult.inserted === 0 ? (
+              <p className="text-sm text-amber-300 border border-amber-500/25 bg-amber-500/5 px-3 py-2 rounded-lg">
+                No new links were added — everything was already in the pool or duplicated in your paste.
+              </p>
+            ) : (
+              <p className="text-sm text-emerald-400 border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 rounded-lg font-semibold">
+                Successfully uploaded {importResult.inserted} new link{importResult.inserted === 1 ? "" : "s"} to the
+                pool.
+              </p>
+            )}
+            <ImportStatsSummary stats={importResult} />
+            <p className="text-xs text-lux-muted">
+              Filter set to <strong className="text-lux-text">Available</strong> — check the total at the top of the
+              table (not just page 1).
+            </p>
+            <div className="flex justify-end">
+              <Button variant="lux" onClick={closeImportResult}>
+                Done
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <div className="lux-card p-5 space-y-4 border-lux-cyan/20">
         <div>
