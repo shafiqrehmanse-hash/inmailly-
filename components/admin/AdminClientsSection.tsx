@@ -1,13 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import AdminClientEmailPanel from "@/components/admin/AdminClientEmailPanel";
 import Button from "@/components/ui/Button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Pagination from "@/components/ui/Pagination";
 import PageSizeSelect from "@/components/ui/PageSizeSelect";
-import AdminClientEmailPanel from "@/components/admin/AdminClientEmailPanel";
 import type { Client } from "@/lib/types";
 import { DEFAULT_PAGE_SIZE, readStoredPageSize, storePageSize } from "@/lib/pagination";
 import { formatDate } from "@/lib/utils";
+
+type DeleteClientTarget = {
+  id: string;
+  name: string;
+  projectCount: number;
+  email?: string | null;
+};
 
 export default function AdminClientsSection({
   adminKey,
@@ -44,6 +52,8 @@ export default function AdminClientsSection({
   const [form, setForm] = useState({ name: "", company_name: "", email: "", notes: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", company_name: "", email: "", notes: "" });
+  const [deleteTarget, setDeleteTarget] = useState<DeleteClientTarget | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -112,16 +122,30 @@ export default function AdminClientsSection({
     load();
   }
 
-  async function removeClient(id: string, name: string) {
-    if (!confirm(`Remove client "${name}"? They must have no projects first.`)) return;
-    const res = await fetch(`/api/admin/clients?key=${adminKey}&clientId=${id}`, { method: "DELETE" });
+  async function confirmDeleteClient() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const res = await fetch(`/api/admin/clients?key=${adminKey}&clientId=${deleteTarget.id}`, {
+      method: "DELETE",
+    });
     const data = await res.json();
+    setDeleting(false);
     if (data.error) {
       onToast(data.error, "error");
       return;
     }
-    onToast("Client removed");
+    const freed = data.email ? ` ${data.email} can register again.` : "";
+    const projects =
+      data.projectsDeleted > 0
+        ? ` Removed ${data.projectsDeleted} project${data.projectsDeleted === 1 ? "" : "s"}.`
+        : "";
+    onToast(`Client deleted.${projects}${freed}`);
+    setDeleteTarget(null);
     load();
+  }
+
+  function requestDeleteClient(target: DeleteClientTarget) {
+    setDeleteTarget(target);
   }
 
   async function copyPortalLink(token: string) {
@@ -294,9 +318,17 @@ export default function AdminClientsSection({
                         <Button
                           variant="lux-ghost"
                           size="sm"
-                          onClick={() => removeClient(c.id, c.company_name || c.name)}
+                          className="text-red-400/90 hover:text-red-300"
+                          onClick={() =>
+                            requestDeleteClient({
+                              id: c.id,
+                              name: c.company_name || c.name,
+                              projectCount: c.project_count || 0,
+                              email: c.email,
+                            })
+                          }
                         >
-                          Remove
+                          Delete
                         </Button>
                       </div>
                     </div>
@@ -387,6 +419,45 @@ export default function AdminClientsSection({
           onPage={setPage}
         />
       </section>
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        title="Delete client?"
+        destructive
+        confirmLabel="Delete client"
+        loading={deleting}
+        onConfirm={confirmDeleteClient}
+        description={
+          deleteTarget ? (
+            <>
+              <p className="mb-3">
+                You are about to permanently delete <strong className="text-lux-text">{deleteTarget.name}</strong>.
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5">
+                {deleteTarget.projectCount > 0 ? (
+                  <li>
+                    {deleteTarget.projectCount} project{deleteTarget.projectCount === 1 ? "" : "s"} and all related
+                    data
+                  </li>
+                ) : (
+                  <li>All client records and service agreements</li>
+                )}
+                <li>Assignments, leads, proofs, and contracts tied to this client</li>
+                {deleteTarget.email ? (
+                  <li>
+                    Login for <strong className="text-lux-text">{deleteTarget.email}</strong> — email will be free for a
+                    new signup
+                  </li>
+                ) : (
+                  <li>Any linked login account</li>
+                )}
+              </ul>
+              <p className="mt-3 text-amber-300/90">This cannot be undone.</p>
+            </>
+          ) : null
+        }
+      />
     </div>
   );
 }

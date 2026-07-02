@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { deleteClient } from "@/lib/admin-delete";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
 
 function checkKey(request: NextRequest) {
@@ -137,22 +138,16 @@ export async function DELETE(request: NextRequest) {
   }
 
   const admin = createAdminClient();
-  const { count } = await admin
-    .from("projects")
-    .select("*", { count: "exact", head: true })
-    .eq("client_id", clientId);
-
-  if ((count || 0) > 0) {
-    return NextResponse.json(
-      { error: "Remove or reassign all projects before deleting this client." },
-      { status: 400 }
-    );
+  try {
+    const result = await deleteClient(admin, clientId);
+    return NextResponse.json({
+      success: true,
+      deleted: result.name,
+      email: result.email,
+      projectsDeleted: result.projectsDeleted,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete client";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
-
-  const { error } = await admin.from("clients").delete().eq("id", clientId);
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-
-  return NextResponse.json({ success: true });
 }

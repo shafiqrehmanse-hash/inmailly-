@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { deleteProject } from "@/lib/admin-delete";
 import { getClientEmailForProject, notifyClientCampaignLive } from "@/lib/email";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
 import { randomToken } from "@/lib/utils";
@@ -260,4 +261,24 @@ export async function PATCH(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
+}
+
+export async function DELETE(request: NextRequest) {
+  if (!checkKey(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const projectId = request.nextUrl.searchParams.get("projectId");
+  if (!projectId) {
+    return NextResponse.json({ error: "projectId is required" }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
+  try {
+    const result = await deleteProject(admin, projectId);
+    return NextResponse.json({ success: true, deleted: result.name });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete project";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 }

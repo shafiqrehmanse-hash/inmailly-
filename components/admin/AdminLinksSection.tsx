@@ -30,7 +30,13 @@ export default function AdminLinksSection({
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const [paste, setPaste] = useState("");
   const [batchName, setBatchName] = useState("");
-  const [preview, setPreview] = useState<{ new: number; duplicates: number; invalid: number } | null>(null);
+  const [preview, setPreview] = useState<{
+    new: number;
+    duplicates: number;
+    invalid: number;
+    parsed?: number;
+    totalLines?: number;
+  } | null>(null);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [memberFilter, setMemberFilter] = useState(initialMemberFilter || "all");
@@ -149,7 +155,11 @@ export default function AdminLinksSection({
       onToast(data.error, "error");
       return;
     }
-    onToast(`Imported ${data.inserted} links (${data.duplicates} duplicates skipped)`);
+    onToast(
+      `Imported ${data.inserted} of ${data.parsed} parsed links (${data.duplicates} duplicates skipped${
+        data.invalid ? `, ${data.invalid} invalid lines` : ""
+      })`
+    );
     setPaste("");
     setPreview(null);
     setStatusFilter("available");
@@ -246,7 +256,7 @@ export default function AdminLinksSection({
         <h3 className="font-bricolage font-bold">Import links</h3>
         <textarea
           className="lux-input min-h-[120px] font-mono text-sm"
-          placeholder="Paste URLs here, one per line…"
+          placeholder="Paste URLs — one per line, or comma / tab separated on the same line"
           value={paste}
           onChange={(e) => setPaste(e.target.value)}
         />
@@ -266,11 +276,14 @@ export default function AdminLinksSection({
         </div>
         {preview && (
           <p className="text-sm text-lux-muted">
-            {preview.new} new · {preview.duplicates} duplicates · {preview.invalid} invalid lines
+            {preview.parsed ?? preview.new + preview.duplicates} URLs parsed · {preview.new} new ·{" "}
+            {preview.duplicates} already in pool · {preview.invalid} invalid lines
+            {preview.totalLines != null ? ` (${preview.totalLines} non-empty lines)` : ""}
           </p>
         )}
         <p className="text-xs text-lux-muted">
-          After import, the list switches to <strong className="text-lux-text">Available</strong> so you see new links on page 1.
+          Use <strong className="text-lux-text">Preview</strong> before import. The table below is paginated — check
+          the toast and <strong className="text-lux-text">Available</strong> total for the real count.
         </p>
       </div>
 

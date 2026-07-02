@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import LuxSelect from "@/components/ui/LuxSelect";
 import type { Client, ProjectStatus, TeamMember } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
@@ -75,6 +76,8 @@ export default function AdminProjectsSection({
   const [loading, setLoading] = useState(true);
   const [projectForm, setProjectForm] = useState({ ...EMPTY_PROJECT });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -190,6 +193,27 @@ export default function AdminProjectsSection({
         ? f.member_ids.filter((id) => id !== memberId)
         : [...f.member_ids, memberId],
     }));
+  }
+
+  async function confirmDeleteProject() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const res = await fetch(`/api/admin/projects?key=${adminKey}&projectId=${deleteTarget.id}`, {
+      method: "DELETE",
+    });
+    const data = await res.json();
+    setDeleting(false);
+    if (data.error) {
+      onToast(data.error, "error");
+      return;
+    }
+    if (editingId === deleteTarget.id) {
+      setEditingId(null);
+      setProjectForm({ ...EMPTY_PROJECT });
+    }
+    onToast(`Project "${data.deleted || deleteTarget.name}" deleted`);
+    setDeleteTarget(null);
+    load();
   }
 
   async function copyClientLink(token: string | null) {
@@ -438,6 +462,14 @@ export default function AdminProjectsSection({
                     <Button variant="lux-ghost" size="sm" onClick={() => startEdit(p)}>
                       Edit
                     </Button>
+                    <Button
+                      variant="lux-ghost"
+                      size="sm"
+                      className="text-red-400/90 hover:text-red-300"
+                      onClick={() => setDeleteTarget({ id: p.id, name: p.name })}
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </div>
                 {p.status === "preview" && (
@@ -473,6 +505,30 @@ export default function AdminProjectsSection({
           )}
         </div>
       </section>
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        title="Delete project?"
+        destructive
+        confirmLabel="Delete project"
+        loading={deleting}
+        onConfirm={confirmDeleteProject}
+        description={
+          deleteTarget ? (
+            <>
+              <p className="mb-3">
+                You are about to permanently delete <strong className="text-lux-text">{deleteTarget.name}</strong>.
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5">
+                <li>Campaign manager assignments</li>
+                <li>Leads, send proofs, and service contracts for this project</li>
+              </ul>
+              <p className="mt-3 text-amber-300/90">This cannot be undone.</p>
+            </>
+          ) : null
+        }
+      />
     </div>
   );
 }

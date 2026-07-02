@@ -4,18 +4,87 @@ export function normalizeUrl(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
-function toBase64Slice(str: string): string {
+function toBase64(str: string): string {
   if (typeof Buffer !== "undefined") {
-    return Buffer.from(str).toString("base64").slice(0, 32);
+    return Buffer.from(str).toString("base64");
   }
-  return btoa(str).slice(0, 32);
+  return btoa(str);
 }
 
 export function urlKey(url: string): string {
   const u = normalizeUrl(url).toLowerCase();
   const liMatch = u.match(/linkedin\.com\/in\/([^/?#]+)/i);
   if (liMatch) return "li:" + liMatch[1];
-  return "url:" + toBase64Slice(u);
+  const salesMatch = u.match(/linkedin\.com\/sales\/lead\/([^/?#,]+)/i);
+  if (salesMatch) return "sn:" + salesMatch[1];
+  return "url:" + toBase64(u);
+}
+
+function cleanUrlToken(raw: string): string {
+  return raw.trim().replace(/^[\s,;"'|]+/, "").replace(/[,;"'<>|]+$/g, "");
+}
+
+/** Pull the first URL-like token from a pasted line (with or without https://). */
+export function extractUrlFromLine(line: string): string | null {
+  const urls = extractUrlsFromLine(line);
+  return urls[0] ?? null;
+}
+
+/** Pull every URL-like token from a line (comma/tab/semicolon separated). */
+export function extractUrlsFromLine(line: string): string[] {
+  const trimmed = line.trim();
+  if (!trimmed) return [];
+
+  const results: string[] = [];
+  const seen = new Set<string>();
+
+  const addRaw = (raw: string) => {
+    const token = cleanUrlToken(raw);
+    if (!token) return;
+    try {
+      const url = normalizeUrl(token);
+      const key = urlKey(url);
+      if (seen.has(key)) return;
+      seen.add(key);
+      results.push(url);
+    } catch {
+      /* skip invalid */
+    }
+  };
+
+  const httpRegex = /https?:\/\/[^\s,;"'<>|]+/gi;
+  let httpMatch: RegExpExecArray | null;
+  while ((httpMatch = httpRegex.exec(trimmed)) !== null) {
+    addRaw(httpMatch[0]);
+  }
+  if (results.length > 0) return results;
+
+  const linkedInRegex =
+    /(?:https?:\/\/)?(?:[a-z0-9-]+\.)?linkedin\.com\/(?:in|sales\/lead)\/[^\s,;"'<>|]+/gi;
+  let liMatch: RegExpExecArray | null;
+  while ((liMatch = linkedInRegex.exec(trimmed)) !== null) {
+    addRaw(liMatch[0]);
+  }
+  if (results.length > 0) return results;
+
+  for (const chunk of trimmed.split(/[,;\t|]+/)) {
+    const piece = chunk.trim();
+    if (!piece) continue;
+
+    const domainMatch = piece.match(
+      /(?:https?:\/\/)?(?:www\.)?[a-z0-9][-a-z0-9]*\.[a-z]{2,}(?:\/[^\s,;"'<>|]*)?/i
+    );
+    if (domainMatch) addRaw(domainMatch[0]);
+  }
+
+  if (results.length > 0) return results;
+
+  const single = trimmed.match(
+    /(?:^|[\s,;"'])(?:https?:\/\/)?(?:www\.)?[a-z0-9][-a-z0-9]*\.[a-z]{2,}(?:\/[^\s,;"'<>]*)?/i
+  );
+  if (single) addRaw(single[0]);
+
+  return results;
 }
 
 export function smartLabel(url: string): string {
@@ -56,19 +125,16 @@ export function parseLinksFromPaste(paste: string): { url: string; key: string }
   const lines = paste.split(/\r?\n/);
   const seen = new Set<string>();
   const results: { url: string; key: string }[] = [];
+
   for (const line of lines) {
-    const match = line.match(/https?:\/\/[^\s]+/i);
-    if (!match) continue;
-    try {
-      const url = normalizeUrl(match[0]);
+    for (const url of extractUrlsFromLine(line)) {
       const key = urlKey(url);
       if (seen.has(key)) continue;
       seen.add(key);
       results.push({ url, key });
-    } catch {
-      continue;
     }
   }
+
   return results;
 }
 
