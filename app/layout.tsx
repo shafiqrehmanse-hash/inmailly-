@@ -19,8 +19,14 @@ export const metadata: Metadata = {
   description:
     "Reach thousands of decision makers on LinkedIn without enterprise InMail pricing. Human-operated outreach at scale.",
   icons: {
-    icon: [{ url: "/icon.png", type: "image/png" }],
-    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+    icon: [
+      { url: `/favicon.ico?v=3`, sizes: "any" },
+      { url: `/favicon-32.png?v=3`, type: "image/png", sizes: "32x32" },
+      { url: `/favicon-16.png?v=3`, type: "image/png", sizes: "16x16" },
+      { url: `/icon.png?v=3`, type: "image/png", sizes: "512x512" },
+    ],
+    apple: [{ url: `/apple-icon.png?v=3`, type: "image/png", sizes: "180x180" }],
+    shortcut: `/favicon.ico?v=3`,
   },
 };
 
