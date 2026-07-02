@@ -58,7 +58,9 @@ export default function LeaderTeamPulse() {
     setBusyId(null);
   }
 
-  const workers = (data?.members || []).filter((m) => m.role !== "team_leader");
+  const workers = (data?.members || []).filter(
+    (m) => m.role !== "team_leader" && m.role !== "campaign_manager"
+  );
 
   return (
     <div className="space-y-5">

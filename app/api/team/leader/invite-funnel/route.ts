@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { LEADER_MANAGED_ROLES } from "@/lib/roles";
 import { isLeaderResponse, requireTeamLeader } from "@/lib/team-leader-auth";
 
 export async function GET() {
@@ -21,8 +22,9 @@ export async function GET() {
   const codeStrings = codes.map((c) => c.code);
   const { data: signups } = await admin
     .from("team_members")
-    .select("id, name, email, invite_code, joined_at, is_active")
-    .in("invite_code", codeStrings);
+    .select("id, name, email, invite_code, joined_at, is_active, role")
+    .in("invite_code", codeStrings)
+    .in("role", [...LEADER_MANAGED_ROLES]);
 
   const signupIds = (signups || []).map((s) => s.id);
   const claimedByMember: Record<string, number> = {};

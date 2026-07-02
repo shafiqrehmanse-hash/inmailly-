@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { isTeamResponseLead } from "@/lib/team-responses";
-import { getOutreachTeamMember } from "@/lib/team-auth-server";
+import { getOutreachEligibleMember } from "@/lib/team-auth-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
-  const member = await getOutreachTeamMember();
+  const member = await getOutreachEligibleMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = createAdminClient();

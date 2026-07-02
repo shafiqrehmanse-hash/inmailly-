@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { shouldPromoteLeadToReplied } from "@/lib/team-responses";
-import { getOutreachTeamMember } from "@/lib/team-auth-server";
+import { getOutreachEligibleMember } from "@/lib/team-auth-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Lead } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
-  const member = await getOutreachTeamMember();
+  const member = await getOutreachEligibleMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const leadId = request.nextUrl.searchParams.get("leadId");
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const member = await getOutreachTeamMember();
+  const member = await getOutreachEligibleMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();

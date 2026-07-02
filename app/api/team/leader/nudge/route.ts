@@ -4,6 +4,7 @@ import { emailLayout } from "@/lib/email-templates";
 import { NUDGE_TEMPLATES, nudgeHtmlBody, type NudgeTemplateKey } from "@/lib/leader-nudges";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { computeTeamPerformance } from "@/lib/team-performance";
+import { isLeaderAssignableWorker } from "@/lib/roles";
 import { isLeaderResponse, requireTeamLeader } from "@/lib/team-leader-auth";
 
 export async function POST(request: NextRequest) {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     .eq("id", memberId)
     .maybeSingle();
 
-  if (!target?.is_active || target.role === "campaign_manager" || target.role === "team_leader") {
+  if (!target?.is_active || !isLeaderAssignableWorker(target.role)) {
     return NextResponse.json({ error: "Invalid team member" }, { status: 400 });
   }
 

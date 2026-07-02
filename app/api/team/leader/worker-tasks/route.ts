@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isLeaderAssignableWorker } from "@/lib/roles";
+import { LEADER_MANAGED_ROLES, isLeaderAssignableWorker } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isLeaderResponse, requireTeamLeader } from "@/lib/team-leader-auth";
 
@@ -22,8 +22,9 @@ export async function GET() {
   if (assigneeIds.length > 0) {
     const { data: members } = await admin
       .from("team_members")
-      .select("id, name, email")
-      .in("id", assigneeIds);
+      .select("id, name, email, role")
+      .in("id", assigneeIds)
+      .in("role", [...LEADER_MANAGED_ROLES]);
     assignees = Object.fromEntries((members || []).map((m) => [m.id, m]));
   }
 

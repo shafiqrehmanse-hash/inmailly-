@@ -19,7 +19,11 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
-  let query = admin.from("team_members").select("id, name, email").eq("is_active", true);
+  let query = admin
+    .from("team_members")
+    .select("id, name, email")
+    .eq("is_active", true)
+    .neq("role", "campaign_manager");
   if (!send_to_all && Array.isArray(member_ids) && member_ids.length > 0) {
     query = query.in("id", member_ids);
   }

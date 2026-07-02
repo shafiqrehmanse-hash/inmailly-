@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isTeamResponseLead } from "@/lib/team-responses";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { LEADER_MANAGED_ROLES } from "@/lib/roles";
 import { isLeaderResponse, requireTeamLeader } from "@/lib/team-leader-auth";
 
 export async function GET() {
@@ -12,7 +13,7 @@ export async function GET() {
     .from("team_members")
     .select("id, name")
     .eq("is_active", true)
-    .in("role", ["member", "senior", "admin", "team_leader"]);
+    .in("role", [...LEADER_MANAGED_ROLES]);
 
   const memberIds = (members || []).map((m) => m.id);
   const memberNames = Object.fromEntries((members || []).map((m) => [m.id, m.name]));

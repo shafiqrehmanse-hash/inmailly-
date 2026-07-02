@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOutreachTeamMember } from "@/lib/team-auth-server";
+import { getOutreachEligibleMember } from "@/lib/team-auth-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const VALID_STATUSES = new Set([
@@ -19,7 +19,7 @@ function buildName(first?: string, last?: string, full?: string) {
 }
 
 export async function GET() {
-  const member = await getOutreachTeamMember();
+  const member = await getOutreachEligibleMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = createAdminClient();
@@ -35,7 +35,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const member = await getOutreachTeamMember();
+  const member = await getOutreachEligibleMember();
   if (!member) {
     return NextResponse.json(
       { error: "Not logged in or email not verified. Log in at /team/login after verifying your email." },
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const member = await getOutreachTeamMember();
+  const member = await getOutreachEligibleMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id, ...updates } = await request.json();
@@ -116,7 +116,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const member = await getOutreachTeamMember();
+  const member = await getOutreachEligibleMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const id = request.nextUrl.searchParams.get("id");

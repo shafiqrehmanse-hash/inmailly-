@@ -16,9 +16,25 @@ export function isOutreachWorker(role: string): boolean {
   return role === "member" || role === "senior" || role === "admin" || role === "team_leader";
 }
 
-/** Workers a team leader can assign tasks to (not other leaders). */
+/** Outreach roles visible in team-leader pulse, email, assign (never campaign managers). */
+export const LEADER_MANAGED_ROLES = ["member", "senior", "admin"] as const;
+
+/** Roles included in team performance aggregates (excludes campaign managers). */
+export const OUTREACH_REPORTING_ROLES = ["member", "senior", "admin", "team_leader"] as const;
+
+/** Workers a team leader can assign tasks to (not other leaders or campaign managers). */
 export function isLeaderAssignableWorker(role: string): boolean {
-  return role === "member" || role === "senior" || role === "admin";
+  return (LEADER_MANAGED_ROLES as readonly string[]).includes(role);
+}
+
+/** Campaign managers are a separate department — never shown to team leaders. */
+export function isHiddenFromTeamLeader(role: string): boolean {
+  return isCampaignManager(role);
+}
+
+/** Outreach tools: outreach team + campaign managers (own outreach tab, no team leaders). */
+export function canUseOutreachTools(role: string): boolean {
+  return isOutreachWorker(role) || isCampaignManager(role);
 }
 
 /** Outreach members who can open live chat (not team leaders or campaign managers). */

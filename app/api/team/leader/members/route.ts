@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentMember } from "@/lib/team";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isTeamLeader } from "@/lib/roles";
+import { isTeamLeader, LEADER_MANAGED_ROLES } from "@/lib/roles";
 
 export async function GET() {
   const member = await getCurrentMember();
@@ -14,7 +14,7 @@ export async function GET() {
     .from("team_members")
     .select("id, name, email, role")
     .eq("is_active", true)
-    .in("role", ["member", "senior", "admin"])
+    .in("role", [...LEADER_MANAGED_ROLES])
     .order("name");
 
   return NextResponse.json({ members: members || [] });

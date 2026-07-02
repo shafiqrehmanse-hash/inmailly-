@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { OUTREACH_REPORTING_ROLES } from "@/lib/roles";
 
 export type MemberPerformance = {
   id: string;
@@ -66,7 +67,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
         .from("team_members")
         .select("id, name, email, role, last_login, joined_at, is_active")
         .eq("is_active", true)
-        .neq("role", "campaign_manager"),
+        .in("role", [...OUTREACH_REPORTING_ROLES]),
       admin
         .from("outreach_links")
         .select("member_id, claimed_at")

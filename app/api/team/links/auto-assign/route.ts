@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
 import { LINK_AUTO_ASSIGN, autoAssignBlockMessage } from "@/lib/link-auto-assign";
-import { isCampaignManager } from "@/lib/roles";
+import { canUseOutreachTools } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/team";
 
-export async function GET() {
-  const member = await getCurrentMember();
-  if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (isCampaignManager(member.role)) {
-    return NextResponse.json({ error: "Not available for campaign managers" }, { status: 403 });
+function requireOutreachMember(member: Awaited<ReturnType<typeof getCurrentMember>>) {
+  if (!member?.is_active || !canUseOutreachTools(member.role)) {
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
+  return { error: null as null, member };
+}
+
+export async function GET() {
+  const raw = await getCurrentMember();
+  const gate = requireOutreachMember(raw);
+  if (gate.error) return gate.error;
+  const member = gate.member;
 
   const supabase = createServerSupabase();
   const [activeRes, poolRes] = await Promise.all([
@@ -44,11 +50,10 @@ export async function GET() {
 }
 
 export async function POST() {
-  const member = await getCurrentMember();
-  if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (isCampaignManager(member.role)) {
-    return NextResponse.json({ error: "Not available for campaign managers" }, { status: 403 });
-  }
+  const raw = await getCurrentMember();
+  const gate = requireOutreachMember(raw);
+  if (gate.error) return gate.error;
+  const member = gate.member;
 
   const admin = createAdminClient();
 

@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isCampaignManager } from "@/lib/roles";
+import { canUseOutreachTools, isCampaignManager } from "@/lib/roles";
 import { createServerSupabase } from "@/lib/supabase/server";
 import type { TeamMember } from "@/lib/types";
 
@@ -30,5 +30,35 @@ export async function getOutreachTeamMember(): Promise<TeamMember | null> {
   }
 
   if (!member || isCampaignManager(member.role)) return null;
+  return member;
+}
+
+/** Outreach links/leads APIs — includes campaign managers on their outreach tab. */
+export async function getOutreachEligibleMember(): Promise<TeamMember | null> {
+  const supabase = createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  if (!user.email_confirmed_at) return null;
+
+  const { data: viaRls } = await supabase
+    .from("team_members")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  let member = (viaRls as TeamMember | null) ?? null;
+
+  if (!member) {
+    const { data: viaAdmin } = await createAdminClient()
+      .from("team_members")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    member = (viaAdmin as TeamMember | null) ?? null;
+  }
+
+  if (!member || !canUseOutreachTools(member.role)) return null;
   return member;
 }

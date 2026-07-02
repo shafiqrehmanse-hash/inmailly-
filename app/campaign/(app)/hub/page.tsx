@@ -1,3 +1,4 @@
+import Link from "next/link";
 import CampaignAssignedProjects from "@/components/campaign/CampaignAssignedProjects";
 import { getCurrentMember } from "@/lib/team";
 import { getMemberAssignedProjects } from "@/lib/team-projects";
@@ -32,8 +33,11 @@ export default async function CampaignHubPage() {
         </div>
         <div className="lux-card p-4 text-center col-span-2 lg:col-span-2">
           <div className="text-[0.8rem] text-lux-muted leading-relaxed">
-            Outreach workers use <strong className="text-lux-text">/team</strong> for links and
-            leads. You handle <strong className="text-lux-violet">client campaigns</strong> here.
+            Run marketing outreach under{" "}
+            <Link href="/campaign/outreach" className="text-lux-cyan font-semibold hover:underline">
+              InMailly outreach
+            </Link>
+            . Manage client projects below — your permanent campaign department, separate from team leaders.
           </div>
         </div>
       </div>

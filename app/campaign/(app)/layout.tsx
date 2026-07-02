@@ -17,7 +17,7 @@ export default async function CampaignAppLayout({
     <div className="min-h-screen bg-lux-bg text-lux-text relative">
       <WorkspaceAmbient />
       <CampaignSidebar member={member} />
-      <div className="lg:ml-[220px] min-h-screen flex flex-col relative">
+      <div className="lg:ml-[240px] min-h-screen flex flex-col relative">
         <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-[1400px] mx-auto w-full">
           {children}
         </main>

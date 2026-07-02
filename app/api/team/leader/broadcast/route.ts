@@ -3,7 +3,7 @@ import { sendEmail } from "@/lib/email";
 import { leaderBroadcastSignature, teamBroadcastHtmlBody, teamBroadcastPlainBody } from "@/lib/admin-email-signature";
 import { getCurrentMember } from "@/lib/team";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isTeamLeader } from "@/lib/roles";
+import { isTeamLeader, LEADER_MANAGED_ROLES } from "@/lib/roles";
 
 export async function POST(request: Request) {
   const member = await getCurrentMember();
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     .from("team_members")
     .select("id, name, email, role")
     .eq("is_active", true)
-    .in("role", ["member", "senior", "admin"])
+    .in("role", [...LEADER_MANAGED_ROLES])
     .neq("id", member.id);
 
   if (!send_to_all && Array.isArray(member_ids) && member_ids.length > 0) {
