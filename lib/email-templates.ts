@@ -448,6 +448,62 @@ export function clientCampaignStartedEmail(data: { clientName: string; projectNa
   });
 }
 
+export function clientBrandingRequestEmail(data: {
+  clientName: string;
+  projectName: string;
+  packageSize?: number | null;
+}) {
+  const site = getSiteUrl();
+  const pkgNote = data.packageSize
+    ? detailRow("Your package", `${data.packageSize.toLocaleString()} InMails`)
+    : "";
+  return emailLayout({
+    preheader: "Action required: submit your campaign branding",
+    eyebrow: "Branding request",
+    title: "Submit your InMail & Sales Nav details",
+    bodyHtml: [
+      p(
+        `Hi ${esc(data.clientName)}, we need your campaign copy for <strong style="color:#fafafa;">${esc(data.projectName)}</strong> before outreach can begin.`
+      ),
+      p("Please open your dashboard and submit:"),
+      `<ul style="margin:0 0 16px;padding-left:20px;color:#a1a1aa;font-size:15px;line-height:1.7;">
+        <li>InMail subject line</li>
+        <li>InMail script / message body</li>
+        <li>Sales Navigator direct link</li>
+        <li>Exact number of Sales Nav links to send (from your package)</li>
+      </ul>`,
+      pkgNote,
+      p("This takes about 5 minutes. Once submitted, your campaign manager receives it automatically."),
+    ].join(""),
+    cta: { href: `${site}/client/branding`, label: "Submit branding now →" },
+    footerNote: "You'll see a red alert on your dashboard until this is complete.",
+  });
+}
+
+export function adminBrandingSubmittedEmail(data: {
+  clientName: string;
+  companyName?: string | null;
+  projectName: string;
+  inmailSubject: string;
+  salesNavLinkCount: number;
+}) {
+  const site = getSiteUrl();
+  const label = data.companyName || data.clientName;
+  return emailLayout({
+    preheader: `${label} submitted campaign branding`,
+    eyebrow: "Admin alert",
+    title: "Client branding submitted",
+    bodyHtml: [
+      p(`<strong style="color:#22d3ee;">${esc(label)}</strong> submitted branding for <strong style="color:#fafafa;">${esc(data.projectName)}</strong>.`),
+      detailRow("InMail subject", data.inmailSubject),
+      detailRow("Sales Nav send count", String(data.salesNavLinkCount)),
+      p("Full scripts are now visible in Admin → Clients and on the campaign manager board."),
+    ].join(""),
+    cta: { href: `${site}/admin/clients`, label: "View in admin →" },
+    footerNote: "Campaign managers assigned to this project can see the details on their project page.",
+  });
+}
+
 export function clientCampaignFinishedEmail(data: { clientName: string; projectName: string }) {
   const site = getSiteUrl();
   return emailLayout({

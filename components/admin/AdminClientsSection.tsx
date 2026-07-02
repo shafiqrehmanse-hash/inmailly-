@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import AdminClientEmailPanel from "@/components/admin/AdminClientEmailPanel";
+import AdminClientBrandingPanel from "@/components/admin/AdminClientBrandingPanel";
 import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Pagination from "@/components/ui/Pagination";
@@ -41,6 +42,13 @@ export default function AdminClientsSection({
         portal_token: string | null;
         inmail_package_size: number | null;
         assignee_count?: number;
+        branding_pending?: boolean;
+        branding_submitted?: boolean;
+        inmail_subject?: string | null;
+        inmail_script?: string | null;
+        sales_nav_direct_link?: string | null;
+        sales_nav_link_count?: number | null;
+        branding_submitted_at?: string | null;
       } | null;
     })[]
   >([]);
@@ -386,6 +394,10 @@ export default function AdminClientsSection({
                     {c.notes && (
                       <p className="text-sm text-lux-muted mt-2 line-clamp-2">{c.notes}</p>
                     )}
+                    <AdminClientBrandingPanel
+                      projectId={c.latest_project?.id}
+                      branding={c.latest_project}
+                    />
                     <AdminClientEmailPanel
                       defaultOpen={emailFocus}
                       client={{

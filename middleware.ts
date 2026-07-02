@@ -86,6 +86,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/client/login?verify=required", request.url));
   }
 
+  if (pathname.startsWith("/client/branding") && !user) {
+    return NextResponse.redirect(new URL("/client/login", request.url));
+  }
+
+  if (pathname.startsWith("/client/branding") && user && !verified) {
+    return NextResponse.redirect(new URL("/client/login?verify=required", request.url));
+  }
+
   if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
     if (request.cookies.get("admin_authed")?.value !== "1") {
       return NextResponse.redirect(new URL("/admin/login", request.url));

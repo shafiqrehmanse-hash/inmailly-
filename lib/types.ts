@@ -119,6 +119,10 @@ export type Project = {
   connection_script: string | null;
   inmail_script: string | null;
   followup_script: string | null;
+  inmail_subject: string | null;
+  sales_nav_direct_link: string | null;
+  sales_nav_link_count: number | null;
+  branding_submitted_at: string | null;
   inmail_package_size: number | null;
   status: ProjectStatus;
   portal_token: string | null;

@@ -46,14 +46,16 @@ export default function AdminClientEmailPanel({
     if (open) loadStatus();
   }, [open, loadStatus]);
 
-  async function send(action: "campaign_started" | "campaign_finished" | "custom") {
+  async function send(action: "request_branding" | "campaign_started" | "campaign_finished" | "custom") {
     if (action === "custom" && (!customSubject.trim() || customMessage.trim().length < 10)) {
       onToast("Add a subject and message (min 10 chars)", "error");
       return;
     }
 
     const label =
-      action === "campaign_started"
+      action === "request_branding"
+        ? "Request branding"
+        : action === "campaign_started"
         ? "Campaign started"
         : action === "campaign_finished"
           ? "Campaign finished"
@@ -82,6 +84,7 @@ export default function AdminClientEmailPanel({
     }
 
     let msg = `Email sent to ${data.sentTo}`;
+    if (data.brandingRequested) msg += " · branding request created — client will see red alert";
     if (data.projectActivated) msg += " · project set to Active";
     if (data.projectCompleted) msg += " · project marked Completed";
     onToast(msg);
@@ -139,6 +142,15 @@ export default function AdminClientEmailPanel({
 
           <div className="flex flex-wrap gap-2">
             <Button
+              variant="lux-ghost"
+              size="sm"
+              className="border-amber-500/30 text-amber-300 hover:text-amber-200"
+              disabled={!hasEmail || sending !== null || !client.latest_project}
+              onClick={() => send("request_branding")}
+            >
+              {sending === "request_branding" ? "Sending…" : "Request branding →"}
+            </Button>
+            <Button
               variant="lux"
               size="sm"
               disabled={!hasEmail || sending !== null || !client.latest_project}
@@ -156,8 +168,10 @@ export default function AdminClientEmailPanel({
             </Button>
           </div>
           <p className="text-[0.65rem] text-lux-muted leading-relaxed">
-            <strong className="text-lux-text">Started</strong> tells them outreach is live and sets project to
-            Active. <strong className="text-lux-text">Finished</strong> wraps the campaign and marks it Completed.
+            <strong className="text-lux-text">Request branding</strong> emails the client and shows a red alert on
+            their dashboard until they submit InMail subject, script, Sales Nav link, and send count.{" "}
+            <strong className="text-lux-text">Started</strong> tells them outreach is live and sets project to Active.{" "}
+            <strong className="text-lux-text">Finished</strong> wraps the campaign and marks it Completed.
           </p>
 
           <div className="space-y-2 border-t border-white/[0.06] pt-4">

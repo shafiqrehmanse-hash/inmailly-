@@ -16,12 +16,16 @@ type ProjectRow = {
   target_industries: string | null;
   target_regions: string | null;
   connection_script: string | null;
-  inmail_script: string | null;
-  followup_script: string | null;
-  status: ProjectStatus;
-  inmail_package_size: number | null;
-  portal_token: string | null;
-  created_at: string;
+    inmail_script: string | null;
+    followup_script: string | null;
+    status: ProjectStatus;
+    inmail_package_size: number | null;
+    portal_token: string | null;
+    inmail_subject: string | null;
+    sales_nav_direct_link: string | null;
+    sales_nav_link_count: number | null;
+    branding_submitted_at: string | null;
+    created_at: string;
   clients: { id: string; name: string; company_name: string | null } | null;
   assignments: { id: string; member_id: string; member: { id: string; name: string; email: string } | null }[];
   assignee_count: number;
@@ -480,6 +484,19 @@ export default function AdminProjectsSection({
                 )}
                 {p.audience_brief && (
                   <p className="text-sm text-lux-muted line-clamp-2 mb-3 mt-3">{p.audience_brief}</p>
+                )}
+                {p.branding_submitted_at && (
+                  <div className="mb-3 border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 rounded-lg text-xs space-y-1">
+                    <p className="text-emerald-400 font-bold uppercase tracking-wider text-[0.6rem]">
+                      Client branding received
+                    </p>
+                    {p.inmail_subject && <p className="text-lux-text"><span className="text-lux-muted">Subject:</span> {p.inmail_subject}</p>}
+                    {p.sales_nav_link_count != null && (
+                      <p className="text-lux-text tabular-nums">
+                        <span className="text-lux-muted">Sales Nav sends:</span> {p.sales_nav_link_count.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
                 )}
                 <div className="flex flex-wrap gap-4 text-xs text-lux-muted/80">
                   <span>{p.assignee_count} assigned</span>

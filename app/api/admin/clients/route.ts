@@ -21,7 +21,11 @@ export async function GET(request: NextRequest) {
   const { data: clients, error, count } = await admin
     .from("clients")
     .select(
-      "*, projects(id, name, status, portal_token, inmail_package_size, created_at, project_assignments(id))",
+      `*, projects(
+        id, name, status, portal_token, inmail_package_size, created_at,
+        inmail_subject, inmail_script, sales_nav_direct_link, sales_nav_link_count, branding_submitted_at,
+        project_assignments(id)
+      )`,
       { count: "exact" }
     )
     .order("created_at", { ascending: false })
@@ -31,26 +35,54 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const enriched = (clients || []).map((c) => {
-    const projectRows = Array.isArray(c.projects) ? c.projects : [];
-    const sorted = [...projectRows].sort(
+  const projectRows = (clients || []).flatMap((c) => {
+    const rows = Array.isArray(c.projects) ? c.projects : [];
+    const sorted = [...rows].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-    const latest_project = sorted[0]
+    return sorted[0]?.id ? [sorted[0].id] : [];
+  });
+
+  const pendingProjectIds = new Set<string>();
+  if (projectRows.length > 0) {
+    const { data: pendingBranding } = await admin
+      .from("client_branding_requests")
+      .select("project_id")
+      .in("project_id", projectRows)
+      .eq("status", "pending");
+    for (const row of pendingBranding || []) {
+      pendingProjectIds.add(row.project_id);
+    }
+  }
+
+  const enriched = (clients || []).map((c) => {
+    const projects = Array.isArray(c.projects) ? c.projects : [];
+    const sorted = [...projects].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    const latest = sorted[0];
+    const latest_project = latest
       ? {
-          id: sorted[0].id,
-          name: sorted[0].name,
-          status: sorted[0].status,
-          portal_token: sorted[0].portal_token,
-          inmail_package_size: sorted[0].inmail_package_size,
-          assignee_count: Array.isArray(sorted[0].project_assignments)
-            ? sorted[0].project_assignments.length
+          id: latest.id,
+          name: latest.name,
+          status: latest.status,
+          portal_token: latest.portal_token,
+          inmail_package_size: latest.inmail_package_size,
+          assignee_count: Array.isArray(latest.project_assignments)
+            ? latest.project_assignments.length
             : 0,
+          branding_pending: pendingProjectIds.has(latest.id),
+          branding_submitted: Boolean(latest.branding_submitted_at),
+          inmail_subject: latest.inmail_subject,
+          inmail_script: latest.inmail_script,
+          sales_nav_direct_link: latest.sales_nav_direct_link,
+          sales_nav_link_count: latest.sales_nav_link_count,
+          branding_submitted_at: latest.branding_submitted_at,
         }
       : null;
     return {
       ...c,
-      project_count: projectRows.length,
+      project_count: projects.length,
       latest_project,
       projects: undefined,
     };

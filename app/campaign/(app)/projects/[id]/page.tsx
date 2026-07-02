@@ -22,7 +22,11 @@ export default async function CampaignProjectPage({ params }: { params: { id: st
     { label: "Connection request", text: project.connection_script },
     { label: "InMail", text: project.inmail_script },
     { label: "Follow-up", text: project.followup_script },
-  ].filter((s) => s.text);
+  ].filter((s) => {
+    if (!s.text) return false;
+    if (s.label === "InMail" && project.branding_submitted_at) return false;
+    return true;
+  });
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -99,6 +103,56 @@ export default async function CampaignProjectPage({ params }: { params: { id: st
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {(project.inmail_subject ||
+        project.sales_nav_direct_link ||
+        project.sales_nav_link_count != null) && (
+        <div className="lux-card p-5 sm:p-6 space-y-4 border-lux-cyan/20">
+          <h2 className="font-bricolage font-bold text-lux-text">Client branding</h2>
+          {project.branding_submitted_at && (
+            <p className="text-xs text-emerald-400">
+              Submitted {new Date(project.branding_submitted_at).toLocaleDateString()}
+            </p>
+          )}
+          {project.inmail_subject && (
+            <div>
+              <div className="text-[0.65rem] uppercase tracking-wider text-lux-cyan mb-2">InMail subject</div>
+              <div className="bg-lux-bg2 border border-white/[0.06] rounded-xl p-4 text-sm text-lux-text">
+                {project.inmail_subject}
+              </div>
+            </div>
+          )}
+          {project.inmail_script && (
+            <div>
+              <div className="text-[0.65rem] uppercase tracking-wider text-lux-cyan mb-2">InMail script</div>
+              <div className="bg-lux-bg2 border border-white/[0.06] rounded-xl p-4 text-sm text-lux-muted whitespace-pre-wrap leading-relaxed">
+                {project.inmail_script}
+              </div>
+            </div>
+          )}
+          {project.sales_nav_direct_link && (
+            <div>
+              <div className="text-[0.65rem] uppercase tracking-wider text-lux-cyan mb-2">Sales Nav direct link</div>
+              <a
+                href={project.sales_nav_direct_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-sm text-lux-cyan break-all hover:underline bg-lux-bg2 border border-white/[0.06] rounded-xl p-4"
+              >
+                {project.sales_nav_direct_link}
+              </a>
+            </div>
+          )}
+          {project.sales_nav_link_count != null && (
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 inline-block">
+              <div className="text-[0.6rem] uppercase tracking-wider text-lux-muted mb-1">Sales Nav send count</div>
+              <div className="text-lg font-bricolage font-extrabold text-lux-text tabular-nums">
+                {project.sales_nav_link_count.toLocaleString()}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

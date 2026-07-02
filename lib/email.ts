@@ -7,6 +7,8 @@ import {
   adminTeamVerifiedEmail,
   clientCampaignStartedEmail,
   clientCampaignFinishedEmail,
+  clientBrandingRequestEmail,
+  adminBrandingSubmittedEmail,
   clientCustomEmail,
   clientNewResponseEmail,
   clientSendProofEmail,
@@ -271,6 +273,37 @@ export async function notifyClientCustom(data: {
     subject: data.subject,
     html: clientCustomEmail(data),
     text: data.message,
+  });
+}
+
+export async function notifyClientBrandingRequest(data: {
+  email: string;
+  clientName: string;
+  projectName: string;
+  packageSize?: number | null;
+}) {
+  return sendEmailSafe({
+    to: data.email,
+    replyTo: getNotifyEmail(),
+    subject: `Action required: Submit branding for ${data.projectName}`,
+    html: clientBrandingRequestEmail(data),
+    text: `Hi ${data.clientName}, please submit your InMail subject, script, Sales Nav link, and send count for "${data.projectName}" at ${getSiteUrl()}/client/branding`,
+  });
+}
+
+export async function notifyAdminBrandingSubmitted(data: {
+  clientName: string;
+  companyName?: string | null;
+  projectName: string;
+  inmailSubject: string;
+  salesNavLinkCount: number;
+}) {
+  const label = data.companyName || data.clientName;
+  return sendEmailSafe({
+    to: getNotifyEmail(),
+    subject: `Branding submitted: ${label} — ${data.projectName}`,
+    html: adminBrandingSubmittedEmail(data),
+    text: `${label} submitted branding for ${data.projectName}. Subject: ${data.inmailSubject}`,
   });
 }
 

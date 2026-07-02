@@ -3,10 +3,12 @@ import {
   getClientEmailById,
   getNotifyEmail,
   isEmailConfigured,
+  notifyClientBrandingRequest,
   notifyClientCampaignFinished,
   notifyClientCampaignStarted,
   notifyClientCustom,
 } from "@/lib/email";
+import { createBrandingRequest } from "@/lib/client-branding";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
 
 function checkKey(request: NextRequest) {
@@ -43,7 +45,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { client_id, action, project_id, subject, message } = body as {
     client_id?: string;
-    action?: "campaign_started" | "campaign_finished" | "custom";
+    action?: "campaign_started" | "campaign_finished" | "request_branding" | "custom";
     project_id?: string;
     subject?: string;
     message?: string;
@@ -65,13 +67,39 @@ export async function POST(request: NextRequest) {
     (project_id && clientInfo.projects.find((p) => p.id === project_id)) ||
     clientInfo.latestProject;
 
-  if ((action === "campaign_started" || action === "campaign_finished") && !project) {
+  if ((action === "campaign_started" || action === "campaign_finished" || action === "request_branding") && !project) {
     return NextResponse.json({ error: "Client has no project — create one in Projects tab first." }, { status: 400 });
   }
 
   const admin = createAdminClient();
   const projectName = project?.name || "Your campaign";
   const clientName = clientInfo.clientName;
+
+  if (action === "request_branding" && project) {
+    const { data: projectRow } = await admin
+      .from("projects")
+      .select("inmail_package_size")
+      .eq("id", project.id)
+      .maybeSingle();
+
+    const packageSize = projectRow?.inmail_package_size ?? null;
+
+    await createBrandingRequest(admin, client_id, project.id, packageSize);
+
+    const result = await notifyClientBrandingRequest({
+      email: clientInfo.email,
+      clientName,
+      projectName,
+      packageSize,
+    });
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: result.skipped ? "Email skipped — RESEND_API_KEY missing" : result.error || "Send failed" },
+        { status: 502 }
+      );
+    }
+    return NextResponse.json({ success: true, sentTo: clientInfo.email, brandingRequested: true });
+  }
 
   if (action === "campaign_started") {
     const result = await notifyClientCampaignStarted({
