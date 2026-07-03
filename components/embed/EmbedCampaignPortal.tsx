@@ -22,8 +22,14 @@ export default function EmbedCampaignPortal({ token }: { token: string }) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-lux-bg flex items-center justify-center p-6 text-red-400 text-sm">
-        {error}
+      <div className="min-h-screen bg-lux-bg flex items-center justify-center p-6 text-center">
+        <div className="max-w-md">
+          <p className="text-red-400 font-semibold mb-2">{error}</p>
+          <p className="text-lux-muted text-sm leading-relaxed">
+            Download a fresh dashboard file from your InMailly client portal, or contact support if this keeps
+            happening.
+          </p>
+        </div>
       </div>
     );
   }

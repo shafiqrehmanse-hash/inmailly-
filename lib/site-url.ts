@@ -3,8 +3,18 @@
  * Used for client portal links, referral URLs, password reset emails, etc.
  */
 export function getSiteUrl(): string {
-  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "https://inmailly.vercel.app";
+  let url =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    "https://www.inmailly.com";
+
+  url = url.replace(/\/$/, "");
+
+  // Canonical host — bare inmailly.com 308-redirects and breaks cross-origin iframes
+  if (/^https:\/\/inmailly\.com/i.test(url)) {
+    url = url.replace(/^https:\/\/inmailly\.com/i, "https://www.inmailly.com");
+  }
+
+  return url;
 }

@@ -19,10 +19,16 @@ export async function fetchEmbedPortalByToken(admin: SupabaseClient, token: stri
     `
     )
     .eq("embed_token", token)
-    .eq("whitelabel_enabled", true)
-    .single();
+    .maybeSingle();
 
-  if (error || !project) return null;
+  if (error || !project || !project.embed_token) return null;
+
+  if (!project.whitelabel_enabled) {
+    await admin
+      .from("projects")
+      .update({ whitelabel_enabled: true, updated_at: new Date().toISOString() })
+      .eq("id", project.id);
+  }
 
   const { data: responses } = await admin
     .from("leads")
