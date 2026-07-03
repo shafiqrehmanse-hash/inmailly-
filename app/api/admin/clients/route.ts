@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
       `*, projects(
         id, name, status, portal_token, inmail_package_size, created_at,
         inmail_subject, inmail_script, sales_nav_direct_link, sales_nav_link_count, branding_submitted_at,
+        client_profile_links_parsed, client_profile_links_imported,
         project_assignments(id)
       )`,
       { count: "exact" }
@@ -78,6 +79,8 @@ export async function GET(request: NextRequest) {
           sales_nav_direct_link: latest.sales_nav_direct_link,
           sales_nav_link_count: latest.sales_nav_link_count,
           branding_submitted_at: latest.branding_submitted_at,
+          client_profile_links_parsed: latest.client_profile_links_parsed,
+          client_profile_links_imported: latest.client_profile_links_imported,
         }
       : null;
     return {

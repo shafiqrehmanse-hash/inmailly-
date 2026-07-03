@@ -48,6 +48,8 @@ export default function AdminClientsSection({
         inmail_script?: string | null;
         sales_nav_direct_link?: string | null;
         sales_nav_link_count?: number | null;
+        client_profile_links_parsed?: number | null;
+        client_profile_links_imported?: number | null;
         branding_submitted_at?: string | null;
       } | null;
     })[]
@@ -397,6 +399,8 @@ export default function AdminClientsSection({
                     <AdminClientBrandingPanel
                       projectId={c.latest_project?.id}
                       branding={c.latest_project}
+                      adminKey={adminKey}
+                      onToast={onToast}
                     />
                     <AdminClientEmailPanel
                       defaultOpen={emailFocus}

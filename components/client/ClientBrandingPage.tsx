@@ -26,6 +26,7 @@ export default function ClientBrandingPage() {
     inmail_script: "",
     sales_nav_direct_link: "",
     sales_nav_link_count: "",
+    profile_links_paste: "",
   });
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function ClientBrandingPage() {
         request_id: data.pendingRequest.id,
         ...form,
         sales_nav_link_count: parseInt(form.sales_nav_link_count, 10),
+        profile_links_paste: form.profile_links_paste.trim() || undefined,
       }),
     });
     const result = await res.json();
@@ -119,10 +121,10 @@ export default function ClientBrandingPage() {
                   · your package is <strong className="text-lux-cyan">{packageSize.toLocaleString()} InMails</strong>
                 </>
               ) : null}
-              . Fill in all four fields below — your campaign manager receives this automatically.
+              . Fill in the fields below — your campaign manager and admin team receive this automatically.
             </>
           ) : (
-            "Fill in all four fields below. Your campaign manager receives this automatically."
+            "Fill in the fields below. Your campaign manager and admin team receive this automatically."
           )}
         </p>
       </div>
@@ -189,6 +191,26 @@ export default function ClientBrandingPage() {
               the exact number of profiles to send to.
             </p>
           ) : null}
+        </div>
+
+        <div>
+          <label className="text-[0.72rem] font-bold uppercase tracking-wide text-lux-muted">
+            Profile links paste {packageSize ? `(${packageSize.toLocaleString()} expected)` : ""}
+          </label>
+          <textarea
+            className={cn("lux-input mt-1.5 w-full min-h-[200px] font-mono text-xs leading-relaxed")}
+            placeholder={
+              packageSize
+                ? `Paste ${packageSize.toLocaleString()} LinkedIn profile URLs here — one per line, or comma/tab separated`
+                : "Paste your LinkedIn profile URLs — one per line, or comma/tab separated (1,000 · 5,000 · 20,000)"
+            }
+            value={form.profile_links_paste}
+            onChange={(e) => setForm({ ...form, profile_links_paste: e.target.value })}
+          />
+          <p className="text-xs text-lux-muted mt-1.5 leading-relaxed">
+            Paste the full list of profiles for your package. These go to your admin info desk and can be imported to
+            the outreach pool. Same profile with different URL formats counts once.
+          </p>
         </div>
 
         {error && (

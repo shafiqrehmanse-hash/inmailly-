@@ -169,7 +169,7 @@ export default function AdminClientEmailPanel({
           </div>
           <p className="text-[0.65rem] text-lux-muted leading-relaxed">
             <strong className="text-lux-text">Request branding</strong> emails the client and shows a red alert on
-            their dashboard until they submit InMail subject, script, Sales Nav link, and send count.{" "}
+            their dashboard until they submit InMail copy, Sales Nav link, send count, and profile links paste.{" "}
             <strong className="text-lux-text">Started</strong> tells them outreach is live and sets project to Active.{" "}
             <strong className="text-lux-text">Finished</strong> wraps the campaign and marks it Completed.
           </p>

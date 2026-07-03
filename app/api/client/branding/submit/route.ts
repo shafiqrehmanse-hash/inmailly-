@@ -15,12 +15,14 @@ export async function POST(request: NextRequest) {
     inmail_script,
     sales_nav_direct_link,
     sales_nav_link_count,
+    profile_links_paste,
   } = body as {
     request_id?: string;
     inmail_subject?: string;
     inmail_script?: string;
     sales_nav_direct_link?: string;
     sales_nav_link_count?: number | string;
+    profile_links_paste?: string;
   };
 
   if (!request_id) {
@@ -51,11 +53,12 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient();
 
   try {
-    const { projectId } = await submitClientBranding(admin, request_id, client.id, {
+    const { projectId, profileLinksParsed } = await submitClientBranding(admin, request_id, client.id, {
       inmail_subject: subject,
       inmail_script: script,
       sales_nav_direct_link: salesLink,
       sales_nav_link_count: count,
+      profile_links_paste: profile_links_paste?.trim() || null,
     });
 
     const { data: project } = await admin
@@ -70,9 +73,10 @@ export async function POST(request: NextRequest) {
       projectName: project?.name || "Campaign",
       inmailSubject: subject,
       salesNavLinkCount: count,
+      profileLinksParsed: profileLinksParsed ?? undefined,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, profileLinksParsed });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to submit branding";
     return NextResponse.json({ error: message }, { status: 400 });

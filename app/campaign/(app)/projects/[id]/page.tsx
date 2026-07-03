@@ -153,6 +153,25 @@ export default async function CampaignProjectPage({ params }: { params: { id: st
               </div>
             </div>
           )}
+          {(project.client_profile_links_parsed ?? 0) > 0 && (
+            <div className="bg-white/[0.03] border border-lux-cyan/20 rounded-xl p-4">
+              <div className="text-[0.65rem] uppercase tracking-wider text-lux-cyan mb-2">
+                Profile links from client
+              </div>
+              <p className="text-sm text-lux-text tabular-nums">
+                <strong>{project.client_profile_links_parsed?.toLocaleString()}</strong> unique profile URLs submitted
+                {(project.client_profile_links_imported ?? 0) > 0 && (
+                  <span className="text-lux-muted">
+                    {" "}
+                    · {project.client_profile_links_imported?.toLocaleString()} imported to outreach pool
+                  </span>
+                )}
+              </p>
+              <p className="text-xs text-lux-muted mt-2">
+                Admin can import remaining links from the client info desk in Admin → Clients.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>

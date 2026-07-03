@@ -297,6 +297,7 @@ export async function notifyAdminBrandingSubmitted(data: {
   projectName: string;
   inmailSubject: string;
   salesNavLinkCount: number;
+  profileLinksParsed?: number;
 }) {
   const label = data.companyName || data.clientName;
   return sendEmailSafe({

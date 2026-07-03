@@ -471,6 +471,7 @@ export function clientBrandingRequestEmail(data: {
         <li>InMail script / message body</li>
         <li>Sales Navigator direct link</li>
         <li>Exact number of Sales Nav links to send (from your package)</li>
+        <li>Profile links paste — your full list (1,000 · 5,000 · 20,000 URLs)</li>
       </ul>`,
       pkgNote,
       p("This takes about 5 minutes. Once submitted, your campaign manager receives it automatically."),
@@ -486,9 +487,14 @@ export function adminBrandingSubmittedEmail(data: {
   projectName: string;
   inmailSubject: string;
   salesNavLinkCount: number;
+  profileLinksParsed?: number;
 }) {
   const site = getSiteUrl();
   const label = data.companyName || data.clientName;
+  const linksRow =
+    data.profileLinksParsed != null && data.profileLinksParsed > 0
+      ? detailRow("Profile links pasted", `${data.profileLinksParsed.toLocaleString()} unique URLs`)
+      : "";
   return emailLayout({
     preheader: `${label} submitted campaign branding`,
     eyebrow: "Admin alert",
@@ -497,7 +503,8 @@ export function adminBrandingSubmittedEmail(data: {
       p(`<strong style="color:#22d3ee;">${esc(label)}</strong> submitted branding for <strong style="color:#fafafa;">${esc(data.projectName)}</strong>.`),
       detailRow("InMail subject", data.inmailSubject),
       detailRow("Sales Nav send count", String(data.salesNavLinkCount)),
-      p("Full scripts are now visible in Admin → Clients and on the campaign manager board."),
+      linksRow,
+      p("View everything in Admin → Clients. Import profile links to the outreach pool from the client info desk."),
     ].join(""),
     cta: { href: `${site}/admin/clients`, label: "View in admin →" },
     footerNote: "Campaign managers assigned to this project can see the details on their project page.",

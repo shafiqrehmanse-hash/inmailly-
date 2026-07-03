@@ -123,6 +123,9 @@ export type Project = {
   sales_nav_direct_link: string | null;
   sales_nav_link_count: number | null;
   branding_submitted_at: string | null;
+  client_profile_links_paste: string | null;
+  client_profile_links_parsed: number | null;
+  client_profile_links_imported: number | null;
   inmail_package_size: number | null;
   status: ProjectStatus;
   portal_token: string | null;

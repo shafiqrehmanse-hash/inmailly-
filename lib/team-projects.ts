@@ -22,6 +22,8 @@ const ASSIGNMENT_SELECT = `
     sales_nav_direct_link,
     sales_nav_link_count,
     branding_submitted_at,
+    client_profile_links_parsed,
+    client_profile_links_imported,
     status,
         portal_token,
         inmail_package_size,
