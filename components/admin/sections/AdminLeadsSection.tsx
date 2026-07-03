@@ -118,9 +118,8 @@ export default function AdminLeadsSection() {
               <th className="text-left px-4 py-3">Member</th>
               <th className="text-left px-4 py-3">Lead</th>
               <th className="text-left px-4 py-3">Profile</th>
-              <th className="text-left px-4 py-3">Contact</th>
               <th className="text-left px-4 py-3">Status</th>
-              <th className="text-left px-4 py-3">Notes</th>
+              <th className="text-left px-4 py-3 min-w-[220px]">Note / what they said</th>
               <th className="text-left px-4 py-3">Updated</th>
               <th className="text-left px-4 py-3">Actions</th>
             </tr>
@@ -128,27 +127,34 @@ export default function AdminLeadsSection() {
           <tbody>
             {leads.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-lux-muted">No outreach leads match.</td>
+                <td colSpan={7} className="px-4 py-10 text-center text-lux-muted">No outreach leads match.</td>
               </tr>
             ) : (
               leads.map((lead) => (
                 <tr
                   key={lead.id}
-                  className="border-b border-white/[0.06] hover:bg-lux-bg2/50 cursor-pointer"
+                  className="border-b border-white/[0.06] hover:bg-lux-bg2/50 cursor-pointer align-top"
                   onClick={() => {
                     setSelectedLead(lead);
                     setModalOpen(true);
                   }}
                 >
-                  <td className="px-4 py-3 text-lux-cyan text-xs font-semibold">{lead.team_members?.name}</td>
-                  <td className="px-4 py-3 font-medium">{lead.name}</td>
+                  <td className="px-4 py-3 text-lux-cyan text-xs font-semibold whitespace-nowrap">
+                    {lead.team_members?.name}
+                  </td>
+                  <td className="px-4 py-3 font-medium">
+                    <div>{lead.name}</div>
+                    {lead.email && (
+                      <div className="text-[0.65rem] text-lux-muted font-normal mt-0.5">{lead.email}</div>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     {lead.profile_url ? (
                       <a
                         href={lead.profile_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-lux-cyan hover:underline"
+                        className="text-lux-cyan hover:underline text-xs"
                         onClick={(e) => e.stopPropagation()}
                       >
                         View →
@@ -157,12 +163,24 @@ export default function AdminLeadsSection() {
                       "—"
                     )}
                   </td>
-                  <td className="px-4 py-3 text-lux-muted text-xs">{lead.email || "—"}</td>
                   <td className="px-4 py-3">
                     <Badge variant={lead.status}>{lead.status}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-lux-muted text-xs max-w-[140px] truncate">{lead.notes || "—"}</td>
-                  <td className="px-4 py-3 text-lux-muted text-xs">{formatDate(lead.updated_at)}</td>
+                  <td className="px-4 py-3 max-w-[320px]">
+                    {lead.notes?.trim() ? (
+                      <p
+                        className="text-xs text-lux-text leading-relaxed whitespace-pre-wrap line-clamp-4"
+                        title={lead.notes}
+                      >
+                        {lead.notes}
+                      </p>
+                    ) : (
+                      <span className="text-xs text-lux-muted">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-lux-muted text-xs whitespace-nowrap">
+                    {formatDate(lead.updated_at)}
+                  </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     {!lead.deal_closed && (
                       <Button variant="lux-ghost" size="sm" onClick={() => closeDeal(lead)}>

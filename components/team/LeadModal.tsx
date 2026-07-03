@@ -142,7 +142,7 @@ export default function LeadModal({
     }
   }
 
-  async function handleUpdateLead(updates: Partial<Lead>) {
+  async function handleUpdateLead(updates: Partial<Lead> & { notes?: string | null }) {
     if (!currentLead) return;
     if (adminKey) {
       const res = await fetch(`/api/admin/leads?key=${adminKey}`, {
@@ -328,6 +328,40 @@ export default function LeadModal({
                 }))}
               />
             ) : null}
+          </div>
+
+          <div className="rounded-xl border border-lux-cyan/25 bg-lux-cyan/5 p-4 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-bricolage font-bold text-lux-text text-sm">
+                Note / what they said
+              </h3>
+              {currentLead.notes?.trim() ? (
+                <span className="text-[0.65rem] uppercase tracking-wider text-lux-cyan font-semibold">
+                  Logged by team
+                </span>
+              ) : null}
+            </div>
+            {currentLead.notes?.trim() ? (
+              <p className="text-sm text-lux-text whitespace-pre-wrap leading-relaxed">
+                {currentLead.notes}
+              </p>
+            ) : (
+              <p className="text-sm text-lux-muted">No note added yet.</p>
+            )}
+            <textarea
+              className="lux-input mt-1 min-h-[72px] text-sm"
+              placeholder="Update note / lead response…"
+              defaultValue={currentLead.notes || ""}
+              key={`notes-${currentLead.id}-${currentLead.updated_at}`}
+              onBlur={(e) => {
+                const next = e.target.value.trim();
+                const prev = (currentLead.notes || "").trim();
+                if (next !== prev) {
+                  handleUpdateLead({ notes: next || null });
+                }
+              }}
+            />
+            <p className="text-[0.65rem] text-lux-muted">Edit and click outside the box to save.</p>
           </div>
 
           <div>

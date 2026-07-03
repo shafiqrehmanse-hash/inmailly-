@@ -481,6 +481,37 @@ export function clientBrandingRequestEmail(data: {
   });
 }
 
+export function adminLeadNoteEmail(data: {
+  leadName: string;
+  note: string;
+  memberName?: string | null;
+  status?: string | null;
+  profileUrl?: string | null;
+  company?: string | null;
+}) {
+  const site = getSiteUrl();
+  const noteHtml = esc(data.note).replace(/\n/g, "<br/>");
+  return emailLayout({
+    preheader: `${data.leadName}: ${data.note.slice(0, 80)}`,
+    eyebrow: "Outreach lead note",
+    title: "Team added a lead note",
+    bodyHtml: [
+      p(
+        `Your team logged a lead with a note (what the lead said / response). Track it here without opening the admin panel.`
+      ),
+      detailRow("Lead name", data.leadName),
+      data.memberName ? detailRow("Added by", data.memberName) : "",
+      data.status ? detailRow("Status", data.status.replace(/_/g, " ")) : "",
+      data.company ? detailRow("Company", data.company) : "",
+      data.profileUrl ? detailRow("Profile", data.profileUrl) : "",
+      `<p style="margin:18px 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#22d3ee;">Note / what they said</p>`,
+      `<div style="margin:0 0 14px;padding:16px 18px;background:rgba(34,211,238,0.06);border:1px solid rgba(34,211,238,0.22);font-size:15px;line-height:1.65;color:#fafafa;white-space:pre-wrap;">${noteHtml}</div>`,
+    ].join(""),
+    cta: { href: `${site}/admin/team/leads`, label: "Open outreach leads →" },
+    footerNote: "You get this email whenever the team adds or updates a lead note.",
+  });
+}
+
 export function adminBrandingSubmittedEmail(data: {
   clientName: string;
   companyName?: string | null;

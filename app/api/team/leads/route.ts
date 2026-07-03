@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOutreachEligibleMember } from "@/lib/team-auth-server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyAdminLeadNote } from "@/lib/email";
 
 const VALID_STATUSES = new Set([
   "new",
@@ -75,6 +76,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error?.message || "Could not save lead" }, { status: 400 });
   }
 
+  const note = typeof lead.notes === "string" ? lead.notes.trim() : "";
+  if (note) {
+    void notifyAdminLeadNote({
+      leadName: lead.name,
+      note,
+      memberName: member.name,
+      status: lead.status,
+      profileUrl: lead.profile_url,
+      company: lead.company,
+    });
+  }
+
   return NextResponse.json({ lead });
 }
 
@@ -88,7 +101,7 @@ export async function PATCH(request: NextRequest) {
   const admin = createAdminClient();
   const { data: existing } = await admin
     .from("leads")
-    .select("id, name")
+    .select("id, name, notes, status, profile_url, company")
     .eq("id", id)
     .eq("member_id", member.id)
     .is("project_id", null)
@@ -112,6 +125,22 @@ export async function PATCH(request: NextRequest) {
 
   const { data, error } = await admin.from("leads").update(patch).eq("id", id).select("*").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (updates.notes !== undefined) {
+    const nextNote = String(updates.notes ?? "").trim();
+    const prevNote = (existing.notes || "").trim();
+    if (nextNote && nextNote !== prevNote) {
+      void notifyAdminLeadNote({
+        leadName: (data?.name as string) || existing.name,
+        note: nextNote,
+        memberName: member.name,
+        status: (data?.status as string) || existing.status,
+        profileUrl: (data?.profile_url as string | null) ?? existing.profile_url,
+        company: (data?.company as string | null) ?? existing.company,
+      });
+    }
+  }
+
   return NextResponse.json({ lead: data });
 }
 

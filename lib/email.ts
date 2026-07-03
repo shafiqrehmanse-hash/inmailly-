@@ -9,6 +9,7 @@ import {
   clientCampaignFinishedEmail,
   clientBrandingRequestEmail,
   adminBrandingSubmittedEmail,
+  adminLeadNoteEmail,
   clientCustomEmail,
   clientNewResponseEmail,
   clientSendProofEmail,
@@ -305,6 +306,25 @@ export async function notifyAdminBrandingSubmitted(data: {
     subject: `Branding submitted: ${label} — ${data.projectName}`,
     html: adminBrandingSubmittedEmail(data),
     text: `${label} submitted branding for ${data.projectName}. Subject: ${data.inmailSubject}`,
+  });
+}
+
+export async function notifyAdminLeadNote(data: {
+  leadName: string;
+  note: string;
+  memberName?: string | null;
+  status?: string | null;
+  profileUrl?: string | null;
+  company?: string | null;
+}) {
+  const note = data.note.trim();
+  if (!note) return { ok: false as const, skipped: true };
+
+  return sendEmailSafe({
+    to: getNotifyEmail(),
+    subject: `Lead note: ${data.leadName}`,
+    html: adminLeadNoteEmail({ ...data, note }),
+    text: `Lead: ${data.leadName}\nAdded by: ${data.memberName || "Team"}\nStatus: ${data.status || "—"}\n\nNote / what they said:\n${note}`,
   });
 }
 
