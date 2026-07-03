@@ -515,7 +515,7 @@ function SendsProofPanel({
           No send proofs yet. Your campaign manager uploads Print Screen captures as they send InMails.
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {proofs.map((p, i) => (
             <motion.div
               key={p.id}

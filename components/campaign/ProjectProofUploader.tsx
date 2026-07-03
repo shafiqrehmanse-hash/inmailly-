@@ -245,7 +245,7 @@ export default function ProjectProofUploader({ projectId }: { projectId: string 
             No proofs yet — paste your first Print Screen capture above.
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {proofs.map((p) => (
               <div key={p.id} className={cn("lux-card p-3 space-y-2", !p.visible_to_client && "opacity-75 border-red-500/20")}>
                 {p.display_url ? (
@@ -254,6 +254,7 @@ export default function ProjectProofUploader({ projectId }: { projectId: string 
                     alt="InMail proof"
                     onClick={() => setLightbox(p.display_url)}
                     className="w-full"
+                    size="md"
                   />
                 ) : (
                   <div className="aspect-[4/3] rounded-xl bg-white/[0.03] flex items-center justify-center text-xs text-lux-muted">

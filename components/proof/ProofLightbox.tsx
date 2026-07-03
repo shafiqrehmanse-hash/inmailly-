@@ -63,7 +63,7 @@ export default function ProofLightbox({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98 }}
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-          className="relative max-w-5xl w-full max-h-[90vh] overflow-hidden rounded-2xl border border-white/[0.12] shadow-[0_32px_80px_rgba(0,0,0,0.6)] bg-lux-bg2"
+          className="relative max-w-6xl w-full max-h-[92vh] overflow-hidden rounded-2xl border border-white/[0.12] shadow-[0_32px_80px_rgba(0,0,0,0.6)] bg-lux-bg2"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="px-4 py-3 border-b border-white/[0.08] flex items-center justify-between">
@@ -88,21 +88,32 @@ export function ProofThumb({
   alt,
   onClick,
   className = "",
+  size = "sm",
 }: {
   src: string;
   alt: string;
   onClick: () => void;
   className?: string;
+  /** sm = compact grid (client dashboard), md = campaign manager upload list */
+  size?: "sm" | "md";
 }) {
+  const heightClass = size === "md" ? "h-36 sm:h-40" : "h-24 sm:h-28";
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-xl border border-white/[0.1] bg-lux-bg2 aspect-[4/3] hover:border-lux-cyan/40 transition-all ${className}`}
+      className={`group relative block w-full overflow-hidden rounded-xl border border-white/[0.1] bg-lux-bg2 hover:border-lux-cyan/40 transition-all ${heightClass} ${className}`}
     >
-      <Image src={src} alt={alt} fill className="object-cover object-top group-hover:scale-[1.02] transition-transform duration-300" unoptimized />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-      <span className="absolute bottom-2 right-2 text-[0.6rem] font-bold uppercase tracking-wider text-white/90 bg-black/50 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className="object-cover object-top group-hover:scale-[1.03] transition-transform duration-300"
+        unoptimized
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+      <span className="absolute bottom-1.5 right-1.5 text-[0.55rem] font-bold uppercase tracking-wider text-white/95 bg-black/55 px-1.5 py-0.5 rounded">
         View HD
       </span>
     </button>
