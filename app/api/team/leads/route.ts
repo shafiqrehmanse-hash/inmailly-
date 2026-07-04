@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
   const status = body.status && VALID_STATUSES.has(body.status) ? body.status : "new";
 
   const admin = createAdminClient();
+  const nowIso = new Date().toISOString();
   const { data: lead, error } = await admin
     .from("leads")
     .insert({
@@ -72,6 +73,9 @@ export async function POST(request: NextRequest) {
     })
     .select("*")
     .single();
+
+  // Keep activity clock fresh so performance board doesn't mark active workers inactive
+  void admin.from("team_members").update({ last_login: nowIso }).eq("id", member.id);
 
   if (error || !lead) {
     return NextResponse.json({ error: error?.message || "Could not save lead" }, { status: 400 });
@@ -128,6 +132,8 @@ export async function PATCH(request: NextRequest) {
 
   const { data, error } = await admin.from("leads").update(patch).eq("id", id).select("*").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  void admin.from("team_members").update({ last_login: new Date().toISOString() }).eq("id", member.id);
 
   if (updates.notes !== undefined) {
     const nextNote = String(updates.notes ?? "").trim();

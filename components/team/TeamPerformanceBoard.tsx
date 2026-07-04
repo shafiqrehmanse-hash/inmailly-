@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import StatCard from "@/components/team/StatCard";
+import TeamAvatar from "@/components/team/TeamAvatar";
 import type { MemberPerformance, TeamPerformanceData } from "@/lib/team-performance";
 import { PRODUCTIVITY_SCORE_FORMULA } from "@/lib/team-performance";
 import { cn, formatDate, formatRelative } from "@/lib/utils";
@@ -130,7 +131,12 @@ export default function TeamPerformanceBoard({
                 currentMemberId === m.id && "ring-1 ring-lux-cyan/40"
               )}
             >
-              <div className="text-2xl mb-1">{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</div>
+              <div className="relative inline-flex justify-center mb-2">
+                <TeamAvatar name={m.name} photoUrl={m.photoUrl} size="lg" />
+                <span className="absolute -bottom-1 -right-1 text-lg drop-shadow" aria-hidden>
+                  {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
+                </span>
+              </div>
               <div className="font-bricolage font-extrabold text-lux-text truncate">
                 {m.name}
                 {currentMemberId === m.id ? " (you)" : ""}
@@ -226,8 +232,8 @@ export default function TeamPerformanceBoard({
           How productivity score works
         </p>
         {data?.scoreFormula || PRODUCTIVITY_SCORE_FORMULA}. Closed deals and referral SDRs boost your rank the most —
-        close wins and invite teammates with your referral link. Leaderboard updates on refresh. Stale = claimed 48h+
-        without completing outreach.
+        close wins and invite teammates with your referral link. Inactive 24h means no login, leads, used links, claims,
+        or auto-assigns in the last day. Stale = claimed 48h+ without completing outreach. Add your photo in Settings.
       </div>
     </div>
   );
@@ -257,17 +263,22 @@ function MemberRow({
         {m.rank}
       </td>
       <td className="px-2.5 py-2.5 whitespace-nowrap">
-        <div className="font-semibold text-lux-text">
-          {m.name}
-          {isYou && (
-            <span className="ml-1.5 text-[0.62rem] uppercase tracking-wide text-lux-cyan font-bold">You</span>
-          )}
-        </div>
-        {mode === "admin" && (
-          <div className="text-[0.62rem] text-lux-muted max-w-[160px] truncate" title={m.email}>
-            {m.email}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <TeamAvatar name={m.name} photoUrl={m.photoUrl} size="sm" />
+          <div className="min-w-0">
+            <div className="font-semibold text-lux-text">
+              {m.name}
+              {isYou && (
+                <span className="ml-1.5 text-[0.62rem] uppercase tracking-wide text-lux-cyan font-bold">You</span>
+              )}
+            </div>
+            {mode === "admin" && (
+              <div className="text-[0.62rem] text-lux-muted max-w-[160px] truncate" title={m.email}>
+                {m.email}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </td>
       <td className="px-2.5 py-2.5 text-center tabular-nums whitespace-nowrap">
         {mode === "admin" ? (
@@ -321,9 +332,9 @@ function MemberRow({
       )}
       <td
         className="px-2.5 py-2.5 text-[0.72rem] text-lux-muted whitespace-nowrap"
-        title={m.lastLogin ? formatDate(m.lastLogin) : undefined}
+        title={m.lastActiveAt ? formatDate(m.lastActiveAt) : undefined}
       >
-        {m.lastLogin ? formatRelative(m.lastLogin) : <span className="text-red-400">Never</span>}
+        {m.lastActiveAt ? formatRelative(m.lastActiveAt) : <span className="text-red-400">Never</span>}
       </td>
       <td className="px-2.5 py-2.5 whitespace-nowrap">
         <div className="flex items-end gap-0.5 h-7 w-[64px]">

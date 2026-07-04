@@ -6,7 +6,10 @@ export type MemberPerformance = {
   name: string;
   email: string;
   role: string;
+  photoUrl: string | null;
   lastLogin: string | null;
+  /** Latest of login, lead, used link, claim, or auto-assign — used for inactive status */
+  lastActiveAt: string | null;
   joinedAt: string;
   claimed: number;
   used: number;
@@ -102,7 +105,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
   ] = await Promise.all([
       admin
         .from("team_members")
-        .select("id, name, email, role, last_login, joined_at, is_active")
+        .select("id, name, email, role, photo_url, last_login, joined_at, is_active")
         .eq("is_active", true)
         .in("role", [...OUTREACH_REPORTING_ROLES]),
       admin
@@ -154,6 +157,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     referralsJoined: number;
     staleClaimed: number;
     dailyUsed: number[];
+    lastActivityMs: number;
   };
 
   const acc = (): Acc => ({
@@ -170,7 +174,15 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     referralsJoined: 0,
     staleClaimed: 0,
     dailyUsed: [0, 0, 0, 0, 0, 0, 0],
+    lastActivityMs: 0,
   });
+
+  function bumpActivity(a: Acc, iso: string | null | undefined) {
+    if (!iso) return;
+    const t = new Date(iso).getTime();
+    if (!Number.isFinite(t)) return;
+    if (t > a.lastActivityMs) a.lastActivityMs = t;
+  }
 
   const byMember = new Map<string, Acc>();
   for (const m of members) byMember.set(m.id, acc());
@@ -180,6 +192,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     const a = byMember.get(row.member_id) || acc();
     a.claimed += 1;
     if (row.claimed_at && new Date(row.claimed_at) < staleCutoff) a.staleClaimed += 1;
+    bumpActivity(a, row.claimed_at);
     byMember.set(row.member_id, a);
   }
 
@@ -194,6 +207,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
       const dayIndex = Math.floor((usedAt.getTime() - weekAgo.getTime()) / (24 * 60 * 60 * 1000));
       if (dayIndex >= 0 && dayIndex < 7) a.dailyUsed[dayIndex] += 1;
     }
+    bumpActivity(a, row.used_at);
     byMember.set(row.used_by_member_id, a);
   }
 
@@ -210,10 +224,12 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
       leadsWeekTotal += 1;
     }
     if (responseStatuses.has(row.status)) a.responses += 1;
+    bumpActivity(a, row.created_at);
     if (row.deal_closed) {
       a.dealsClosed += 1;
       const closedAt = row.closed_at ? new Date(row.closed_at) : created;
       if (closedAt >= weekAgo) a.dealsClosedWeek += 1;
+      bumpActivity(a, row.closed_at || row.created_at);
     }
     byMember.set(row.member_id, a);
   }
@@ -234,18 +250,24 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     cur.week += row.assigned_count;
     if (!cur.lastAt || row.created_at > cur.lastAt) cur.lastAt = row.created_at;
     autoAssignByMember[row.member_id] = cur;
+    const a = byMember.get(row.member_id);
+    if (a) bumpActivity(a, row.created_at);
   }
 
   const autoAssignLinksToday = autoAssignTodayRows.reduce((s, e) => s + e.assigned_count, 0);
   const autoAssignBatchesToday = autoAssignTodayRows.length;
+  const inactiveCutoffMs = inactiveCutoff.getTime();
 
   const teamMembers = members
     .map((m) => {
       const a = byMember.get(m.id) || acc();
       const auto = autoAssignByMember[m.id] || { week: 0, lastAt: null };
       const productivityScore = productivityScoreFor(a);
-      const lastLogin = m.last_login ? new Date(m.last_login) : null;
-      const inactive24h = !lastLogin || lastLogin < inactiveCutoff;
+      bumpActivity(a, m.last_login);
+      bumpActivity(a, m.joined_at);
+      const lastActiveAt = a.lastActivityMs > 0 ? new Date(a.lastActivityMs).toISOString() : null;
+      // Active if they logged in, added leads, used/claimed links, or auto-assigned within 24h
+      const inactive24h = !lastActiveAt || a.lastActivityMs < inactiveCutoffMs;
       const needsAttention =
         inactive24h || a.staleClaimed > 0 || (a.claimed > 0 && a.used === 0 && a.claimed >= 3);
 
@@ -254,7 +276,9 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
         name: m.name,
         email: m.email,
         role: m.role,
+        photoUrl: m.photo_url || null,
         lastLogin: m.last_login,
+        lastActiveAt,
         joinedAt: m.joined_at,
         claimed: a.claimed,
         used: a.used,

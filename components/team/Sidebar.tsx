@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { InMaillyBrand } from "@/components/brand/InMaillyLogo";
+import TeamAvatar from "@/components/team/TeamAvatar";
 import type { TeamMember } from "@/lib/types";
 import { isTeamLeader } from "@/lib/roles";
 import { cn } from "@/lib/utils";
@@ -113,13 +114,6 @@ export default function Sidebar({
     ...sections.filter((s) => s.label === "Account"),
   ];
   const navSections = [...leaderNav, ...workersNav];
-  const initials = member.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
   async function logout() {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -225,9 +219,7 @@ export default function Sidebar({
 
       <div className="mx-3 mb-4 p-3 rounded-xl border border-lux-violet/20 bg-gradient-to-br from-lux-violet/10 via-slate-900/40 to-lux-bg2/60 shrink-0">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-lux-violet to-lux-cyan flex items-center justify-center text-xs font-bold text-white shadow-md shadow-lux-violet/20">
-            {initials}
-          </div>
+          <TeamAvatar name={member.name} photoUrl={member.photo_url} size="md" />
           <div className="min-w-0">
             <div className="text-sm text-white font-medium truncate">{member.name}</div>
             <div className="text-[0.65rem] text-lux-violet/60">
@@ -235,6 +227,13 @@ export default function Sidebar({
             </div>
           </div>
         </div>
+        <Link
+          href="/team/settings"
+          onClick={() => setOpen(false)}
+          className="block w-full text-left text-xs text-lux-cyan hover:text-white py-1 px-1 transition-colors mb-1"
+        >
+          Profile photo & settings
+        </Link>
         <button
           type="button"
           onClick={logout}
