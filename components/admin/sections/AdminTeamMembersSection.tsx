@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
+import TeamAvatar from "@/components/team/TeamAvatar";
 import type { TeamMember } from "@/lib/types";
 import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 
@@ -201,13 +202,16 @@ export default function AdminTeamMembersSection() {
                 members.map((m) => (
                   <tr key={m.id} className="border-b border-white/[0.06] last:border-0 hover:bg-lux-bg2/50">
                     <td className="px-4 py-3 font-medium text-lux-text">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {m.name}
-                        {m.role === "team_leader" && (
-                          <span className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                            Team leader
-                          </span>
-                        )}
+                      <div className="flex items-center gap-2.5">
+                        <TeamAvatar name={m.name} photoUrl={m.photo_url} size="sm" />
+                        <div className="flex flex-wrap items-center gap-2 min-w-0">
+                          {m.name}
+                          {m.role === "team_leader" && (
+                            <span className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                              Team leader
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-lux-muted">{m.email}</td>

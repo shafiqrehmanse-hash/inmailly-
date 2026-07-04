@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOutreachEligibleMember } from "@/lib/team-auth-server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canUseOutreachTools } from "@/lib/roles";
+import { getCurrentMember } from "@/lib/team";
 import {
   processTeamPhoto,
   TEAM_PHOTO_BUCKET,
   TEAM_PHOTO_MAX_BYTES,
 } from "@/lib/team-photo";
 
+/** Outreach team + campaign managers — anyone on the staff roster. */
+async function getPhotoMember() {
+  const member = await getCurrentMember();
+  if (!member || !member.is_active || !canUseOutreachTools(member.role)) return null;
+  return member;
+}
+
 export async function POST(request: NextRequest) {
-  const member = await getOutreachEligibleMember();
+  const member = await getPhotoMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const form = await request.formData();
@@ -75,7 +83,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE() {
-  const member = await getOutreachEligibleMember();
+  const member = await getPhotoMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = createAdminClient();

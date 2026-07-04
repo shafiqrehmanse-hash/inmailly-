@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { TeamMember } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { InMaillyBrand } from "@/components/brand/InMaillyLogo";
+import TeamAvatar from "@/components/team/TeamAvatar";
 
 type NavItem = { id: string; href: string; label: string; icon: string };
 
@@ -26,12 +27,6 @@ export default function CampaignSidebar({ member }: { member: TeamMember }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const inOutreach = pathname.startsWith("/campaign/outreach");
-  const initials = member.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   async function logout() {
     const supabase = createClient();
@@ -88,9 +83,7 @@ export default function CampaignSidebar({ member }: { member: TeamMember }) {
 
       <div className="px-5 py-4 border-t border-white/[0.08]">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-lux-violet to-lux-cyan flex items-center justify-center text-xs font-bold text-white">
-            {initials}
-          </div>
+          <TeamAvatar name={member.name} photoUrl={member.photo_url} size="md" />
           <div className="min-w-0">
             <div className="text-sm text-lux-text truncate">{member.name}</div>
             <div className="text-[0.65rem] text-lux-violet/80">
@@ -98,6 +91,13 @@ export default function CampaignSidebar({ member }: { member: TeamMember }) {
             </div>
           </div>
         </div>
+        <Link
+          href="/campaign/settings"
+          onClick={() => setOpen(false)}
+          className="block w-full text-left text-xs text-lux-cyan hover:text-white py-1 transition-colors mb-1"
+        >
+          Profile photo & settings
+        </Link>
         <button
           type="button"
           onClick={logout}
