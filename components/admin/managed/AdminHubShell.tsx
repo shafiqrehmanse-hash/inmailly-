@@ -14,6 +14,7 @@ const HUB_NAV = [
   { href: "/admin/clients", label: "Clients", icon: "◇", criticalKey: "clients" as const },
   { href: "/admin/projects", label: "Projects", icon: "◎" },
   { href: "/admin/website", label: "Website", icon: "🌐" },
+  { href: "/admin/blog", label: "Blog", icon: "✎" },
 ] as const;
 
 export default function AdminHubShell({

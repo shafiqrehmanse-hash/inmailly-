@@ -9,6 +9,7 @@ import { InMaillyBrand } from "@/components/brand/InMaillyLogo";
 const LINKS = [
   { href: "#story", label: "Story" },
   { href: "#responses", label: "Responses" },
+  { href: "/blog", label: "Blog" },
   { href: "/client/register", label: "Get started" },
   { href: "#pricing", label: "Pricing" },
   { href: "/contact", label: "Contact" },

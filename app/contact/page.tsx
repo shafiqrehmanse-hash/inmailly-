@@ -1,9 +1,26 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import ContactForm from "@/components/home/ContactForm";
 import LuxBackground from "@/components/home/LuxBackground";
 import LuxFooter from "@/components/home/LuxFooter";
 import LuxNav from "@/components/home/LuxNav";
 import { getSiteContent } from "@/lib/site-content-server";
+import { getSiteUrl } from "@/lib/site-url";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Contact InMailly",
+  description:
+    "Talk to InMailly about managed LinkedIn outreach, white-label campaigns, and scaling B2B prospecting for your team or clients.",
+  openGraph: {
+    title: "Contact InMailly",
+    description:
+      "Talk to InMailly about managed LinkedIn outreach, white-label campaigns, and scaling B2B prospecting.",
+    url: `${getSiteUrl()}/contact`,
+  },
+  alternates: {
+    canonical: `${getSiteUrl()}/contact`,
+  },
+};
 
 export default async function ContactPage() {
   const content = await getSiteContent();

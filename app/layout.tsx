@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Sans } from "next/font/google";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
+
+const siteUrl = getSiteUrl();
+const googleVerification = process.env.GOOGLE_SITE_VERIFICATION;
 
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -15,9 +19,29 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "InMailly — Premium LinkedIn Outreach Infrastructure",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "InMailly — Premium LinkedIn Outreach Infrastructure",
+    template: "%s | InMailly",
+  },
   description:
     "Reach thousands of decision makers on LinkedIn without enterprise InMail pricing. Human-operated outreach at scale.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "InMailly",
+    title: "InMailly — Premium LinkedIn Outreach Infrastructure",
+    description:
+      "Reach thousands of decision makers on LinkedIn without enterprise InMail pricing. Human-operated outreach at scale.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "InMailly — Premium LinkedIn Outreach Infrastructure",
+    description:
+      "Reach thousands of decision makers on LinkedIn without enterprise InMail pricing. Human-operated outreach at scale.",
+  },
+  ...(googleVerification ? { verification: { google: googleVerification } } : {}),
   icons: {
     icon: [
       { url: `/favicon.ico?v=4`, sizes: "any" },
