@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Sidebar from "@/components/team/Sidebar";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import LiveChatWidget from "@/components/team/LiveChatWidget";
+import ProfilePhotoPrompt from "@/components/team/ProfilePhotoPrompt";
 import { canOpenLiveChat, isCampaignManager, isTeamLeader } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -61,6 +62,7 @@ export default async function TeamAppLayout({
         <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-[1200px] mx-auto w-full">{children}</main>
       </div>
       {chatMode && <LiveChatWidget mode={chatMode} agentEnabled={liveChatAgent} />}
+      <ProfilePhotoPrompt member={member} />
     </div>
   );
 }

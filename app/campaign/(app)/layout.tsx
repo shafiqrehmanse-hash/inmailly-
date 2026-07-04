@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import CampaignSidebar from "@/components/campaign/CampaignSidebar";
+import ProfilePhotoPrompt from "@/components/team/ProfilePhotoPrompt";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import { getCurrentMember } from "@/lib/team";
 import { isCampaignManager } from "@/lib/roles";

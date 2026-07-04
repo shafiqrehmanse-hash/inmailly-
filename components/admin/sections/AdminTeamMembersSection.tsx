@@ -158,6 +158,7 @@ export default function AdminTeamMembersSection() {
             <p className="text-xs text-lux-muted -mt-1">Create account with email and temp password</p>
             <input className="lux-input" placeholder="Full name" value={newMember.name} onChange={(e) => setNewMember({ ...newMember, name: e.target.value })} />
             <input className="lux-input" placeholder="Email" type="email" value={newMember.email} onChange={(e) => setNewMember({ ...newMember, email: e.target.value })} />
+            <input className="lux-input" placeholder="WhatsApp / phone (+92…)" type="tel" value={newMember.phone} onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })} />
             <input className="lux-input" type="password" placeholder="Temporary password" value={newMember.password} onChange={(e) => setNewMember({ ...newMember, password: e.target.value })} />
             <LuxSelect value={newMember.role} onChange={(role) => setNewMember({ ...newMember, role })} options={roleOptions} />
             <Button variant="lux" onClick={addMember} className="w-full">Add member</Button>
