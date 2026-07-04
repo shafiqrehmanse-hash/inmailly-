@@ -8,10 +8,6 @@ import Button from "@/components/ui/Button";
 import TeamAvatar from "@/components/team/TeamAvatar";
 import type { TeamMember } from "@/lib/types";
 
-function dismissKey(memberId: string) {
-  return `inmailly-photo-prompt-later:${memberId}`;
-}
-
 export default function ProfilePhotoPrompt({ member }: { member: TeamMember }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -30,25 +26,13 @@ export default function ProfilePhotoPrompt({ member }: { member: TeamMember }) {
       setOpen(false);
       return;
     }
-    try {
-      if (sessionStorage.getItem(dismissKey(member.id)) === "1") {
-        setOpen(false);
-        return;
-      }
-    } catch {
-      /* ignore */
-    }
-    // Small delay so the dashboard paints first
+    // Every login / page load shows this until a photo is saved.
+    // "Later" only closes it for this visit (no sessionStorage).
     const t = window.setTimeout(() => setOpen(true), 600);
     return () => window.clearTimeout(t);
   }, [member.id, member.photo_url, done]);
 
   function later() {
-    try {
-      sessionStorage.setItem(dismissKey(member.id), "1");
-    } catch {
-      /* ignore */
-    }
     setOpen(false);
   }
 
@@ -67,11 +51,6 @@ export default function ProfilePhotoPrompt({ member }: { member: TeamMember }) {
     }
     setDone(true);
     setOpen(false);
-    try {
-      sessionStorage.removeItem(dismissKey(member.id));
-    } catch {
-      /* ignore */
-    }
     router.refresh();
   }
 
@@ -142,7 +121,7 @@ export default function ProfilePhotoPrompt({ member }: { member: TeamMember }) {
                 </button>
               </div>
               <p className="text-[0.65rem] text-lux-muted/70">
-                Once your photo is saved, this reminder won&apos;t show again.
+                This reminder appears every login until you add a photo. After upload, it stops for good.
               </p>
             </div>
           </motion.div>
