@@ -46,7 +46,7 @@ export default function TeamPerformanceBoard({
   const you = currentMemberId ? sorted.find((m) => m.id === currentMemberId) : null;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="w-full max-w-none space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-bricolage font-extrabold text-2xl lux-gradient-text">📊 Team performance</h1>
@@ -178,26 +178,30 @@ export default function TeamPerformanceBoard({
         </div>
       ) : (
         <div className="lux-card-elite overflow-hidden">
-          <div className="overflow-x-auto lux-scrollbar-hide">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-max min-w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b border-white/[0.08] text-left text-[0.62rem] uppercase tracking-wider text-lux-muted">
-                  <th className="px-4 py-3 font-bold">#</th>
-                  <th className="px-4 py-3 font-bold">Member</th>
-                  <th className="px-4 py-3 font-bold text-center">Claimed</th>
-                  <th className="px-4 py-3 font-bold text-center">Used</th>
-                  <th className="px-4 py-3 font-bold text-center">Today</th>
-                  <th className="px-4 py-3 font-bold text-center">Leads</th>
-                  <th className="px-4 py-3 font-bold text-center">Responses</th>
-                  <th className="px-4 py-3 font-bold text-center">Deals</th>
-                  <th className="px-4 py-3 font-bold text-center">Referral SDRs</th>
-                  <th className="px-4 py-3 font-bold text-center">Score</th>
+                <tr className="border-b border-white/[0.08] text-left text-[0.6rem] uppercase tracking-wider text-lux-muted">
+                  <th className="px-2.5 py-2.5 font-bold whitespace-nowrap">#</th>
+                  <th className="px-2.5 py-2.5 font-bold whitespace-nowrap min-w-[120px]">Member</th>
+                  <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap">Claimed</th>
+                  <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap">Used</th>
+                  <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap" title="Used today · leads today">
+                    Today
+                  </th>
+                  <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap">Leads</th>
+                  <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap">Replies</th>
+                  <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap">Deals</th>
+                  <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap" title="SDRs joined via referral">
+                    Refs
+                  </th>
+                  <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap">Score</th>
                   {mode === "admin" && (
-                    <th className="px-4 py-3 font-bold text-center">Auto (7d)</th>
+                    <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap">Auto 7d</th>
                   )}
-                  <th className="px-4 py-3 font-bold">Last active</th>
-                  <th className="px-4 py-3 font-bold">7-day activity</th>
-                  <th className="px-4 py-3 font-bold">Status</th>
+                  <th className="px-2.5 py-2.5 font-bold whitespace-nowrap">Active</th>
+                  <th className="px-2.5 py-2.5 font-bold whitespace-nowrap">7-day</th>
+                  <th className="px-2.5 py-2.5 font-bold whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -249,19 +253,23 @@ function MemberRow({
         isYou && "bg-lux-cyan/[0.06]"
       )}
     >
-      <td className="px-4 py-3 font-bricolage font-bold text-lux-violet tabular-nums">{m.rank}</td>
-      <td className="px-4 py-3">
+      <td className="px-2.5 py-2.5 font-bricolage font-bold text-lux-violet tabular-nums whitespace-nowrap">
+        {m.rank}
+      </td>
+      <td className="px-2.5 py-2.5 whitespace-nowrap">
         <div className="font-semibold text-lux-text">
           {m.name}
           {isYou && (
-            <span className="ml-2 text-[0.62rem] uppercase tracking-wide text-lux-cyan font-bold">You</span>
+            <span className="ml-1.5 text-[0.62rem] uppercase tracking-wide text-lux-cyan font-bold">You</span>
           )}
         </div>
         {mode === "admin" && (
-          <div className="text-[0.65rem] text-lux-muted truncate max-w-[140px]">{m.email}</div>
+          <div className="text-[0.62rem] text-lux-muted max-w-[160px] truncate" title={m.email}>
+            {m.email}
+          </div>
         )}
       </td>
-      <td className="px-4 py-3 text-center tabular-nums">
+      <td className="px-2.5 py-2.5 text-center tabular-nums whitespace-nowrap">
         {mode === "admin" ? (
           <Link
             href={`/admin/team/links?memberId=${m.id}`}
@@ -276,69 +284,60 @@ function MemberRow({
           <div className="text-[0.58rem] text-amber-400">{m.staleClaimed} stale</div>
         )}
       </td>
-      <td className="px-4 py-3 text-center tabular-nums font-semibold text-lux-text">{m.used}</td>
-      <td className="px-4 py-3 text-center tabular-nums text-lux-muted">
+      <td className="px-2.5 py-2.5 text-center tabular-nums font-semibold text-lux-text whitespace-nowrap">
+        {m.used}
+      </td>
+      <td
+        className="px-2.5 py-2.5 text-center tabular-nums text-lux-muted whitespace-nowrap"
+        title={`${m.usedToday} used today · ${m.leadsToday} leads today`}
+      >
         {m.usedToday}u · {m.leadsToday}l
       </td>
-      <td className="px-4 py-3 text-center tabular-nums">{m.leads}</td>
-      <td className="px-4 py-3 text-center tabular-nums">{m.responses}</td>
-      <td className="px-4 py-3 text-center tabular-nums">
+      <td className="px-2.5 py-2.5 text-center tabular-nums whitespace-nowrap">{m.leads}</td>
+      <td className="px-2.5 py-2.5 text-center tabular-nums whitespace-nowrap">{m.responses}</td>
+      <td className="px-2.5 py-2.5 text-center tabular-nums whitespace-nowrap">
         <span className="font-semibold text-amber-300">🏆 {m.dealsClosed}</span>
         {m.dealsClosedWeek > 0 && (
-          <div className="text-[0.58rem] text-lux-muted">+{m.dealsClosedWeek} this week</div>
+          <div className="text-[0.58rem] text-lux-muted">+{m.dealsClosedWeek} wk</div>
         )}
       </td>
-      <td className="px-4 py-3 text-center tabular-nums">
+      <td className="px-2.5 py-2.5 text-center tabular-nums whitespace-nowrap">
         {m.referralsJoined > 0 ? (
           <span className="font-semibold text-amber-200">✦ {m.referralsJoined}</span>
         ) : (
           <span className="text-lux-muted">0</span>
         )}
       </td>
-      <td className="px-4 py-3 text-center">
+      <td className="px-2.5 py-2.5 text-center whitespace-nowrap">
         <span className="font-bricolage font-extrabold text-lux-cyan tabular-nums">{m.productivityScore}</span>
       </td>
       {mode === "admin" && (
-        <td className="px-4 py-3 text-center tabular-nums text-lux-violet font-semibold">
-          {m.autoAssignWeek > 0 ? (
-            <>
-              +{m.autoAssignWeek}
-              {m.lastAutoAssignAt && (
-                <div className="text-[0.58rem] text-lux-muted font-normal">
-                  {formatRelative(m.lastAutoAssignAt)}
-                </div>
-              )}
-            </>
-          ) : (
-            "—"
-          )}
+        <td
+          className="px-2.5 py-2.5 text-center tabular-nums text-lux-violet font-semibold whitespace-nowrap"
+          title={m.lastAutoAssignAt ? formatRelative(m.lastAutoAssignAt) : undefined}
+        >
+          {m.autoAssignWeek > 0 ? `+${m.autoAssignWeek}` : "—"}
         </td>
       )}
-      <td className="px-4 py-3 text-[0.72rem] text-lux-muted whitespace-nowrap">
-        {m.lastLogin ? (
-          <>
-            {formatRelative(m.lastLogin)}
-            {mode === "admin" && (
-              <div className="text-[0.58rem] opacity-70">{formatDate(m.lastLogin)}</div>
-            )}
-          </>
-        ) : (
-          <span className="text-red-400">Never</span>
-        )}
+      <td
+        className="px-2.5 py-2.5 text-[0.72rem] text-lux-muted whitespace-nowrap"
+        title={m.lastLogin ? formatDate(m.lastLogin) : undefined}
+      >
+        {m.lastLogin ? formatRelative(m.lastLogin) : <span className="text-red-400">Never</span>}
       </td>
-      <td className="px-4 py-3">
-        <div className="flex items-end gap-0.5 h-8 w-[72px]">
+      <td className="px-2.5 py-2.5 whitespace-nowrap">
+        <div className="flex items-end gap-0.5 h-7 w-[64px]">
           {m.dailyUsed.map((v, i) => (
             <div
               key={i}
-              className="flex-1 rounded-t-sm bg-gradient-to-t from-lux-violet to-lux-cyan min-w-[6px]"
+              className="flex-1 rounded-t-sm bg-gradient-to-t from-lux-violet to-lux-cyan min-w-[5px]"
               style={{ height: `${(v / maxDaily) * 100}%`, minHeight: v ? 3 : 0 }}
               title={`${dayLabels[i]}: ${v} used`}
             />
           ))}
         </div>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-2.5 py-2.5 whitespace-nowrap">
         {m.inactive24h ? (
           <Badge variant="dead">Inactive 24h</Badge>
         ) : m.needsAttention && mode === "admin" ? (
