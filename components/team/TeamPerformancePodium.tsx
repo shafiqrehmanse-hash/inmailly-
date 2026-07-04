@@ -13,6 +13,7 @@ export default function TeamPerformancePodium({
 }) {
   const [top3, setTop3] = useState<MemberPerformance[]>([]);
   const [you, setYou] = useState<MemberPerformance | null>(null);
+  const [scope, setScope] = useState<"global" | "assigned_team">("global");
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -22,6 +23,7 @@ export default function TeamPerformancePodium({
     if (res.ok) {
       const members = (data.members || []) as MemberPerformance[];
       setTop3(members.slice(0, 3));
+      setScope(data.scope === "assigned_team" ? "assigned_team" : "global");
       const id = currentMemberId || data.currentMemberId;
       setYou(id ? members.find((m) => m.id === id) || null : null);
     }
@@ -49,17 +51,17 @@ export default function TeamPerformancePodium({
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-lux-violet/80">
-            Live leaderboard
+            {scope === "assigned_team" ? "Your team only" : "Live leaderboard"}
           </p>
           <h2 className="font-bricolage font-extrabold text-lg text-lux-text mt-0.5">
-            Top performers this week
+            {scope === "assigned_team" ? "Top performers on your team" : "Top performers this week"}
           </h2>
         </div>
         <Link
           href="/team/performance"
           className="text-xs font-bold text-lux-cyan hover:underline"
         >
-          Full team board →
+          {scope === "assigned_team" ? "Your team board →" : "Full team board →"}
         </Link>
       </div>
 

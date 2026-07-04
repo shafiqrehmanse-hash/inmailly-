@@ -53,6 +53,8 @@ export type TeamPerformanceData = {
   dayLabels: string[];
   generatedAt: string;
   scoreFormula: string;
+  /** global = full outreach board; assigned_team = team leader's workers only */
+  scope?: "global" | "assigned_team";
 };
 
 /** Closed deals and referral SDRs weigh heavily so the board rewards wins, not only volume. */
