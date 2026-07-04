@@ -20,13 +20,16 @@ export default async function TeamAppLayout({
   const admin = createAdminClient();
   const supabase = createServerSupabase();
 
-  const [{ data: teamLeaders }, { count }, leaderChatRow] = await Promise.all([
-    admin
-      .from("team_members")
-      .select("id, name, email")
-      .eq("role", "team_leader")
-      .eq("is_active", true)
-      .order("name"),
+  const [{ data: assignedLeader }, { count }, leaderChatRow] = await Promise.all([
+    !isTeamLeader(member.role) && member.leader_id
+      ? admin
+          .from("team_members")
+          .select("id, name, email")
+          .eq("id", member.leader_id)
+          .eq("role", "team_leader")
+          .eq("is_active", true)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
     supabase
       .from("outreach_links")
       .select("*", { count: "exact", head: true })
@@ -36,6 +39,8 @@ export default async function TeamAppLayout({
       ? admin.from("team_members").select("live_chat_agent").eq("id", member.id).maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
+
+  const teamLeaders = assignedLeader ? [assignedLeader] : [];
 
   let liveChatAgent = member.live_chat_agent === true;
   if (isTeamLeader(member.role) && leaderChatRow?.data) {

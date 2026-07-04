@@ -6,6 +6,8 @@ export type TeamMember = {
   phone: string | null;
   photo_url: string | null;
   role: "member" | "senior" | "admin" | "campaign_manager" | "team_leader";
+  /** Outreach worker's assigned team leader (null for leaders / unassigned). */
+  leader_id: string | null;
   is_active: boolean;
   invite_code: string | null;
   joined_at: string;

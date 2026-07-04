@@ -18,16 +18,18 @@ export default async function HubPage() {
   if (!member) return null;
 
   const admin = createAdminClient();
-  const { data: teamLeaders } = await admin
-    .from("team_members")
-    .select("id, name, email")
-    .eq("role", "team_leader")
-    .eq("is_active", true)
-    .order("name");
-
-  const visibleLeaders = isTeamLeader(member.role)
-    ? []
-    : (teamLeaders || []).filter((l) => l.id !== member.id);
+  // Workers only see their assigned team leader — not every leader in the company
+  let visibleLeaders: { id: string; name: string; email: string }[] = [];
+  if (!isTeamLeader(member.role) && member.leader_id) {
+    const { data: myLeader } = await admin
+      .from("team_members")
+      .select("id, name, email")
+      .eq("id", member.leader_id)
+      .eq("role", "team_leader")
+      .eq("is_active", true)
+      .maybeSingle();
+    if (myLeader) visibleLeaders = [myLeader];
+  }
 
   const supabase = createServerSupabase();
   const fourteenDaysAgo = new Date();

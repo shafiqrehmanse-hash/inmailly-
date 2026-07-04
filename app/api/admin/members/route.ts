@@ -73,16 +73,67 @@ export async function PATCH(request: NextRequest) {
   if (!checkKey(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { memberId, is_active, role } = await request.json();
+  const { memberId, is_active, role, leader_id } = await request.json();
+  if (!memberId) {
+    return NextResponse.json({ error: "memberId required" }, { status: 400 });
+  }
+
   const admin = createAdminClient();
+  const { data: existing } = await admin
+    .from("team_members")
+    .select("id, role")
+    .eq("id", memberId)
+    .maybeSingle();
+
+  if (!existing) {
+    return NextResponse.json({ error: "Member not found" }, { status: 404 });
+  }
+
   const updates: Record<string, unknown> = {};
   if (typeof is_active === "boolean") updates.is_active = is_active;
-  if (role) updates.role = role;
+
+  if (role) {
+    updates.role = role;
+    // Leaders don't report to leaders
+    if (role === "team_leader" || role === "campaign_manager") {
+      updates.leader_id = null;
+    }
+  }
+
+  if (leader_id !== undefined) {
+    const nextLeaderId = leader_id || null;
+    if (nextLeaderId) {
+      const { data: leader } = await admin
+        .from("team_members")
+        .select("id, role, is_active")
+        .eq("id", nextLeaderId)
+        .maybeSingle();
+      if (!leader?.is_active || leader.role !== "team_leader") {
+        return NextResponse.json({ error: "leader_id must be an active team leader" }, { status: 400 });
+      }
+      const effectiveRole = (role as string) || existing.role;
+      if (effectiveRole === "team_leader" || effectiveRole === "campaign_manager") {
+        return NextResponse.json(
+          { error: "Only outreach workers can be assigned to a team leader" },
+          { status: 400 }
+        );
+      }
+    }
+    updates.leader_id = nextLeaderId;
+  }
+
   if (!Object.keys(updates).length) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
+
   const { error } = await admin.from("team_members").update(updates).eq("id", memberId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // If demoting a leader, unassign their workers
+  if (role && existing.role === "team_leader" && role !== "team_leader") {
+    await admin.from("team_members").update({ leader_id: null }).eq("leader_id", memberId);
+  }
+
   return NextResponse.json({ success: true });
 }
 

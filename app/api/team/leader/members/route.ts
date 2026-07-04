@@ -1,21 +1,27 @@
 import { NextResponse } from "next/server";
-import { getCurrentMember } from "@/lib/team";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { isTeamLeader, LEADER_MANAGED_ROLES } from "@/lib/roles";
+import { getLeaderAssignedWorkers } from "@/lib/team-leader-scope";
+import { isLeaderResponse, requireTeamLeader } from "@/lib/team-leader-auth";
 
 export async function GET() {
-  const member = await getCurrentMember();
-  if (!member || !member.is_active || !isTeamLeader(member.role)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const leader = await requireTeamLeader();
+  if (isLeaderResponse(leader)) return leader;
+
+  try {
+    const members = await getLeaderAssignedWorkers(leader.id);
+    return NextResponse.json({
+      members: members.map((m) => ({
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        role: m.role,
+        phone: m.phone,
+        photo_url: m.photo_url,
+      })),
+    });
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Failed to load members" },
+      { status: 500 }
+    );
   }
-
-  const admin = createAdminClient();
-  const { data: members } = await admin
-    .from("team_members")
-    .select("id, name, email, role")
-    .eq("is_active", true)
-    .in("role", [...LEADER_MANAGED_ROLES])
-    .order("name");
-
-  return NextResponse.json({ members: members || [] });
 }

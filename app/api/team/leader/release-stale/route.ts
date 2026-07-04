@@ -17,12 +17,16 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient();
   const { data: target } = await admin
     .from("team_members")
-    .select("id, name, role, is_active")
+    .select("id, name, role, is_active, leader_id")
     .eq("id", memberId)
     .maybeSingle();
 
-  if (!target?.is_active || !isLeaderAssignableWorker(target.role)) {
-    return NextResponse.json({ error: "Invalid team member" }, { status: 400 });
+  if (
+    !target?.is_active ||
+    !isLeaderAssignableWorker(target.role) ||
+    target.leader_id !== leader.id
+  ) {
+    return NextResponse.json({ error: "Member is not on your assigned team" }, { status: 400 });
   }
 
   const staleCutoff = new Date(Date.now() - STALE_MS).toISOString();

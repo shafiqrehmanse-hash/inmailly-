@@ -23,6 +23,7 @@ export default async function CampaignAppLayout({
           {children}
         </main>
       </div>
+      <ProfilePhotoPrompt member={member} />
     </div>
   );
 }

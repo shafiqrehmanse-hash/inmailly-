@@ -83,6 +83,28 @@ export default function AdminTeamMembersSection() {
     }
   }
 
+  async function updateLeader(memberId: string, leaderId: string) {
+    const res = await fetch(`/api/admin/members?key=${adminKey}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ memberId, leader_id: leaderId || null }),
+    });
+    const data = await res.json();
+    if (data.error) showToast(data.error, "error");
+    else {
+      showToast(leaderId ? "Assigned to team leader" : "Unassigned from team leader");
+      loadMembers();
+    }
+  }
+
+  const leaders = members.filter((m) => m.role === "team_leader" && m.is_active);
+  const leaderOptions = [
+    { value: "", label: "No team leader" },
+    ...leaders.map((l) => ({ value: l.id, label: l.name })),
+  ];
+  const canAssignLeader = (role: string) =>
+    role === "member" || role === "senior" || role === "admin";
+
   async function resetPassword(email: string) {
     await fetch(`/api/admin/members/reset-password?key=${adminKey}`, {
       method: "POST",
@@ -181,7 +203,12 @@ export default function AdminTeamMembersSection() {
 
       <section>
         <div className="flex items-center justify-between mb-4">
-          <p className="admin-section-title">All members</p>
+          <div>
+            <p className="admin-section-title">All members</p>
+            <p className="text-xs text-lux-muted mt-1">
+              Assign each outreach worker to one team leader. Leaders only see their assigned members.
+            </p>
+          </div>
           <span className="text-xs text-lux-muted">{members.length} total</span>
         </div>
         <div className="lux-card overflow-x-auto">
@@ -192,6 +219,7 @@ export default function AdminTeamMembersSection() {
                 <th className="text-left px-4 py-3 font-semibold">Email</th>
                 <th className="text-left px-4 py-3 font-semibold">Phone</th>
                 <th className="text-left px-4 py-3 font-semibold">Role</th>
+                <th className="text-left px-4 py-3 font-semibold">Team leader</th>
                 <th className="text-left px-4 py-3 font-semibold">Links</th>
                 <th className="text-left px-4 py-3 font-semibold">Leads</th>
                 <th className="text-left px-4 py-3 font-semibold">Deals</th>
@@ -202,7 +230,7 @@ export default function AdminTeamMembersSection() {
             <tbody>
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-lux-muted">
+                  <td colSpan={10} className="px-4 py-12 text-center text-lux-muted">
                     No team members yet.
                   </td>
                 </tr>
@@ -216,7 +244,7 @@ export default function AdminTeamMembersSection() {
                           {m.name}
                           {m.role === "team_leader" && (
                             <span className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                              Team leader
+                              Team leader · {members.filter((w) => w.leader_id === m.id).length} workers
                             </span>
                           )}
                         </div>
@@ -234,6 +262,19 @@ export default function AdminTeamMembersSection() {
                     </td>
                     <td className="px-4 py-3">
                       <LuxSelect size="sm" className="min-w-[160px]" value={m.role} onChange={(role) => updateRole(m.id, role)} options={roleOptions} />
+                    </td>
+                    <td className="px-4 py-3">
+                      {canAssignLeader(m.role) ? (
+                        <LuxSelect
+                          size="sm"
+                          className="min-w-[160px]"
+                          value={m.leader_id || ""}
+                          onChange={(leaderId) => updateLeader(m.id, leaderId)}
+                          options={leaderOptions}
+                        />
+                      ) : (
+                        <span className="text-xs text-lux-muted">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">{m.active_links}</td>
                     <td className="px-4 py-3">{m.leads_count}</td>

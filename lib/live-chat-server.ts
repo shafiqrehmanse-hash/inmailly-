@@ -100,8 +100,8 @@ async function pickChatAgent(
 }
 
 /**
- * When a member messages and no leader is assigned yet, auto-route to a granted chat agent.
- * Admin can still reassign or add more leaders from the admin panel.
+ * When a member messages and no leader is assigned yet, auto-route to their
+ * assigned team leader (if chat agent), otherwise any granted chat agent.
  */
 export async function autoAssignThreadIfNeeded(threadId: string): Promise<{ id: string; name: string }[]> {
   const admin = createAdminClient();
@@ -117,7 +117,35 @@ export async function autoAssignThreadIfNeeded(threadId: string): Promise<{ id: 
     return leaders || [];
   }
 
-  const agent = await pickChatAgent(admin);
+  const { data: thread } = await admin
+    .from("live_chat_threads")
+    .select("member_id")
+    .eq("id", threadId)
+    .maybeSingle();
+
+  let agent: { id: string; name: string } | null = null;
+
+  if (thread?.member_id) {
+    const { data: worker } = await admin
+      .from("team_members")
+      .select("leader_id")
+      .eq("id", thread.member_id)
+      .maybeSingle();
+
+    if (worker?.leader_id) {
+      const { data: ownLeader } = await admin
+        .from("team_members")
+        .select("id, name")
+        .eq("id", worker.leader_id)
+        .eq("role", "team_leader")
+        .eq("is_active", true)
+        .eq("live_chat_agent", true)
+        .maybeSingle();
+      if (ownLeader) agent = ownLeader;
+    }
+  }
+
+  if (!agent) agent = await pickChatAgent(admin);
   if (!agent) return [];
 
   const { error } = await admin.from("live_chat_thread_leaders").insert({

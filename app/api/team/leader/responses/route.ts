@@ -1,27 +1,22 @@
 import { NextResponse } from "next/server";
 import { isTeamResponseLead } from "@/lib/team-responses";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { LEADER_MANAGED_ROLES } from "@/lib/roles";
+import { getLeaderAssignedWorkers } from "@/lib/team-leader-scope";
 import { isLeaderResponse, requireTeamLeader } from "@/lib/team-leader-auth";
 
 export async function GET() {
   const leader = await requireTeamLeader();
   if (isLeaderResponse(leader)) return leader;
 
-  const admin = createAdminClient();
-  const { data: members } = await admin
-    .from("team_members")
-    .select("id, name")
-    .eq("is_active", true)
-    .in("role", [...LEADER_MANAGED_ROLES]);
-
-  const memberIds = (members || []).map((m) => m.id);
-  const memberNames = Object.fromEntries((members || []).map((m) => [m.id, m.name]));
+  const members = await getLeaderAssignedWorkers(leader.id);
+  const memberIds = members.map((m) => m.id);
+  const memberNames = Object.fromEntries(members.map((m) => [m.id, m.name]));
 
   if (!memberIds.length) {
     return NextResponse.json({ responses: [] });
   }
 
+  const admin = createAdminClient();
   const { data: leads, error } = await admin
     .from("leads")
     .select("id, member_id, name, company, status, updated_at, created_at")

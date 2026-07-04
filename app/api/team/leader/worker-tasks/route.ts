@@ -45,12 +45,19 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient();
   const { data: assignee } = await admin
     .from("team_members")
-    .select("id, role, is_active")
+    .select("id, role, is_active, leader_id")
     .eq("id", assignedTo)
     .maybeSingle();
 
-  if (!assignee?.is_active || !isLeaderAssignableWorker(assignee.role)) {
-    return NextResponse.json({ error: "Can only assign to active outreach workers" }, { status: 400 });
+  if (
+    !assignee?.is_active ||
+    !isLeaderAssignableWorker(assignee.role) ||
+    assignee.leader_id !== leader.id
+  ) {
+    return NextResponse.json(
+      { error: "Can only assign tasks to workers on your team" },
+      { status: 400 }
+    );
   }
 
   const { data, error } = await admin

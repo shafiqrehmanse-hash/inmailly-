@@ -1,21 +1,26 @@
 import { NextResponse } from "next/server";
 import { getCurrentMember } from "@/lib/team";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { isTeamLeader } from "@/lib/roles";
+import { getLeadersForWorker } from "@/lib/team-leader-scope";
 
-/** Active team leaders — visible to all signed-in team members. */
+/** Workers only see their assigned team leader — not every leader in the company. */
 export async function GET() {
   const member = await getCurrentMember();
   if (!member?.is_active) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = createAdminClient();
-  const { data: leaders } = await admin
-    .from("team_members")
-    .select("id, name, email, role")
-    .eq("role", "team_leader")
-    .eq("is_active", true)
-    .order("name");
+  if (isTeamLeader(member.role)) {
+    return NextResponse.json({ leaders: [] });
+  }
 
-  return NextResponse.json({ leaders: leaders || [] });
+  const leaders = await getLeadersForWorker(member.id);
+  return NextResponse.json({
+    leaders: leaders.map((l) => ({
+      id: l.id,
+      name: l.name,
+      email: l.email,
+      role: "team_leader",
+    })),
+  });
 }
