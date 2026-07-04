@@ -53,7 +53,6 @@ export type TeamPerformanceData = {
   dayLabels: string[];
   generatedAt: string;
   scoreFormula: string;
-  /** global = full outreach board; assigned_team = team leader's workers only */
   scope?: "global" | "assigned_team";
 };
 

@@ -50,15 +50,11 @@ export default function TeamPerformanceBoard({
     <div className="w-full max-w-none space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-bricolage font-extrabold text-2xl lux-gradient-text">
-            {data?.scope === "assigned_team" ? "📊 Your team performance" : "📊 Team performance"}
-          </h1>
+          <h1 className="font-bricolage font-extrabold text-2xl lux-gradient-text">📊 Team performance</h1>
           <p className="text-sm text-lux-muted mt-1 max-w-xl">
             {mode === "admin"
               ? "Claimed & used links, leads, closed deals, referral SDRs, and inactive alerts — all outreach members in one place."
-              : data?.scope === "assigned_team"
-                ? "Only workers assigned to you. Other leaders' teams are hidden."
-                : "Everyone on the outreach team can see this board. Climb the ranks with used links, leads, closed deals, and referral SDRs."}
+              : "Global outreach leaderboard — scores and activity for the whole team. Team leaders manage details only for members assigned to them."}
           </p>
         </div>
         <Button variant="lux-soft" size="sm" onClick={onRefresh} disabled={loading}>
