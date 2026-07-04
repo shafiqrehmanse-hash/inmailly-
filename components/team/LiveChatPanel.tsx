@@ -66,19 +66,18 @@ export default function LiveChatPanel({
               key={m.id}
               className={`flex flex-col max-w-[85%] ${isSelf ? "ml-auto items-end" : "items-start"}`}
             >
-              <div className="text-[0.58rem] text-lux-muted mb-1 px-1">
-                {m.sender_name}
-                {isAdmin && " · Admin"}
-                {" · "}
-                {formatRelative(m.created_at)}
+              <div className="text-[0.62rem] mb-1 px-1 flex items-center gap-1.5 flex-wrap">
+                <span className="font-bold text-emerald-400">{m.sender_name}</span>
+                {isAdmin && <span className="font-semibold text-amber-300">· Admin</span>}
+                <span className="text-emerald-600/80">· {formatRelative(m.created_at)}</span>
               </div>
               <div
                 className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
                   isSelf
-                    ? "bg-lux-cyan/20 border border-lux-cyan/30 text-lux-text rounded-br-md"
+                    ? "bg-lux-cyan/20 border border-lux-cyan/30 text-white rounded-br-md"
                     : isAdmin
-                      ? "bg-amber-500/15 border border-amber-500/25 text-lux-text rounded-bl-md"
-                      : "bg-lux-violet/15 border border-lux-violet/25 text-lux-text rounded-bl-md"
+                      ? "bg-amber-500/15 border border-amber-500/25 text-white rounded-bl-md"
+                      : "bg-lux-violet/15 border border-lux-violet/25 text-white rounded-bl-md"
                 }`}
               >
                 {m.body}

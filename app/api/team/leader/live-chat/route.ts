@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { enrichThreads } from "@/lib/live-chat-server";
+import { enrichThreads, touchMemberPresence } from "@/lib/live-chat-server";
 import { isLeaderResponse, requireTeamLeader } from "@/lib/team-leader-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -23,6 +23,8 @@ async function requireChatAgent() {
 export async function GET() {
   const leader = await requireChatAgent();
   if (leader instanceof NextResponse) return leader;
+
+  void touchMemberPresence(leader.id);
 
   const admin = createAdminClient();
   const { data: assignments } = await admin
@@ -75,6 +77,8 @@ export async function POST(request: NextRequest) {
   if (!thread || thread.status !== "open") {
     return NextResponse.json({ error: "Thread closed or not found" }, { status: 400 });
   }
+
+  void touchMemberPresence(leader.id);
 
   const now = new Date().toISOString();
   const { data: message, error } = await admin

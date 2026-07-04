@@ -50,8 +50,11 @@ function LoginForm() {
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
     if (authError) {
       setLoading(false);
-      if (authError.message.toLowerCase().includes("email not confirmed")) {
+      const msg = authError.message.toLowerCase();
+      if (msg.includes("email not confirmed")) {
         setError("Please verify your email first. Use the link we sent, or resend below.");
+      } else if (msg.includes("invalid") || msg.includes("credentials") || msg.includes("password")) {
+        setError("Wrong email or password. Check your details and try again.");
       } else {
         setError(authError.message);
       }
@@ -128,7 +131,10 @@ function LoginForm() {
         </div>
       )}
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm mb-5">
+        <div
+          role="alert"
+          className="bg-red-500/20 border-2 border-red-500 rounded-xl px-4 py-3 text-sm mb-5 !text-red-500 font-extrabold leading-snug"
+        >
           {error}
         </div>
       )}

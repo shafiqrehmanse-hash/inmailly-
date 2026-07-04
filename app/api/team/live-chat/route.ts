@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canOpenLiveChat } from "@/lib/roles";
-import { enrichThreads, getOrCreateOpenThread, autoAssignThreadIfNeeded } from "@/lib/live-chat-server";
+import {
+  enrichThreads,
+  getOrCreateOpenThread,
+  autoAssignThreadIfNeeded,
+  touchMemberPresence,
+} from "@/lib/live-chat-server";
 import { getCurrentMember } from "@/lib/team";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -12,6 +17,8 @@ export async function GET() {
   if (!canOpenLiveChat(member.role)) {
     return NextResponse.json({ error: "Live chat is for outreach members only" }, { status: 403 });
   }
+
+  void touchMemberPresence(member.id);
 
   const admin = createAdminClient();
   const thread = await getOrCreateOpenThread(member.id);
@@ -67,6 +74,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  void touchMemberPresence(member.id);
 
   await admin
     .from("live_chat_threads")

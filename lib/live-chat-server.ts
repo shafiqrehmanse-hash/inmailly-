@@ -1,5 +1,18 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { LiveChatThread } from "@/lib/live-chat";
+import { isRecentlyOnline, type LiveChatPerson, type LiveChatThread } from "@/lib/live-chat";
+
+function withPresence<T extends { id: string; name: string; last_login?: string | null }>(
+  row: T
+): LiveChatPerson {
+  return {
+    id: row.id,
+    name: row.name,
+    email: (row as LiveChatPerson).email,
+    role: (row as LiveChatPerson).role,
+    last_login: row.last_login ?? null,
+    is_online: isRecentlyOnline(row.last_login),
+  };
+}
 
 export async function enrichThreads(threads: Record<string, unknown>[]): Promise<LiveChatThread[]> {
   if (!threads.length) return [];
@@ -9,7 +22,7 @@ export async function enrichThreads(threads: Record<string, unknown>[]): Promise
   const memberIds = Array.from(new Set(threads.map((t) => t.member_id as string)));
 
   const [{ data: members }, { data: assignments }, { data: msgs }] = await Promise.all([
-    admin.from("team_members").select("id, name, email, role").in("id", memberIds),
+    admin.from("team_members").select("id, name, email, role, last_login").in("id", memberIds),
     admin.from("live_chat_thread_leaders").select("thread_id, leader_id").in("thread_id", threadIds),
     admin
       .from("live_chat_messages")
@@ -18,15 +31,18 @@ export async function enrichThreads(threads: Record<string, unknown>[]): Promise
       .order("created_at", { ascending: false }),
   ]);
 
-  const memberMap = Object.fromEntries((members || []).map((m) => [m.id, m]));
+  const memberMap = Object.fromEntries((members || []).map((m) => [m.id, withPresence(m)]));
   const leaderIds = Array.from(new Set((assignments || []).map((a) => a.leader_id)));
-  let leaderMap: Record<string, { id: string; name: string }> = {};
+  let leaderMap: Record<string, LiveChatPerson> = {};
   if (leaderIds.length) {
-    const { data: leaders } = await admin.from("team_members").select("id, name").in("id", leaderIds);
-    leaderMap = Object.fromEntries((leaders || []).map((l) => [l.id, l]));
+    const { data: leaders } = await admin
+      .from("team_members")
+      .select("id, name, last_login")
+      .in("id", leaderIds);
+    leaderMap = Object.fromEntries((leaders || []).map((l) => [l.id, withPresence(l)]));
   }
 
-  const assignByThread: Record<string, { id: string; name: string }[]> = {};
+  const assignByThread: Record<string, LiveChatPerson[]> = {};
   for (const a of assignments || []) {
     const leader = leaderMap[a.leader_id];
     if (!leader) continue;
@@ -45,6 +61,15 @@ export async function enrichThreads(threads: Record<string, unknown>[]): Promise
     assigned_leaders: assignByThread[t.id as string] || [],
     last_message: lastByThread[t.id as string] || null,
   }));
+}
+
+/** Keep presence fresh while chat is open / polling. */
+export async function touchMemberPresence(memberId: string) {
+  const admin = createAdminClient();
+  await admin
+    .from("team_members")
+    .update({ last_login: new Date().toISOString() })
+    .eq("id", memberId);
 }
 
 export async function getOrCreateOpenThread(memberId: string) {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import LiveChatPanel from "@/components/team/LiveChatPanel";
+import OnlineDot from "@/components/team/OnlineDot";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
@@ -190,8 +191,8 @@ export default function AdminLiveChatSection() {
                 className="accent-amber-400"
               />
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-lux-text">{l.name}</div>
-                <div className="text-xs text-lux-muted truncate">{l.email}</div>
+                <div className="text-sm font-bold text-emerald-400">{l.name}</div>
+                <div className="text-xs text-emerald-600/80 truncate font-semibold">{l.email}</div>
               </div>
               {!l.is_active && <Badge variant="general">Inactive</Badge>}
             </label>
@@ -238,11 +239,12 @@ export default function AdminLiveChatSection() {
                     )}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-lux-text truncate">{t.member?.name}</span>
+                      <OnlineDot online={t.member?.is_online} />
+                      <span className="text-sm font-bold text-emerald-400 truncate">{t.member?.name}</span>
                       <Badge variant={t.status === "open" ? "available" : "general"}>{t.status}</Badge>
                     </div>
-                    <div className="text-xs text-lux-muted truncate mt-0.5">{t.last_message || "—"}</div>
-                    <div className="text-[0.58rem] text-lux-muted mt-1">
+                    <div className="text-xs text-emerald-600/80 truncate mt-0.5 font-medium">{t.last_message || "—"}</div>
+                    <div className="text-[0.58rem] text-emerald-500/80 mt-1 font-semibold">
                       {t.assigned_leaders?.length
                         ? `Assigned: ${t.assigned_leaders.map((l) => l.name).join(", ")}`
                         : "Unassigned"}
@@ -258,10 +260,11 @@ export default function AdminLiveChatSection() {
               <>
                 <div className="lux-card-elite p-4 border-lux-violet/20 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-lux-text">{selected.member?.name}</span>
-                    <span className="text-xs text-lux-muted">{selected.member?.email}</span>
-                    <span className="text-xs text-lux-muted ml-auto">
-                      {formatRelative(selected.last_message_at)}
+                    <OnlineDot online={selected.member?.is_online} />
+                    <span className="font-bold text-emerald-400">{selected.member?.name}</span>
+                    <span className="text-xs font-semibold text-emerald-600/90">{selected.member?.email}</span>
+                    <span className="text-xs text-emerald-600/70 ml-auto font-semibold">
+                      {selected.member?.is_online ? "Online" : "Offline"} · {formatRelative(selected.last_message_at)}
                     </span>
                   </div>
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import LiveChatPanel from "@/components/team/LiveChatPanel";
+import OnlineDot from "@/components/team/OnlineDot";
 import type { LiveChatMessage, LiveChatThread } from "@/lib/live-chat";
 import { cn } from "@/lib/utils";
 
@@ -199,10 +200,10 @@ export default function LiveChatWidget({
         <div className={cn(PANEL_SHELL, "pointer-events-auto min-h-[320px]")} role="dialog" aria-label="Live chat">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-gradient-to-r from-lux-violet/10 to-lux-cyan/5 shrink-0">
             <div>
-              <p className="text-sm font-semibold text-white">
+              <p className="text-sm font-bold text-emerald-400">
                 {mode === "member" ? "Team support" : "Live chat inbox"}
               </p>
-              <p className="text-[0.65rem] text-lux-muted">Private · team only</p>
+              <p className="text-[0.65rem] text-emerald-600/90 font-semibold">Private · team only</p>
             </div>
             <button
               type="button"
@@ -227,8 +228,14 @@ export default function LiveChatWidget({
                 </div>
               )}
               {!memberLoading && assigned > 0 && (
-                <div className="px-4 py-2 border-b border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-200 shrink-0">
-                  Connected with {thread?.assigned_leaders?.map((l) => l.name).join(", ")}
+                <div className="px-4 py-2 border-b border-emerald-500/25 bg-emerald-500/10 text-xs shrink-0 flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-emerald-300">Connected with</span>
+                  {thread?.assigned_leaders?.map((l) => (
+                    <span key={l.id} className="inline-flex items-center gap-1.5 font-bold text-emerald-400">
+                      <OnlineDot online={l.is_online} />
+                      {l.name}
+                    </span>
+                  ))}
                 </div>
               )}
               {memberLoading ? (
@@ -275,16 +282,26 @@ export default function LiveChatWidget({
                         type="button"
                         onClick={() => setSelectedId(t.id)}
                         className={cn(
-                          "shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                          "shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors inline-flex items-center gap-1.5",
                           t.id === selectedId
-                            ? "bg-amber-500/20 text-amber-100 border border-amber-500/30"
-                            : "text-lux-muted hover:bg-white/[0.05]"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                            : "text-emerald-500/80 hover:bg-white/[0.05] hover:text-emerald-400"
                         )}
                       >
+                        <OnlineDot online={t.member?.is_online} />
                         {t.member?.name || "Member"}
                       </button>
                     ))}
                   </div>
+                  {selected?.member && (
+                    <div className="px-4 py-2 border-b border-emerald-500/20 bg-emerald-500/5 text-xs shrink-0 flex items-center gap-2">
+                      <OnlineDot online={selected.member.is_online} />
+                      <span className="font-bold text-emerald-400">{selected.member.name}</span>
+                      <span className="text-emerald-600 font-semibold">
+                        {selected.member.is_online ? "Online now" : "Offline"}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex-1 min-h-0 flex flex-col">
                     <LiveChatPanel
                       compact
