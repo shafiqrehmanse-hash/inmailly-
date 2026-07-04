@@ -78,7 +78,20 @@ export async function PATCH(request: NextRequest) {
   if (!existing) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (status !== undefined) updates.status = status;
+  if (status !== undefined) {
+    const allowed = new Set([
+      "new",
+      "contacted",
+      "replied",
+      "interested",
+      "meeting_booked",
+      "not_interested",
+      "follow_up",
+      "closed",
+      "dead",
+    ]);
+    if (allowed.has(status)) updates.status = status;
+  }
   if (notes !== undefined) updates.notes = notes;
   if (deal_closed !== undefined) {
     updates.deal_closed = deal_closed;

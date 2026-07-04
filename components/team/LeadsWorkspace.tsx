@@ -6,6 +6,9 @@ import { useSearchParams } from "next/navigation";
 import Badge from "@/components/ui/Badge";
 import LuxSelect from "@/components/ui/LuxSelect";
 import LeadModal from "@/components/team/LeadModal";
+import VictoryCelebration, {
+  type VictoryCelebrationPayload,
+} from "@/components/team/VictoryCelebration";
 import StatCard from "@/components/team/StatCard";
 import { createClient } from "@/lib/supabase/client";
 import type { Lead, TeamMember } from "@/lib/types";
@@ -18,6 +21,7 @@ const STATUS_FILTERS = [
   { key: "contacted", label: "Contacted" },
   { key: "replied", label: "Replied" },
   { key: "interested", label: "Interested" },
+  { key: "meeting_booked", label: "Meeting booked" },
   { key: "not_interested", label: "Not Interested" },
   { key: "follow_up", label: "Follow Up" },
 ] as const;
@@ -50,6 +54,7 @@ function LeadsWorkspaceInner() {
   const [saving, setSaving] = useState(false);
   const [modalLead, setModalLead] = useState<Lead | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [celebration, setCelebration] = useState<VictoryCelebrationPayload | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/team/leads");
@@ -162,6 +167,21 @@ function LeadsWorkspaceInner() {
     load();
   }
 
+  async function bookMeeting(lead: Lead) {
+    const res = await fetch("/api/team/leads", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: lead.id, status: "meeting_booked" }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setFormMsg({ text: data.error || "Could not mark meeting booked", type: "error" });
+      return;
+    }
+    if (data.celebration) setCelebration(data.celebration as VictoryCelebrationPayload);
+    load();
+  }
+
   async function deleteLead(id: string) {
     if (!confirm("Delete this lead permanently?")) return;
     await fetch(`/api/team/leads?id=${id}`, { method: "DELETE" });
@@ -172,6 +192,7 @@ function LeadsWorkspaceInner() {
 
   return (
     <div className="space-y-6">
+      <VictoryCelebration celebration={celebration} onClose={() => setCelebration(null)} />
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">My Marketing Leads</h1>
         <p className="text-[0.8rem] text-lux-muted mt-1">
@@ -339,21 +360,32 @@ function LeadsWorkspaceInner() {
                         {formatDate(lead.created_at)}
                       </td>
                       <td className="px-3 py-3">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setModalLead(lead);
-                            setModalOpen(true);
-                          }}
-                          className="inline-flex items-center gap-1 bg-lux-blue/15 text-lux-cyan border border-lux-cyan/25 rounded-lg px-2.5 py-1 text-xs font-bold"
-                        >
-                          💬 Thread
-                          {msgCounts[lead.id] > 0 && (
-                            <span className="bg-lux-cyan text-lux-bg text-[0.6rem] px-1.5 rounded-full">
-                              {msgCounts[lead.id]}
-                            </span>
+                        <div className="flex flex-col gap-1">
+                          {!lead.deal_closed && lead.status !== "meeting_booked" && (
+                            <button
+                              type="button"
+                              onClick={() => bookMeeting(lead)}
+                              className="text-lux-cyan text-[0.65rem] font-bold border border-lux-cyan/30 px-2 py-1 rounded-lg hover:bg-lux-cyan/10 whitespace-nowrap"
+                            >
+                              📅 Book meeting
+                            </button>
                           )}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setModalLead(lead);
+                              setModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 bg-lux-blue/15 text-lux-cyan border border-lux-cyan/25 rounded-lg px-2.5 py-1 text-xs font-bold"
+                          >
+                            💬 Thread
+                            {msgCounts[lead.id] > 0 && (
+                              <span className="bg-lux-cyan text-lux-bg text-[0.6rem] px-1.5 rounded-full">
+                                {msgCounts[lead.id]}
+                              </span>
+                            )}
+                          </button>
+                        </div>
                       </td>
                       <td className="px-3 py-3">
                         <button

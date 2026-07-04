@@ -8,14 +8,23 @@ import Pagination from "@/components/ui/Pagination";
 import PageSizeSelect from "@/components/ui/PageSizeSelect";
 import LeadModal from "@/components/team/LeadModal";
 import type { Lead, TeamMember } from "@/lib/types";
-import { useAdminKey } from "@/lib/admin-context";
+import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { formatDate } from "@/lib/utils";
 
 type LeadRow = Lead & { team_members?: { name: string; email: string } };
 
+function statusLabel(s: string) {
+  if (s === "all") return "All statuses";
+  return s
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 export default function AdminLeadsSection() {
   const adminKey = useAdminKey();
+  const showToast = useAdminToast();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [memberFilter, setMemberFilter] = useState("all");
@@ -64,11 +73,32 @@ export default function AdminLeadsSection() {
   }, [memberFilter, statusFilter, closedOnly, pageSize]);
 
   async function closeDeal(lead: LeadRow) {
-    await fetch(`/api/admin/leads?key=${adminKey}`, {
+    const res = await fetch(`/api/admin/leads?key=${adminKey}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ lead_id: lead.id, deal_closed: true }),
     });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Could not close deal", "error");
+      return;
+    }
+    showToast(`Deal closed — 24h banner for ${lead.team_members?.name || "team member"}`);
+    loadLeads();
+  }
+
+  async function bookMeeting(lead: LeadRow) {
+    const res = await fetch(`/api/admin/leads?key=${adminKey}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lead_id: lead.id, status: "meeting_booked" }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Could not mark meeting booked — run migration 024 in Supabase", "error");
+      return;
+    }
+    showToast(`Meeting booked — 24h banner for ${lead.team_members?.name || "team member"}`);
     loadLeads();
   }
 
@@ -96,7 +126,7 @@ export default function AdminLeadsSection() {
           onChange={setStatusFilter}
           options={["all", "new", "contacted", "replied", "interested", "meeting_booked", "closed", "dead"].map((s) => ({
             value: s,
-            label: s === "all" ? "All statuses" : s.charAt(0).toUpperCase() + s.slice(1),
+            label: statusLabel(s),
           }))}
         />
         <button
@@ -164,7 +194,7 @@ export default function AdminLeadsSection() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant={lead.status}>{lead.status}</Badge>
+                    <Badge variant={lead.status}>{statusLabel(lead.status)}</Badge>
                   </td>
                   <td className="px-4 py-3 max-w-[320px]">
                     {lead.notes?.trim() ? (
@@ -182,11 +212,23 @@ export default function AdminLeadsSection() {
                     {formatDate(lead.updated_at)}
                   </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    {!lead.deal_closed && (
-                      <Button variant="lux-ghost" size="sm" onClick={() => closeDeal(lead)}>
-                        💰 Close
-                      </Button>
-                    )}
+                    <div className="flex flex-col gap-1.5 min-w-[108px]">
+                      {!lead.deal_closed && lead.status !== "meeting_booked" && (
+                        <Button
+                          variant="lux-ghost"
+                          size="sm"
+                          className="border-lux-cyan/30 text-lux-cyan hover:text-lux-cyan whitespace-nowrap"
+                          onClick={() => bookMeeting(lead)}
+                        >
+                          📅 Book meeting
+                        </Button>
+                      )}
+                      {!lead.deal_closed && (
+                        <Button variant="lux-ghost" size="sm" className="whitespace-nowrap" onClick={() => closeDeal(lead)}>
+                          🏆 Close deal
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
