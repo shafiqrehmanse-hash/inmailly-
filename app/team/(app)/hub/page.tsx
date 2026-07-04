@@ -118,6 +118,13 @@ export default async function HubPage() {
       desc: "Share your link — earn when referrals close deals.",
       go: `${referred} referred →`,
     },
+    {
+      href: "/team/performance",
+      label: "Team performance",
+      icon: "📊",
+      desc: "See the full leaderboard — deals, referral SDRs, and your rank.",
+      go: "View board →",
+    },
   ];
 
   return (

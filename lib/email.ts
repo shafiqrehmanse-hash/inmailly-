@@ -10,6 +10,7 @@ import {
   clientBrandingRequestEmail,
   adminBrandingSubmittedEmail,
   adminLeadNoteEmail,
+  teamDealClosedEmail,
   clientCustomEmail,
   clientNewResponseEmail,
   clientSendProofEmail,
@@ -325,6 +326,22 @@ export async function notifyAdminLeadNote(data: {
     subject: `Lead note: ${data.leadName}`,
     html: adminLeadNoteEmail({ ...data, note }),
     text: `Lead: ${data.leadName}\nAdded by: ${data.memberName || "Team"}\nStatus: ${data.status || "—"}\n\nNote / what they said:\n${note}`,
+  });
+}
+
+export async function notifyTeamDealClosed(data: {
+  email: string;
+  memberName: string;
+  leadName: string;
+  message: string;
+}) {
+  const first = data.memberName.trim().split(/\s+/)[0] || "Champion";
+  return sendEmailSafe({
+    to: data.email,
+    replyTo: getNotifyEmail(),
+    subject: `🏆 Deal closed: ${data.leadName} — trophy unlocked`,
+    html: teamDealClosedEmail(data),
+    text: `Hi ${first},\n\n${data.message}\n\nLead: ${data.leadName}\nSee the leaderboard: ${getSiteUrl()}/team/performance`,
   });
 }
 

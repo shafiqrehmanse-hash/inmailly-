@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
+import { notifyTeamDealClosed } from "@/lib/email";
+import { dealClosedCelebrationMessage } from "@/lib/deal-celebration";
 
 function checkKey(request: NextRequest) {
   const key = request.headers.get("x-admin-key") || request.nextUrl.searchParams.get("key");
@@ -68,6 +70,14 @@ export async function PATCH(request: NextRequest) {
   if (!lead_id) return NextResponse.json({ error: "lead_id required" }, { status: 400 });
 
   const admin = createAdminClient();
+  const { data: existing } = await admin
+    .from("leads")
+    .select("id, name, deal_closed, member_id, team_members(name, email)")
+    .eq("id", lead_id)
+    .maybeSingle();
+
+  if (!existing) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (status !== undefined) updates.status = status;
   if (notes !== undefined) updates.notes = notes;
@@ -79,5 +89,26 @@ export async function PATCH(request: NextRequest) {
 
   const { data, error } = await admin.from("leads").update(updates).eq("id", lead_id).select("*").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ lead: data });
+
+  let celebration = null;
+  const newlyClosed = deal_closed === true && !existing.deal_closed;
+  if (newlyClosed && data) {
+    const tm = existing.team_members as
+      | { name?: string; email?: string }
+      | { name?: string; email?: string }[]
+      | null;
+    const member = Array.isArray(tm) ? tm[0] : tm;
+    const memberName = member?.name || "Champion";
+    celebration = dealClosedCelebrationMessage(data.name, memberName);
+    if (member?.email) {
+      void notifyTeamDealClosed({
+        email: member.email,
+        memberName,
+        leadName: data.name,
+        message: celebration.message,
+      });
+    }
+  }
+
+  return NextResponse.json({ lead: data, celebration });
 }

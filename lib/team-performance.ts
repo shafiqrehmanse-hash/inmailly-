@@ -17,6 +17,8 @@ export type MemberPerformance = {
   leadsWeek: number;
   responses: number;
   dealsClosed: number;
+  dealsClosedWeek: number;
+  referralsJoined: number;
   staleClaimed: number;
   productivityScore: number;
   rank: number;
@@ -37,6 +39,8 @@ export type TeamPerformanceData = {
     leads: number;
     leadsToday: number;
     leadsWeek: number;
+    dealsClosed: number;
+    referralsJoined: number;
     inactive: number;
     needsAttention: number;
     poolAvailable: number;
@@ -45,7 +49,32 @@ export type TeamPerformanceData = {
   };
   dayLabels: string[];
   generatedAt: string;
+  scoreFormula: string;
 };
+
+/** Closed deals and referral SDRs weigh heavily so the board rewards wins, not only volume. */
+export function productivityScoreFor(a: {
+  usedWeek: number;
+  leadsWeek: number;
+  usedToday: number;
+  leadsToday: number;
+  dealsClosed: number;
+  dealsClosedWeek: number;
+  referralsJoined: number;
+}) {
+  return (
+    a.usedWeek * 10 +
+    a.leadsWeek * 15 +
+    a.usedToday * 5 +
+    a.leadsToday * 8 +
+    a.dealsClosedWeek * 40 +
+    a.dealsClosed * 50 +
+    a.referralsJoined * 25
+  );
+}
+
+export const PRODUCTIVITY_SCORE_FORMULA =
+  "Weekly used x10 + weekly leads x15 + today's used x5 + today's leads x8 + deals closed this week x40 + all-time closed deals x50 + referral SDRs x25";
 
 function startOfDay(d = new Date()) {
   const x = new Date(d);
@@ -61,8 +90,16 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
   const inactiveCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const staleCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
-  const [membersRes, claimedRows, usedRows, leadsRows, autoAssignWeekRes, autoAssignTodayRes, poolRes] =
-    await Promise.all([
+  const [
+    membersRes,
+    claimedRows,
+    usedRows,
+    leadsRows,
+    autoAssignWeekRes,
+    autoAssignTodayRes,
+    poolRes,
+    referralsRes,
+  ] = await Promise.all([
       admin
         .from("team_members")
         .select("id, name, email, role, last_login, joined_at, is_active")
@@ -80,7 +117,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
         .not("used_by_member_id", "is", null),
       admin
         .from("leads")
-        .select("member_id, created_at, status, deal_closed")
+        .select("member_id, created_at, status, deal_closed, closed_at")
         .is("project_id", null),
       admin
         .from("link_auto_assign_events")
@@ -95,6 +132,10 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
         .select("*", { count: "exact", head: true })
         .eq("status", "available")
         .is("member_id", null),
+      admin
+        .from("referrals")
+        .select("referrer_id, status")
+        .in("status", ["joined", "converted"]),
     ]);
 
   const members = membersRes.data || [];
@@ -109,6 +150,8 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     leadsWeek: number;
     responses: number;
     dealsClosed: number;
+    dealsClosedWeek: number;
+    referralsJoined: number;
     staleClaimed: number;
     dailyUsed: number[];
   };
@@ -123,6 +166,8 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     leadsWeek: 0,
     responses: 0,
     dealsClosed: 0,
+    dealsClosedWeek: 0,
+    referralsJoined: 0,
     staleClaimed: 0,
     dailyUsed: [0, 0, 0, 0, 0, 0, 0],
   });
@@ -165,8 +210,19 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
       leadsWeekTotal += 1;
     }
     if (responseStatuses.has(row.status)) a.responses += 1;
-    if (row.deal_closed) a.dealsClosed += 1;
+    if (row.deal_closed) {
+      a.dealsClosed += 1;
+      const closedAt = row.closed_at ? new Date(row.closed_at) : created;
+      if (closedAt >= weekAgo) a.dealsClosedWeek += 1;
+    }
     byMember.set(row.member_id, a);
+  }
+
+  for (const row of referralsRes.data || []) {
+    if (!row.referrer_id) continue;
+    const a = byMember.get(row.referrer_id);
+    if (!a) continue;
+    a.referralsJoined += 1;
   }
 
   const autoAssignWeekRows = autoAssignWeekRes.error ? [] : autoAssignWeekRes.data || [];
@@ -187,7 +243,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     .map((m) => {
       const a = byMember.get(m.id) || acc();
       const auto = autoAssignByMember[m.id] || { week: 0, lastAt: null };
-      const productivityScore = a.usedWeek * 10 + a.leadsWeek * 15 + a.usedToday * 5 + a.leadsToday * 8;
+      const productivityScore = productivityScoreFor(a);
       const lastLogin = m.last_login ? new Date(m.last_login) : null;
       const inactive24h = !lastLogin || lastLogin < inactiveCutoff;
       const needsAttention =
@@ -209,6 +265,8 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
         leadsWeek: a.leadsWeek,
         responses: a.responses,
         dealsClosed: a.dealsClosed,
+        dealsClosedWeek: a.dealsClosedWeek,
+        referralsJoined: a.referralsJoined,
         staleClaimed: a.staleClaimed,
         productivityScore,
         inactive24h,
@@ -229,10 +287,22 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
       usedToday: s.usedToday + m.usedToday,
       leads: s.leads + m.leads,
       leadsToday: s.leadsToday + m.leadsToday,
+      dealsClosed: s.dealsClosed + m.dealsClosed,
+      referralsJoined: s.referralsJoined + m.referralsJoined,
       inactive: s.inactive + (m.inactive24h ? 1 : 0),
       needsAttention: s.needsAttention + (m.needsAttention ? 1 : 0),
     }),
-    { claimed: 0, used: 0, usedToday: 0, leads: 0, leadsToday: 0, inactive: 0, needsAttention: 0 }
+    {
+      claimed: 0,
+      used: 0,
+      usedToday: 0,
+      leads: 0,
+      leadsToday: 0,
+      dealsClosed: 0,
+      referralsJoined: 0,
+      inactive: 0,
+      needsAttention: 0,
+    }
   );
 
   const dayLabels = Array.from({ length: 7 }, (_, i) => {
@@ -252,5 +322,6 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     },
     dayLabels,
     generatedAt: new Date().toISOString(),
+    scoreFormula: PRODUCTIVITY_SCORE_FORMULA,
   };
 }

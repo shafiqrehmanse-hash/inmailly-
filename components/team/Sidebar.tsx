@@ -29,6 +29,7 @@ const sections: { label: string; tone: string; items: NavItem[] }[] = [
       { id: "links", href: "/team/links", label: "Work Links", icon: "⛓", badge: true, accent: "cyan" },
       { id: "scripts", href: "/team/scripts", label: "Scripts", icon: "📋", accent: "violet" },
       { id: "leads", href: "/team/leads", label: "My Leads", icon: "◫", accent: "violet" },
+      { id: "performance", href: "/team/performance", label: "Team performance", icon: "📊", accent: "amber" },
     ],
   },
   {

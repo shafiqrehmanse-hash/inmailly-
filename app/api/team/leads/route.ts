@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOutreachEligibleMember } from "@/lib/team-auth-server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { notifyAdminLeadNote } from "@/lib/email";
+import { notifyAdminLeadNote, notifyTeamDealClosed } from "@/lib/email";
+import { dealClosedCelebrationMessage } from "@/lib/deal-celebration";
 
 const VALID_STATUSES = new Set([
   "new",
@@ -101,7 +102,7 @@ export async function PATCH(request: NextRequest) {
   const admin = createAdminClient();
   const { data: existing } = await admin
     .from("leads")
-    .select("id, name, notes, status, profile_url, company")
+    .select("id, name, notes, status, profile_url, company, deal_closed")
     .eq("id", id)
     .eq("member_id", member.id)
     .is("project_id", null)
@@ -119,8 +120,10 @@ export async function PATCH(request: NextRequest) {
   if (updates.email !== undefined) patch.email = updates.email;
   if (updates.phone !== undefined) patch.phone = updates.phone;
   if (updates.deal_closed !== undefined) {
-    patch.deal_closed = Boolean(updates.deal_closed);
-    patch.closed_at = updates.deal_closed ? new Date().toISOString() : null;
+    const closing = Boolean(updates.deal_closed);
+    patch.deal_closed = closing;
+    patch.closed_at = closing ? new Date().toISOString() : null;
+    if (closing) patch.status = "closed";
   }
 
   const { data, error } = await admin.from("leads").update(patch).eq("id", id).select("*").single();
@@ -141,7 +144,19 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ lead: data });
+  let celebration = null;
+  const newlyClosed = updates.deal_closed === true && !existing.deal_closed;
+  if (newlyClosed && data) {
+    celebration = dealClosedCelebrationMessage(data.name, member.name);
+    void notifyTeamDealClosed({
+      email: member.email,
+      memberName: member.name,
+      leadName: data.name,
+      message: celebration.message,
+    });
+  }
+
+  return NextResponse.json({ lead: data, celebration });
 }
 
 export async function DELETE(request: NextRequest) {

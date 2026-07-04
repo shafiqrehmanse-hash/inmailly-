@@ -481,6 +481,36 @@ export function clientBrandingRequestEmail(data: {
   });
 }
 
+export function teamDealClosedEmail(data: {
+  memberName: string;
+  leadName: string;
+  message: string;
+}) {
+  const site = getSiteUrl();
+  const first = data.memberName.trim().split(/\s+/)[0] || "Champion";
+  return emailLayout({
+    preheader: `🏆 Deal closed: ${data.leadName}`,
+    eyebrow: "Trophy unlocked",
+    title: `Deal closed, ${first}!`,
+    bodyHtml: [
+      `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
+        <tr><td align="center" style="padding:28px 20px;background:linear-gradient(145deg,rgba(251,191,36,0.2) 0%,rgba(34,211,238,0.08) 50%,rgba(124,58,237,0.14) 100%);border:1px solid rgba(251,191,36,0.35);">
+          <div style="font-size:48px;line-height:1;margin-bottom:10px;">🏆</div>
+          <p style="margin:0 0 6px;font-size:18px;font-weight:800;color:#fafafa;">Winning moment</p>
+          <p style="margin:0;font-size:14px;color:#fbbf24;font-weight:700;">${esc(data.leadName)}</p>
+        </td></tr>
+      </table>`,
+      p(`Hi ${esc(first)},`),
+      p(esc(data.message)),
+      p(
+        `This closed deal now counts on <strong style="color:#fafafa;">Team Performance</strong> — your score, your rank, and your trophy count. The whole team can see it. Keep climbing.`
+      ),
+    ].join(""),
+    cta: { href: `${site}/team/performance`, label: "View team leaderboard →" },
+    footerNote: "Closed deals are the highest-value points on the board. Share your referral link and bring more SDRs too.",
+  });
+}
+
 export function adminLeadNoteEmail(data: {
   leadName: string;
   note: string;

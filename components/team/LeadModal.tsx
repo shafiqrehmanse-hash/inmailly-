@@ -5,6 +5,9 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
 import Modal from "@/components/ui/Modal";
+import DealClosedCelebration, {
+  type DealCelebrationPayload,
+} from "@/components/team/DealClosedCelebration";
 import { createClient } from "@/lib/supabase/client";
 import type { Lead, LeadMessage } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
@@ -75,6 +78,7 @@ export default function LeadModal({
   const [msgType, setMsgType] = useState<LeadMessage["msg_type"]>("message");
   const [msgSender, setMsgSender] = useState<"team" | "lead">("team");
   const [currentLead, setCurrentLead] = useState<Lead | null>(lead ?? null);
+  const [celebration, setCelebration] = useState<DealCelebrationPayload | null>(null);
 
   useEffect(() => {
     if (mode === "add" && prefill) {
@@ -165,6 +169,9 @@ export default function LeadModal({
     const data = await res.json();
     if (res.ok && data.lead) {
       setCurrentLead(data.lead as Lead);
+      if (data.celebration) {
+        setCelebration(data.celebration as DealCelebrationPayload);
+      }
       onSaved?.();
     }
   }
@@ -237,6 +244,8 @@ export default function LeadModal({
   const viewMode = mode === "view" || currentLead;
 
   return (
+    <>
+    <DealClosedCelebration celebration={celebration} onClose={() => setCelebration(null)} />
     <Modal
       open={open}
       onClose={onClose}
@@ -433,6 +442,7 @@ export default function LeadModal({
         </div>
       ) : null}
     </Modal>
+    </>
   );
 }
 
