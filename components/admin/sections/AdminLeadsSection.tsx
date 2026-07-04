@@ -94,7 +94,7 @@ export default function AdminLeadsSection() {
           size="sm"
           value={statusFilter}
           onChange={setStatusFilter}
-          options={["all", "new", "contacted", "replied", "interested", "closed", "dead"].map((s) => ({
+          options={["all", "new", "contacted", "replied", "interested", "meeting_booked", "closed", "dead"].map((s) => ({
             value: s,
             label: s === "all" ? "All statuses" : s.charAt(0).toUpperCase() + s.slice(1),
           }))}

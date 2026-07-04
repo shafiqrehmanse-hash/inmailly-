@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
-import { notifyTeamDealClosed } from "@/lib/email";
-import { dealClosedCelebrationMessage } from "@/lib/deal-celebration";
+import { processLeadVictories } from "@/lib/lead-victory";
 
 function checkKey(request: NextRequest) {
   const key = request.headers.get("x-admin-key") || request.nextUrl.searchParams.get("key");
@@ -72,7 +71,7 @@ export async function PATCH(request: NextRequest) {
   const admin = createAdminClient();
   const { data: existing } = await admin
     .from("leads")
-    .select("id, name, deal_closed, member_id, team_members(name, email)")
+    .select("id, name, status, deal_closed, member_id, team_members(name, email)")
     .eq("id", lead_id)
     .maybeSingle();
 
@@ -91,23 +90,26 @@ export async function PATCH(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   let celebration = null;
-  const newlyClosed = deal_closed === true && !existing.deal_closed;
-  if (newlyClosed && data) {
+  if (data && existing.member_id) {
     const tm = existing.team_members as
       | { name?: string; email?: string }
       | { name?: string; email?: string }[]
       | null;
-    const member = Array.isArray(tm) ? tm[0] : tm;
-    const memberName = member?.name || "Champion";
-    celebration = dealClosedCelebrationMessage(data.name, memberName);
-    if (member?.email) {
-      void notifyTeamDealClosed({
-        email: member.email,
-        memberName,
-        leadName: data.name,
-        message: celebration.message,
-      });
-    }
+    const memberRow = Array.isArray(tm) ? tm[0] : tm;
+    celebration = await processLeadVictories({
+      existing: {
+        deal_closed: existing.deal_closed,
+        status: existing.status,
+        name: existing.name,
+      },
+      data: data as { name: string; status: string; deal_closed?: boolean },
+      member: {
+        id: existing.member_id,
+        name: memberRow?.name || "Champion",
+        email: memberRow?.email || "",
+      },
+      updates: { deal_closed, status },
+    });
   }
 
   return NextResponse.json({ lead: data, celebration });

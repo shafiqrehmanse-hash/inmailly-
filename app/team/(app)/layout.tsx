@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import TeamVictoryBanner from "@/components/team/TeamVictoryBanner";
 import Sidebar from "@/components/team/Sidebar";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import LiveChatWidget from "@/components/team/LiveChatWidget";
@@ -64,7 +65,10 @@ export default async function TeamAppLayout({
         liveChatLabel={chatMode === "leader" ? "Live chat inbox" : "Live support"}
       />
       <div className="lg:ml-[240px] min-h-screen flex flex-col relative">
-        <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-[1200px] mx-auto w-full">{children}</main>
+        <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-[1200px] mx-auto w-full">
+          <TeamVictoryBanner />
+          {children}
+        </main>
       </div>
       {chatMode && <LiveChatWidget mode={chatMode} agentEnabled={liveChatAgent} />}
       <ProfilePhotoPrompt member={member} />

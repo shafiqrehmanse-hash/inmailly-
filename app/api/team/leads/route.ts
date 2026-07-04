@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOutreachEligibleMember } from "@/lib/team-auth-server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { notifyAdminLeadNote, notifyTeamDealClosed } from "@/lib/email";
-import { dealClosedCelebrationMessage } from "@/lib/deal-celebration";
+import { notifyAdminLeadNote } from "@/lib/email";
+import { processLeadVictories } from "@/lib/lead-victory";
 
 const VALID_STATUSES = new Set([
   "new",
   "contacted",
   "replied",
   "interested",
+  "meeting_booked",
   "not_interested",
   "follow_up",
   "closed",
@@ -151,14 +152,12 @@ export async function PATCH(request: NextRequest) {
   }
 
   let celebration = null;
-  const newlyClosed = updates.deal_closed === true && !existing.deal_closed;
-  if (newlyClosed && data) {
-    celebration = dealClosedCelebrationMessage(data.name, member.name);
-    void notifyTeamDealClosed({
-      email: member.email,
-      memberName: member.name,
-      leadName: data.name,
-      message: celebration.message,
+  if (data) {
+    celebration = await processLeadVictories({
+      existing,
+      data: data as { name: string; status: string; deal_closed?: boolean },
+      member: { id: member.id, name: member.name, email: member.email },
+      updates,
     });
   }
 

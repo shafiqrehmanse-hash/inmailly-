@@ -45,7 +45,7 @@ export type Lead = {
   position: string | null;
   email: string | null;
   phone: string | null;
-  status: "new" | "contacted" | "replied" | "interested" | "not_interested" | "follow_up" | "closed" | "dead";
+  status: "new" | "contacted" | "replied" | "interested" | "meeting_booked" | "not_interested" | "follow_up" | "closed" | "dead";
   deal_closed: boolean;
   closed_at: string | null;
   notes: string | null;

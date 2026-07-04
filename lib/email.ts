@@ -11,6 +11,7 @@ import {
   adminBrandingSubmittedEmail,
   adminLeadNoteEmail,
   teamDealClosedEmail,
+  teamMeetingBookedEmail,
   clientCustomEmail,
   clientNewResponseEmail,
   clientSendProofEmail,
@@ -344,6 +345,22 @@ export async function notifyTeamDealClosed(data: {
     subject: `🏆 Deal closed: ${data.leadName} — trophy unlocked`,
     html: teamDealClosedEmail(data),
     text: `Hi ${first},\n\n${data.message}\n\nLead: ${data.leadName}\nSee the leaderboard: ${getSiteUrl()}/team/performance`,
+  });
+}
+
+export async function notifyTeamMeetingBooked(data: {
+  email: string;
+  memberName: string;
+  leadName: string;
+  message: string;
+}) {
+  const first = data.memberName.trim().split(/\s+/)[0] || "Champion";
+  return sendEmailSafe({
+    to: data.email,
+    replyTo: getNotifyEmail(),
+    subject: `📅 Meeting booked: ${data.leadName}`,
+    html: teamMeetingBookedEmail(data),
+    text: `Hi ${first},\n\n${data.message}\n\nLead: ${data.leadName}\nTeam hub: ${getSiteUrl()}/team/hub`,
   });
 }
 

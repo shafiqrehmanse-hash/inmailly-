@@ -10,6 +10,7 @@ export function dealClosedCelebrationMessage(leadName: string, memberFirstName?:
   const first = (memberFirstName || "Champion").trim().split(/\s+/)[0] || "Champion";
   const body = TROPHY_MESSAGES[Math.floor(Math.random() * TROPHY_MESSAGES.length)];
   return {
+    kind: "deal_closed" as const,
     title: `🏆 Deal closed, ${first}!`,
     subtitle: `${leadName} is a win`,
     message: body,

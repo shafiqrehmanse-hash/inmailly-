@@ -5,9 +5,9 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
 import Modal from "@/components/ui/Modal";
-import DealClosedCelebration, {
-  type DealCelebrationPayload,
-} from "@/components/team/DealClosedCelebration";
+import VictoryCelebration, {
+  type VictoryCelebrationPayload,
+} from "@/components/team/VictoryCelebration";
 import { createClient } from "@/lib/supabase/client";
 import type { Lead, LeadMessage } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
@@ -18,6 +18,7 @@ const STATUSES = [
   "contacted",
   "replied",
   "interested",
+  "meeting_booked",
   "not_interested",
   "follow_up",
   "closed",
@@ -78,7 +79,7 @@ export default function LeadModal({
   const [msgType, setMsgType] = useState<LeadMessage["msg_type"]>("message");
   const [msgSender, setMsgSender] = useState<"team" | "lead">("team");
   const [currentLead, setCurrentLead] = useState<Lead | null>(lead ?? null);
-  const [celebration, setCelebration] = useState<DealCelebrationPayload | null>(null);
+  const [celebration, setCelebration] = useState<VictoryCelebrationPayload | null>(null);
 
   useEffect(() => {
     if (mode === "add" && prefill) {
@@ -157,6 +158,9 @@ export default function LeadModal({
       const data = await res.json();
       if (data.lead) {
         setCurrentLead(data.lead as Lead);
+        if (data.celebration) {
+          setCelebration(data.celebration as VictoryCelebrationPayload);
+        }
         onSaved?.();
       }
       return;
@@ -170,7 +174,7 @@ export default function LeadModal({
     if (res.ok && data.lead) {
       setCurrentLead(data.lead as Lead);
       if (data.celebration) {
-        setCelebration(data.celebration as DealCelebrationPayload);
+        setCelebration(data.celebration as VictoryCelebrationPayload);
       }
       onSaved?.();
     }
@@ -245,7 +249,7 @@ export default function LeadModal({
 
   return (
     <>
-    <DealClosedCelebration celebration={celebration} onClose={() => setCelebration(null)} />
+    <VictoryCelebration celebration={celebration} onClose={() => setCelebration(null)} />
     <Modal
       open={open}
       onClose={onClose}

@@ -523,6 +523,36 @@ export function teamDealClosedEmail(data: {
   });
 }
 
+export function teamMeetingBookedEmail(data: {
+  memberName: string;
+  leadName: string;
+  message: string;
+}) {
+  const site = getSiteUrl();
+  const first = data.memberName.trim().split(/\s+/)[0] || "Champion";
+  return emailLayout({
+    preheader: `📅 Meeting booked: ${data.leadName}`,
+    eyebrow: "Meeting secured",
+    title: `Meeting booked, ${first}!`,
+    bodyHtml: [
+      `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
+        <tr><td align="center" style="padding:28px 20px;background:linear-gradient(145deg,rgba(34,211,238,0.18) 0%,rgba(37,99,235,0.1) 50%,rgba(124,58,237,0.12) 100%);border:1px solid rgba(34,211,238,0.35);">
+          <div style="font-size:48px;line-height:1;margin-bottom:10px;">📅</div>
+          <p style="margin:0 0 6px;font-size:18px;font-weight:800;color:#fafafa;">Calendar win</p>
+          <p style="margin:0;font-size:14px;color:#22d3ee;font-weight:700;">${esc(data.leadName)}</p>
+        </td></tr>
+      </table>`,
+      p(`Hi ${esc(first)},`),
+      p(esc(data.message)),
+      p(
+        `Your name is on the <strong style="color:#fafafa;">team victory banner</strong> for 24 hours — the whole squad sees this win. Push toward the close.`
+      ),
+    ].join(""),
+    cta: { href: `${site}/team/hub`, label: "Open team hub →" },
+    footerNote: "Meetings are the bridge between outreach and closed deals. Keep stacking wins.",
+  });
+}
+
 export function adminLeadNoteEmail(data: {
   leadName: string;
   note: string;

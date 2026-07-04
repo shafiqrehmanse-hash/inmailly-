@@ -7,6 +7,7 @@ type BadgeVariant =
   | "used"
   | "replied"
   | "interested"
+  | "meeting_booked"
   | "closed"
   | "dead"
   | "contacted"
@@ -24,6 +25,7 @@ const lightVariants: Record<BadgeVariant, string> = {
   used: "bg-off text-dimmer border-line",
   replied: "bg-green-50 text-green-700 border-green-200",
   interested: "bg-ind/10 text-ind border-ind/20",
+  meeting_booked: "bg-sky/10 text-sky border-sky/25",
   closed: "bg-green-100 text-green-800 border-green-300 font-bold",
   dead: "bg-red-50 text-red-600 border-red-200",
   contacted: "bg-sky/10 text-sky border-sky/25",
@@ -46,6 +48,8 @@ const darkVariants: Record<BadgeVariant, string> = {
     "bg-gradient-to-r from-emerald-500/16 to-teal-500/8 text-emerald-300 border-emerald-400/30 shadow-[0_0_14px_rgba(52,211,153,0.1)]",
   interested:
     "bg-gradient-to-r from-lux-violet/16 to-lux-cyan/8 text-lux-violet border-lux-violet/30 shadow-[0_0_14px_rgba(139,92,246,0.1)]",
+  meeting_booked:
+    "bg-gradient-to-r from-lux-cyan/18 to-lux-blue/10 text-lux-cyan border-lux-cyan/35 shadow-[0_0_16px_rgba(34,211,238,0.14)] font-bold",
   closed:
     "bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 text-emerald-200 border-emerald-400/35 font-bold shadow-[0_0_14px_rgba(52,211,153,0.12)]",
   dead: "bg-gradient-to-r from-red-500/16 to-rose-600/8 text-red-300 border-red-400/30 shadow-[0_0_14px_rgba(248,113,113,0.1)]",
