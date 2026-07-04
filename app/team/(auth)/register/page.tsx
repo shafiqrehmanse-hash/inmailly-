@@ -11,6 +11,7 @@ function RegisterForm() {
   const refCode = searchParams.get("ref") || "";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [inviteCode, setInviteCode] = useState("");
@@ -22,6 +23,11 @@ function RegisterForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    const cleanedPhone = phone.replace(/[^+0-9]/g, "");
+    if (!cleanedPhone || cleanedPhone.length < 8) {
+      setError("Enter a valid WhatsApp / phone number with country code");
+      return;
+    }
     if (password !== confirm) {
       setError("Passwords do not match");
       return;
@@ -37,6 +43,7 @@ function RegisterForm() {
       body: JSON.stringify({
         name,
         email,
+        phone: cleanedPhone,
         password,
         inviteCode,
         refCode: refCode || undefined,
@@ -87,6 +94,20 @@ function RegisterForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <Field label="Full name" value={name} onChange={setName} required />
         <Field label="Email" value={email} onChange={setEmail} type="email" required />
+        <div>
+          <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">
+            WhatsApp / phone
+          </label>
+          <input
+            type="tel"
+            required
+            className="ws-input mt-1.5"
+            placeholder="+92 300 1234567"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+          <p className="text-[0.65rem] text-white/35 mt-1">Include country code so admin can reach you.</p>
+        </div>
         <div>
           <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Password</label>
           <PasswordInput className="mt-1.5" value={password} onChange={setPassword} required />

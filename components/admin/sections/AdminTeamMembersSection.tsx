@@ -24,7 +24,13 @@ export default function AdminTeamMembersSection() {
   const showToast = useAdminToast();
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const [members, setMembers] = useState<MemberRow[]>([]);
-  const [newMember, setNewMember] = useState({ name: "", email: "", password: "", role: "member" });
+  const [newMember, setNewMember] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    role: "member",
+  });
   const [inviteLabel, setInviteLabel] = useState("");
   const [inviteUses, setInviteUses] = useState(10);
   const [generatedCode, setGeneratedCode] = useState("");
@@ -49,7 +55,7 @@ export default function AdminTeamMembersSection() {
     if (data.error) showToast(data.error, "error");
     else {
       showToast("Member added");
-      setNewMember({ name: "", email: "", password: "", role: "member" });
+      setNewMember({ name: "", email: "", phone: "", password: "", role: "member" });
       loadMembers();
     }
   }
@@ -183,6 +189,7 @@ export default function AdminTeamMembersSection() {
               <tr className="text-lux-muted text-xs uppercase bg-lux-bg2 border-b border-white/[0.06]">
                 <th className="text-left px-4 py-3 font-semibold">Name</th>
                 <th className="text-left px-4 py-3 font-semibold">Email</th>
+                <th className="text-left px-4 py-3 font-semibold">Phone</th>
                 <th className="text-left px-4 py-3 font-semibold">Role</th>
                 <th className="text-left px-4 py-3 font-semibold">Links</th>
                 <th className="text-left px-4 py-3 font-semibold">Leads</th>
@@ -194,7 +201,7 @@ export default function AdminTeamMembersSection() {
             <tbody>
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-lux-muted">
+                  <td colSpan={9} className="px-4 py-12 text-center text-lux-muted">
                     No team members yet.
                   </td>
                 </tr>
@@ -215,6 +222,15 @@ export default function AdminTeamMembersSection() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-lux-muted">{m.email}</td>
+                    <td className="px-4 py-3 text-lux-muted whitespace-nowrap text-xs">
+                      {m.phone ? (
+                        <a href={`https://wa.me/${m.phone.replace(/[^0-9]/g, "")}`} className="text-lux-cyan hover:underline" target="_blank" rel="noopener noreferrer">
+                          {m.phone}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <LuxSelect size="sm" className="min-w-[160px]" value={m.role} onChange={(role) => updateRole(m.id, role)} options={roleOptions} />
                     </td>

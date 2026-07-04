@@ -146,6 +146,7 @@ export async function notifyAdminClientVerified(data: {
 export async function notifyAdminTeamSignupPending(data: {
   name: string;
   email: string;
+  phone?: string | null;
   inviteCode?: string | null;
 }) {
   return sendEmailSafe({
@@ -153,13 +154,14 @@ export async function notifyAdminTeamSignupPending(data: {
     replyTo: data.email,
     subject: `New team signup (pending verify): ${data.name}`,
     html: adminTeamSignupPendingEmail(data),
-    text: `New team signup pending verification: ${data.name} (${data.email})`,
+    text: `New team signup pending verification: ${data.name} (${data.email})${data.phone ? ` · ${data.phone}` : ""}`,
   });
 }
 
 export async function notifyAdminTeamVerified(data: {
   name: string;
   email: string;
+  phone?: string | null;
   inviteCode?: string | null;
 }) {
   return sendEmailSafe({
@@ -167,7 +169,7 @@ export async function notifyAdminTeamVerified(data: {
     replyTo: data.email,
     subject: `Team member verified: ${data.name}`,
     html: adminTeamVerifiedEmail(data),
-    text: `Team member verified: ${data.name} (${data.email})`,
+    text: `Team member verified: ${data.name} (${data.email})${data.phone ? ` · ${data.phone}` : ""}`,
   });
 }
 

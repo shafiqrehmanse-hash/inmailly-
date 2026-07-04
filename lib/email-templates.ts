@@ -250,7 +250,12 @@ export function adminClientVerifiedEmail(data: { name: string; email: string; co
   });
 }
 
-export function adminTeamSignupPendingEmail(data: { name: string; email: string; inviteCode?: string | null }) {
+export function adminTeamSignupPendingEmail(data: {
+  name: string;
+  email: string;
+  phone?: string | null;
+  inviteCode?: string | null;
+}) {
   const site = getSiteUrl();
   return emailLayout({
     preheader: `New team signup: ${data.name}`,
@@ -260,6 +265,7 @@ export function adminTeamSignupPendingEmail(data: { name: string; email: string;
       p("Someone registered for the outreach team. <strong style=\"color:#fafafa;\">They must verify email before accessing the workspace.</strong>"),
       detailRow("Name", data.name),
       detailRow("Email", data.email),
+      data.phone ? detailRow("Phone / WhatsApp", data.phone) : "",
       data.inviteCode ? detailRow("Invite code", data.inviteCode) : "",
     ].join(""),
     cta: { href: `${site}/admin/team/members`, label: "Open team panel →" },
@@ -267,7 +273,12 @@ export function adminTeamSignupPendingEmail(data: { name: string; email: string;
   });
 }
 
-export function adminTeamVerifiedEmail(data: { name: string; email: string; inviteCode?: string | null }) {
+export function adminTeamVerifiedEmail(data: {
+  name: string;
+  email: string;
+  phone?: string | null;
+  inviteCode?: string | null;
+}) {
   const site = getSiteUrl();
   return emailLayout({
     preheader: `Team member verified: ${data.name}`,
@@ -277,6 +288,7 @@ export function adminTeamVerifiedEmail(data: { name: string; email: string; invi
       p("<strong style=\"color:#22d3ee;\">A team member just verified their email</strong> and can now access the outreach workspace."),
       detailRow("Name", data.name),
       detailRow("Email", data.email),
+      data.phone ? detailRow("Phone / WhatsApp", data.phone) : "",
       data.inviteCode ? detailRow("Invite code", data.inviteCode) : "",
     ].join(""),
     cta: { href: `${site}/admin/team/members`, label: "View team members →" },

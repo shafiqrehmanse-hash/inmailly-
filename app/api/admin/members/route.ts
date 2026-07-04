@@ -48,8 +48,10 @@ export async function POST(request: NextRequest) {
   if (!checkKey(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { name, email, password, role } = await request.json();
+  const { name, email, password, role, phone } = await request.json();
   const admin = createAdminClient();
+  const cleanedPhone =
+    typeof phone === "string" ? phone.replace(/[^+0-9]/g, "") || null : null;
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
     email,
     password,
@@ -60,6 +62,7 @@ export async function POST(request: NextRequest) {
     user_id: authData.user.id,
     name,
     email: email.toLowerCase(),
+    phone: cleanedPhone,
     role: role || "member",
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

@@ -3,6 +3,7 @@ import StatCard from "@/components/team/StatCard";
 import HubFocusBanner from "@/components/team/HubFocusBanner";
 import LeaderTeamSnapshot from "@/components/team/LeaderTeamSnapshot";
 import TeamLeadersCard from "@/components/team/TeamLeadersCard";
+import TeamPerformancePodium from "@/components/team/TeamPerformancePodium";
 import TeamProgressChart from "@/components/team/TeamProgressChart";
 import TeamContractHubCard from "@/components/team/TeamContractHubCard";
 import TeamWeeklyGoalBar from "@/components/team/TeamWeeklyGoalBar";
@@ -142,6 +143,8 @@ export default async function HubPage() {
           then jump into a section below.
         </p>
       </div>
+
+      <TeamPerformancePodium currentMemberId={member.id} />
 
       <HubFocusBanner />
 

@@ -40,7 +40,7 @@ export async function handlePostEmailVerification(user: AuthUser) {
 
   const { data: teamMember } = await admin
     .from("team_members")
-    .select("id, name, email, role, invite_code")
+    .select("id, name, email, phone, role, invite_code")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -55,6 +55,7 @@ export async function handlePostEmailVerification(user: AuthUser) {
       const adminResult = await notifyAdminTeamVerified({
         name: teamMember.name,
         email: teamMember.email || email,
+        phone: teamMember.phone,
         inviteCode: teamMember.invite_code,
       });
       if (adminResult.ok || adminResult.skipped) {
@@ -105,6 +106,7 @@ export async function notifyAdminOnSignup(
   data: {
     name: string;
     email: string;
+    phone?: string | null;
     company?: string | null;
     inviteCode?: string | null;
   }
@@ -113,6 +115,7 @@ export async function notifyAdminOnSignup(
     return notifyAdminTeamSignupPending({
       name: data.name,
       email: data.email,
+      phone: data.phone,
       inviteCode: data.inviteCode,
     });
   }

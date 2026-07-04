@@ -8,10 +8,17 @@ import { generateVerificationLink } from "@/lib/verification-email";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, password, inviteCode, refCode } = body;
+    const { name, email, password, inviteCode, refCode, phone } = body;
 
     if (!name || !email || !password || !inviteCode) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+    }
+    const cleanedPhone = typeof phone === "string" ? phone.replace(/[^+0-9]/g, "") : "";
+    if (!cleanedPhone || cleanedPhone.length < 8) {
+      return NextResponse.json(
+        { error: "WhatsApp / phone number with country code is required" },
+        { status: 400 }
+      );
     }
     if (password.length < 8) {
       return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
@@ -53,6 +60,7 @@ export async function POST(request: Request) {
         user_id: authData.user.id,
         name: name.trim(),
         email: normalizedEmail,
+        phone: cleanedPhone,
         invite_code: inviteCode.trim(),
       })
       .select()
@@ -90,6 +98,7 @@ export async function POST(request: Request) {
     const adminNotify = await notifyAdminOnSignup("team", {
       name: name.trim(),
       email: normalizedEmail,
+      phone: cleanedPhone,
       inviteCode: inviteCode.trim(),
     });
 
