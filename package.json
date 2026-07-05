@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate:favicons": "node scripts/generate-favicons.mjs"
+    "generate:favicons": "node scripts/generate-favicons.mjs",
+    "adspower:pilot": "node scripts/adspower-open-profile.mjs",
+    "adspower:list": "node scripts/adspower-open-profile.mjs --list"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
