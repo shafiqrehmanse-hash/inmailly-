@@ -45,6 +45,7 @@ export async function middleware(request: NextRequest) {
     pathname === "/register";
 
   const isCampaignAuth = pathname === "/campaign/login";
+  const isContentAuth = pathname === "/content/login";
   const isClientAuth = pathname === "/client/login" || pathname === "/client/register";
 
   if (pathname.startsWith("/team") && !isTeamAuth && !user) {
@@ -55,6 +56,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/team/login?verify=required", request.url));
   }
 
+  if (pathname.startsWith("/content") && !isContentAuth && !user) {
+    return NextResponse.redirect(new URL("/content/login", request.url));
+  }
+
+  if (pathname.startsWith("/content") && !isContentAuth && user && !verified) {
+    return NextResponse.redirect(new URL("/content/login?verify=required", request.url));
+  }
+
   if (pathname.startsWith("/campaign") && !isCampaignAuth && !user) {
     return NextResponse.redirect(new URL("/campaign/login", request.url));
   }
@@ -63,7 +72,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/campaign/login?verify=required", request.url));
   }
 
-  if ((isTeamAuth || isCampaignAuth || isClientAuth) && user && verified) {
+  if ((isTeamAuth || isCampaignAuth || isContentAuth || isClientAuth) && user && verified) {
     const home = await resolveVerifiedHome(user.id);
     if (home) {
       return NextResponse.redirect(new URL(home, request.url));
@@ -111,6 +120,7 @@ export const config = {
   matcher: [
     "/team/:path*",
     "/campaign/:path*",
+    "/content/:path*",
     "/client",
     "/client/dashboard",
     "/client/contract",

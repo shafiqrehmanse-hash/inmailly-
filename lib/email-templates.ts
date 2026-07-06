@@ -703,3 +703,42 @@ export function teamClientFollowupEmail(data: {
     cta: { href: `${site}/campaign/hub`, label: "Open campaign hub →" },
   });
 }
+
+export function adminBlogPendingReviewEmail(data: {
+  authorName: string;
+  title: string;
+  slug: string;
+  category?: string | null;
+}) {
+  const site = getSiteUrl();
+  return emailLayout({
+    preheader: `${data.authorName} submitted: ${data.title}`,
+    eyebrow: "Blog review",
+    title: "Article ready for your approval",
+    bodyHtml: [
+      p(
+        `<strong style="color:#fafafa;">${esc(data.authorName)}</strong> submitted a blog article for review. Approve it to publish on the public blog.`
+      ),
+      detailRow("Title", data.title),
+      data.category ? detailRow("Category", data.category.replace(/-/g, " ")) : "",
+      detailRow("Slug", `/blog/${data.slug}`),
+    ].join(""),
+    cta: { href: `${site}/admin/blog`, label: "Review in admin →" },
+    footerNote: "Content managers cannot publish directly — you approve or send back with revision notes.",
+  });
+}
+
+export function contentManagerWelcomeEmail(data: { firstName: string }) {
+  const site = getSiteUrl();
+  return emailLayout({
+    eyebrow: "Content team",
+    title: `Welcome, ${data.firstName}`,
+    bodyHtml: [
+      p("Your email is verified and your content workspace is live."),
+      p("Write drafts, set up your author profile, then submit articles for admin review before they go on the blog."),
+    ].join(""),
+    cta: { href: `${site}/content/hub`, label: "Open content hub →" },
+    secondaryCta: { href: `${site}/content/profile`, label: "Set up author profile" },
+    footerNote: "Published posts show your photo, title, and bio on inmailly.com/blog.",
+  });
+}

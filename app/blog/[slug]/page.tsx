@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import BlogAuthorCard from "@/components/blog/BlogAuthorCard";
 import BlogBody, { blogArticleJsonLd } from "@/components/blog/BlogBody";
 import LuxBackground from "@/components/home/LuxBackground";
 import LuxFooter from "@/components/home/LuxFooter";
 import LuxNav from "@/components/home/LuxNav";
 import { getPublishedBlogPostBySlug, getPublishedBlogPosts } from "@/lib/blog";
+import { blogCategoryLabel } from "@/lib/blog-categories";
 import { getSiteUrl } from "@/lib/site-url";
 import { formatDate } from "@/lib/utils";
 
@@ -58,9 +60,19 @@ export default async function BlogPostPage({ params }: Props) {
           </Link>
 
           <header className="mb-10">
-            <time className="text-[0.7rem] font-bold uppercase tracking-widest text-lux-cyan">
-              {formatDate(post.published_at || post.created_at)}
-            </time>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <time className="text-[0.7rem] font-bold uppercase tracking-widest text-lux-cyan">
+                {formatDate(post.published_at || post.created_at)}
+              </time>
+              {post.category && (
+                <Link
+                  href={`/blog?category=${post.category}`}
+                  className="text-[0.65rem] font-bold uppercase tracking-wider text-lux-muted hover:text-lux-cyan transition-colors"
+                >
+                  {blogCategoryLabel(post.category)}
+                </Link>
+              )}
+            </div>
             <h1 className="font-bricolage font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight text-lux-text mt-3 mb-4">
               {post.title}
             </h1>
@@ -75,6 +87,12 @@ export default async function BlogPostPage({ params }: Props) {
           )}
 
           <BlogBody body={post.body} />
+
+          {post.author && (
+            <div className="mt-12">
+              <BlogAuthorCard author={post.author} />
+            </div>
+          )}
 
           <div className="mt-16 pt-10 border-t border-white/[0.08]">
             <p className="text-sm text-lux-muted mb-4">Ready to scale LinkedIn outreach without enterprise InMail costs?</p>

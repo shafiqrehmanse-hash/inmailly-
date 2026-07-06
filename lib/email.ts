@@ -10,6 +10,8 @@ import {
   clientBrandingRequestEmail,
   adminBrandingSubmittedEmail,
   adminLeadNoteEmail,
+  adminBlogPendingReviewEmail,
+  contentManagerWelcomeEmail,
   teamDealClosedEmail,
   teamMeetingBookedEmail,
   clientCustomEmail,
@@ -329,6 +331,31 @@ export async function notifyAdminLeadNote(data: {
     subject: `Lead note: ${data.leadName}`,
     html: adminLeadNoteEmail({ ...data, note }),
     text: `Lead: ${data.leadName}\nAdded by: ${data.memberName || "Team"}\nStatus: ${data.status || "—"}\n\nNote / what they said:\n${note}`,
+  });
+}
+
+export async function notifyAdminBlogPendingReview(data: {
+  authorName: string;
+  title: string;
+  slug: string;
+  category?: string | null;
+}) {
+  return sendEmailSafe({
+    to: getNotifyEmail(),
+    subject: `Blog review: ${data.title}`,
+    html: adminBlogPendingReviewEmail(data),
+    text: `${data.authorName} submitted "${data.title}" for blog review. Open admin → Blog.`,
+  });
+}
+
+export async function notifyContentManagerWelcomeVerified(data: { name: string; email: string }) {
+  const first = data.name.trim().split(" ")[0];
+  return sendEmailSafe({
+    to: data.email,
+    replyTo: getNotifyEmail(),
+    subject: `Welcome to InMailly content, ${first}`,
+    html: contentManagerWelcomeEmail({ firstName: first }),
+    text: `Hi ${first}, your content workspace is live at ${getSiteUrl()}/content/hub`,
   });
 }
 

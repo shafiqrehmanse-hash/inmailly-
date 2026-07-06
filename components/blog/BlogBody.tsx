@@ -51,6 +51,7 @@ export function blogArticleJsonLd(post: {
   cover_image_url: string | null;
   published_at: string | null;
   updated_at: string;
+  author?: { name: string } | null;
 }) {
   return {
     "@context": "https://schema.org",
@@ -61,6 +62,9 @@ export function blogArticleJsonLd(post: {
     datePublished: post.published_at || post.updated_at,
     dateModified: post.updated_at,
     mainEntityOfPage: `${siteUrl}/blog/${post.slug}`,
+    author: post.author?.name
+      ? { "@type": "Person", name: post.author.name }
+      : undefined,
     publisher: {
       "@type": "Organization",
       name: "InMailly",

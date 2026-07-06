@@ -95,7 +95,7 @@ export async function PATCH(request: NextRequest) {
   if (role) {
     updates.role = role;
     // Leaders don't report to leaders
-    if (role === "team_leader" || role === "campaign_manager") {
+    if (role === "team_leader" || role === "campaign_manager" || role === "content_manager") {
       updates.leader_id = null;
     }
   }
@@ -112,7 +112,7 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "leader_id must be an active team leader" }, { status: 400 });
       }
       const effectiveRole = (role as string) || existing.role;
-      if (effectiveRole === "team_leader" || effectiveRole === "campaign_manager") {
+      if (effectiveRole === "team_leader" || effectiveRole === "campaign_manager" || effectiveRole === "content_manager") {
         return NextResponse.json(
           { error: "Only outreach workers can be assigned to a team leader" },
           { status: 400 }

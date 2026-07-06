@@ -89,7 +89,11 @@ function LoginForm() {
       }
 
       if (member.role !== "campaign_manager") {
-        setError("This login is for campaign managers only. Use /team/login for outreach work.");
+        if (member.role === "content_manager") {
+          setError("Content managers should use /content/login");
+        } else {
+          setError("This login is for campaign managers only. Use /team/login for outreach work.");
+        }
         await supabase.auth.signOut();
         setLoading(false);
         return;

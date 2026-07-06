@@ -5,7 +5,10 @@ import LuxBackground from "@/components/home/LuxBackground";
 import LuxFooter from "@/components/home/LuxFooter";
 import LuxNav from "@/components/home/LuxNav";
 import { getPublishedBlogPosts } from "@/lib/blog";
+import { BLOG_CATEGORIES, blogCategoryLabel } from "@/lib/blog-categories";
 import { getSiteUrl } from "@/lib/site-url";
+
+type Props = { searchParams: { category?: string } };
 
 export const metadata: Metadata = {
   title: "Blog — LinkedIn Outreach Tips & B2B Sales Insights",
@@ -22,8 +25,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function BlogPage() {
-  const posts = await getPublishedBlogPosts();
+export default async function BlogPage({ searchParams }: Props) {
+  const category = searchParams.category || null;
+  const posts = await getPublishedBlogPosts(undefined, category);
+  const activeLabel = category ? blogCategoryLabel(category) : null;
 
   return (
     <div className="relative min-h-screen bg-lux-bg text-lux-text">
@@ -34,10 +39,10 @@ export default async function BlogPage() {
           <Link href="/" className="text-sm text-lux-muted hover:text-lux-cyan mb-8 inline-block transition-colors">
             ← Home
           </Link>
-          <div className="max-w-2xl mb-14">
+          <div className="max-w-2xl mb-10">
             <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-lux-cyan mb-3">InMailly Blog</p>
             <h1 className="font-bricolage font-extrabold text-[clamp(2.2rem,4.5vw,3.5rem)] tracking-tight text-lux-text mb-4">
-              LinkedIn outreach insights
+              {activeLabel || "LinkedIn outreach insights"}
             </h1>
             <p className="text-lg text-lux-muted leading-relaxed">
               Practical guides on InMail, B2B prospecting, campaign transparency, and scaling outreach without
@@ -45,9 +50,42 @@ export default async function BlogPage() {
             </p>
           </div>
 
+          <div className="flex flex-wrap gap-2 mb-10">
+            <Link
+              href="/blog"
+              className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border transition-colors ${
+                !category
+                  ? "border-lux-cyan/40 bg-lux-cyan/10 text-lux-cyan"
+                  : "border-white/10 text-lux-muted hover:text-lux-text"
+              }`}
+            >
+              All topics
+            </Link>
+            {BLOG_CATEGORIES.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/blog?category=${c.slug}`}
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border transition-colors ${
+                  category === c.slug
+                    ? "border-lux-cyan/40 bg-lux-cyan/10 text-lux-cyan"
+                    : "border-white/10 text-lux-muted hover:text-lux-text"
+                }`}
+              >
+                {c.label}
+              </Link>
+            ))}
+          </div>
+
           {posts.length === 0 ? (
             <div className="border border-white/[0.08] bg-lux-card/50 p-12 text-center">
-              <p className="text-lux-muted">New articles coming soon. Check back shortly.</p>
+              <p className="text-lux-muted">
+                {category ? "No articles in this category yet." : "New articles coming soon. Check back shortly."}
+              </p>
+              {category && (
+                <Link href="/blog" className="inline-block mt-4 text-sm text-lux-cyan hover:underline">
+                  View all articles
+                </Link>
+              )}
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,12 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  notifyAdminClientSignup,
-  notifyAdminClientVerified,
-  notifyAdminTeamSignupPending,
   notifyAdminTeamVerified,
-  notifyClientWelcomeVerified,
+  notifyContentManagerWelcomeVerified,
   notifyTeamWelcomeVerified,
 } from "@/lib/email";
+import { isCampaignManager, isContentManager } from "@/lib/roles";
 
 type AuthUser = {
   id: string;
@@ -50,7 +48,36 @@ export async function handlePostEmailVerification(user: AuthUser) {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (teamMember && teamMember.role !== "campaign_manager") {
+  if (teamMember && isCampaignManager(teamMember.role)) {
+    return;
+  }
+
+  if (teamMember && isContentManager(teamMember.role)) {
+    if (!metaFlag(withMeta, "admin_verified_notify_sent")) {
+      const adminResult = await notifyAdminTeamVerified({
+        name: teamMember.name,
+        email: teamMember.email || email,
+        phone: teamMember.phone,
+        inviteCode: teamMember.invite_code,
+      });
+      if (adminResult.ok || adminResult.skipped) {
+        await patchMeta(withMeta, { admin_verified_notify_sent: true });
+      }
+    }
+
+    if (!metaFlag(withMeta, "welcome_email_sent")) {
+      const welcomeResult = await notifyContentManagerWelcomeVerified({
+        name: teamMember.name,
+        email: teamMember.email || email,
+      });
+      if (welcomeResult.ok || welcomeResult.skipped) {
+        await patchMeta(withMeta, { welcome_email_sent: true, verified_notify_sent: true });
+      }
+    }
+    return;
+  }
+
+  if (teamMember) {
     if (!metaFlag(withMeta, "admin_verified_notify_sent")) {
       const adminResult = await notifyAdminTeamVerified({
         name: teamMember.name,
@@ -76,6 +103,7 @@ export async function handlePostEmailVerification(user: AuthUser) {
   }
 
   if (client) {
+    const { notifyAdminClientVerified, notifyClientWelcomeVerified } = await import("@/lib/email");
     if (!metaFlag(withMeta, "admin_verified_notify_sent")) {
       const adminResult = await notifyAdminClientVerified({
         name: client.name,
@@ -112,6 +140,7 @@ export async function notifyAdminOnSignup(
   }
 ) {
   if (type === "team") {
+    const { notifyAdminTeamSignupPending } = await import("@/lib/email");
     return notifyAdminTeamSignupPending({
       name: data.name,
       email: data.email,
@@ -119,6 +148,7 @@ export async function notifyAdminOnSignup(
       inviteCode: data.inviteCode,
     });
   }
+  const { notifyAdminClientSignup } = await import("@/lib/email");
   return notifyAdminClientSignup({
     name: data.name,
     email: data.email,

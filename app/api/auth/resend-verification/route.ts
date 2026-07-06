@@ -26,7 +26,11 @@ export async function POST(request: Request) {
             name: teamMember.name || "there",
             userId: teamMember.user_id,
             redirect:
-              teamMember.role === "campaign_manager" ? "/campaign/hub" : "/team/hub",
+              teamMember.role === "campaign_manager"
+                ? "/campaign/hub"
+                : teamMember.role === "content_manager"
+                  ? "/content/hub"
+                  : "/team/hub",
           }
         : null;
 

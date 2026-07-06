@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import TeamAuthLayout from "@/components/team/TeamAuthLayout";
 import PasswordInput from "@/components/ui/PasswordInput";
-import { getLoginRedirect, isCampaignManager, isContentManager } from "@/lib/roles";
+import { getLoginRedirect, isContentManager } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
@@ -79,14 +79,8 @@ function LoginForm() {
         .eq("user_id", user.id)
         .single();
       if (member) {
-        if (isCampaignManager(member.role)) {
-          setError("Campaign managers should use /campaign/login");
-          await supabase.auth.signOut();
-          setLoading(false);
-          return;
-        }
-        if (isContentManager(member.role)) {
-          setError("Content managers should use /content/login");
+        if (!isContentManager(member.role)) {
+          setError("This login is for content managers only. Use /team/login or /campaign/login.");
           await supabase.auth.signOut();
           setLoading(false);
           return;
@@ -95,21 +89,21 @@ function LoginForm() {
           .from("team_members")
           .update({ last_login: new Date().toISOString() })
           .eq("id", member.id);
-        router.push(getLoginRedirect(member.role as "member"));
+        router.push(getLoginRedirect("content_manager"));
         router.refresh();
         return;
       }
     }
     await supabase.auth.signOut();
     setLoading(false);
-    setError("No team account found for this email. Register with an invite code first.");
+    setError("No content manager account found for this email.");
   }
 
   return (
-    <TeamAuthLayout title="Team Login" subtitle="Internal outreach workspace">
+    <TeamAuthLayout title="Content Manager" subtitle="Write articles for the InMailly blog">
       {verifyRequired && (
         <div className="bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl px-4 py-3 text-sm mb-5">
-          Verify your email before opening the team workspace. Check your inbox or resend below.
+          Verify your email before opening the content workspace. Check your inbox or resend below.
         </div>
       )}
       {verifyFailed && (
@@ -119,11 +113,11 @@ function LoginForm() {
       )}
       {verified && (
         <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-xl px-4 py-3 text-sm mb-5">
-          Email verified — you&apos;re in. Log in to open your workspace.
+          Email verified — log in to open your content hub.
         </div>
       )}
       {info && (
-        <div className="bg-ws-ind/10 border border-ws-ind/30 text-ws-cyan rounded-xl px-4 py-3 text-sm mb-5">
+        <div className="bg-lux-cyan/10 border border-lux-cyan/30 text-lux-cyan rounded-xl px-4 py-3 text-sm mb-5">
           {info}
         </div>
       )}
@@ -153,7 +147,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3.5 bg-ws-ind text-white rounded-xl font-bricolage font-extrabold hover:bg-ind2 transition-all disabled:opacity-50"
+          className="w-full py-3.5 bg-gradient-to-r from-lux-violet to-lux-cyan text-white rounded-xl font-bricolage font-extrabold hover:opacity-90 transition-all disabled:opacity-50"
         >
           {loading ? "Signing in…" : "Log in →"}
         </button>
@@ -162,21 +156,21 @@ function LoginForm() {
         type="button"
         onClick={resendVerification}
         disabled={resending}
-        className="w-full mt-3 text-center text-xs text-ws-cyan hover:underline disabled:opacity-50"
+        className="w-full mt-3 text-center text-xs text-lux-cyan hover:underline disabled:opacity-50"
       >
         {resending ? "Sending…" : "Resend verification email"}
       </button>
       <p className="text-center text-xs text-white/30 mt-6">
-        Campaign managers:{" "}
-        <a href="/campaign/login" className="text-lux-cyan hover:underline">
-          /campaign/login
+        Outreach team:{" "}
+        <a href="/team/login" className="text-lux-cyan hover:underline">
+          /team/login
         </a>
       </p>
     </TeamAuthLayout>
   );
 }
 
-export default function TeamLoginPage() {
+export default function ContentLoginPage() {
   return (
     <Suspense>
       <LoginForm />

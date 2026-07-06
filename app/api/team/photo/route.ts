@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { canUseOutreachTools } from "@/lib/roles";
+import { canUploadStaffPhoto } from "@/lib/roles";
 import { getCurrentMember } from "@/lib/team";
 import {
   processTeamPhoto,
@@ -11,7 +11,7 @@ import {
 /** Outreach team + campaign managers — anyone on the staff roster. */
 async function getPhotoMember() {
   const member = await getCurrentMember();
-  if (!member || !member.is_active || !canUseOutreachTools(member.role)) return null;
+  if (!member || !member.is_active || !canUploadStaffPhoto(member.role)) return null;
   return member;
 }
 

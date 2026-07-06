@@ -4,7 +4,7 @@ import Sidebar from "@/components/team/Sidebar";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import LiveChatWidget from "@/components/team/LiveChatWidget";
 import ProfilePhotoPrompt from "@/components/team/ProfilePhotoPrompt";
-import { canOpenLiveChat, isCampaignManager, isTeamLeader } from "@/lib/roles";
+import { canOpenLiveChat, isCampaignManager, isContentManager, isTeamLeader } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/team";
@@ -17,6 +17,7 @@ export default async function TeamAppLayout({
   const member = await getCurrentMember();
   if (!member) redirect("/team/login");
   if (isCampaignManager(member.role)) redirect("/campaign/hub");
+  if (isContentManager(member.role)) redirect("/content/hub");
 
   const admin = createAdminClient();
   const supabase = createServerSupabase();

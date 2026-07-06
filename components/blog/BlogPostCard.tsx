@@ -1,8 +1,9 @@
 import Link from "next/link";
-import type { BlogPost } from "@/lib/blog";
+import type { BlogPostWithAuthor } from "@/lib/blog";
+import { blogCategoryLabel } from "@/lib/blog-categories";
 import { formatDate } from "@/lib/utils";
 
-export default function BlogPostCard({ post }: { post: BlogPost }) {
+export default function BlogPostCard({ post }: { post: BlogPostWithAuthor }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
@@ -23,14 +24,24 @@ export default function BlogPostCard({ post }: { post: BlogPost }) {
         </div>
       )}
       <div className="p-6">
-        <time className="text-[0.7rem] font-bold uppercase tracking-widest text-lux-cyan">
-          {formatDate(post.published_at || post.created_at)}
-        </time>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <time className="text-[0.7rem] font-bold uppercase tracking-widest text-lux-cyan">
+            {formatDate(post.published_at || post.created_at)}
+          </time>
+          {post.category && (
+            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-lux-muted">
+              {blogCategoryLabel(post.category)}
+            </span>
+          )}
+        </div>
         <h2 className="font-bricolage font-bold text-xl text-lux-text mt-2 group-hover:text-lux-cyan transition-colors">
           {post.title}
         </h2>
         {post.excerpt && (
           <p className="text-sm text-lux-muted mt-3 line-clamp-3 leading-relaxed">{post.excerpt}</p>
+        )}
+        {post.author && (
+          <p className="text-xs text-lux-muted mt-3">By {post.author.name}</p>
         )}
         <span className="inline-block mt-4 text-sm font-medium text-lux-cyan">Read article →</span>
       </div>

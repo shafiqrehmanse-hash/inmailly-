@@ -25,7 +25,9 @@ export async function resolvePostVerifyRedirect(
 
   const wantsClient = nextParam.startsWith("/client");
   const wantsTeam =
-    nextParam.startsWith("/team") || nextParam.startsWith("/campaign");
+    nextParam.startsWith("/team") ||
+    nextParam.startsWith("/campaign") ||
+    nextParam.startsWith("/content");
 
   if (member && wantsTeam) return nextParam;
   if (client && wantsClient) return nextParam;

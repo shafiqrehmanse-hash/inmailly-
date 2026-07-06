@@ -7,6 +7,15 @@ export function isCampaignManager(role: string): boolean {
   return role === "campaign_manager";
 }
 
+export function isContentManager(role: string): boolean {
+  return role === "content_manager";
+}
+
+/** Campaign + content managers are separate departments from outreach. */
+export function isSeparateDepartmentRole(role: string): boolean {
+  return isCampaignManager(role) || isContentManager(role);
+}
+
 export function isTeamLeader(role: string): boolean {
   return role === "team_leader";
 }
@@ -27,9 +36,14 @@ export function isLeaderAssignableWorker(role: string): boolean {
   return (LEADER_MANAGED_ROLES as readonly string[]).includes(role);
 }
 
-/** Campaign managers are a separate department — never shown to team leaders. */
+/** Campaign managers and content managers are never shown to team leaders. */
 export function isHiddenFromTeamLeader(role: string): boolean {
-  return isCampaignManager(role);
+  return isSeparateDepartmentRole(role);
+}
+
+/** Staff roster photo uploads: outreach, campaign, and content managers. */
+export function canUploadStaffPhoto(role: string): boolean {
+  return canUseOutreachTools(role) || isContentManager(role);
 }
 
 /** Outreach tools: outreach team + campaign managers (own outreach tab, no team leaders). */
@@ -44,18 +58,21 @@ export function canOpenLiveChat(role: string): boolean {
 
 export function getLoginRedirect(role: MemberRole): string {
   if (isCampaignManager(role)) return "/campaign/hub";
+  if (isContentManager(role)) return "/content/hub";
   return "/team/hub";
 }
 
 /** Where employment contracts are signed in the dashboard for each role. */
 export function getContractDashboardPath(role: string): string {
   if (isCampaignManager(role)) return "/campaign/contract";
+  if (isContentManager(role)) return "/content/hub";
   return "/team/contract";
 }
 
 export function roleLabel(role: string): string {
   if (isTeamLeader(role)) return "Team leader";
   if (isCampaignManager(role)) return "Campaign manager";
+  if (isContentManager(role)) return "Content manager";
   if (role === "admin") return "Team admin";
   if (role === "senior") return "Senior worker";
   return "Outreach worker";

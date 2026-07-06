@@ -16,6 +16,7 @@ const roleOptions = [
   { value: "senior", label: "Senior worker" },
   { value: "team_leader", label: "Team leader" },
   { value: "campaign_manager", label: "Campaign manager" },
+  { value: "content_manager", label: "Content manager" },
   { value: "admin", label: "Team admin" },
 ];
 
@@ -153,7 +154,9 @@ export default function AdminTeamMembersSection() {
     showToast("Invite code generated from label");
   }
 
-  const outreachMembers = members.filter((m) => m.is_active && m.role !== "campaign_manager");
+  const outreachMembers = members.filter(
+    (m) => m.is_active && m.role !== "campaign_manager" && m.role !== "content_manager"
+  );
   const totalLeads = outreachMembers.reduce((s, m) => s + m.leads_count, 0);
   const totalDeals = outreachMembers.reduce((s, m) => s + (m.deals_closed || 0), 0);
   const totalLinks = outreachMembers.reduce((s, m) => s + m.active_links, 0);

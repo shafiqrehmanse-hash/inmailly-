@@ -5,7 +5,7 @@ export type TeamMember = {
   email: string;
   phone: string | null;
   photo_url: string | null;
-  role: "member" | "senior" | "admin" | "campaign_manager" | "team_leader";
+  role: "member" | "senior" | "admin" | "campaign_manager" | "team_leader" | "content_manager";
   /** Outreach worker's assigned team leader (null for leaders / unassigned). */
   leader_id: string | null;
   is_active: boolean;
@@ -13,6 +13,8 @@ export type TeamMember = {
   joined_at: string;
   last_login: string | null;
   live_chat_agent?: boolean;
+  author_bio?: string | null;
+  author_title?: string | null;
 };
 
 export type OutreachLink = {
