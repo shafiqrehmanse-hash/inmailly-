@@ -44,6 +44,7 @@ export default function LuxSelect({
   const [mounted, setMounted] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
   const listId = useId();
 
   const selected = options.find((o) => o.value === value);
@@ -56,10 +57,10 @@ export default function LuxSelect({
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
     const gap = 6;
-    const preferredHeight = Math.min(240, options.length * 40 + 12);
+    const preferredHeight = Math.min(360, options.length * 40 + 12);
     const spaceBelow = window.innerHeight - rect.bottom - gap;
     const spaceAbove = rect.top - gap;
-    const openUp = spaceBelow < 160 && spaceAbove > spaceBelow;
+    const openUp = spaceBelow < 180 && spaceAbove > spaceBelow;
 
     if (openUp) {
       setMenuPos({
@@ -84,12 +85,17 @@ export default function LuxSelect({
       return;
     }
     updateMenuPos();
-    const onScroll = () => setOpen(false);
+    const onScroll = (e: Event) => {
+      const target = e.target as Node | null;
+      if (menuRef.current && target && menuRef.current.contains(target)) return;
+      if (target instanceof HTMLElement && target.closest?.("[data-lux-select-menu]")) return;
+      updateMenuPos();
+    };
     const onResize = () => updateMenuPos();
-    window.addEventListener("scroll", onScroll, true);
+    document.addEventListener("scroll", onScroll, true);
     window.addEventListener("resize", onResize);
     return () => {
-      window.removeEventListener("scroll", onScroll, true);
+      document.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -162,6 +168,7 @@ export default function LuxSelect({
       ? createPortal(
           <AnimatePresence>
             <motion.ul
+              ref={menuRef}
               id={listId}
               data-lux-select-menu
               role="listbox"
@@ -178,7 +185,7 @@ export default function LuxSelect({
                 maxHeight: menuPos.maxHeight,
                 zIndex: 9999,
               }}
-              className="overflow-auto rounded-xl border border-white/[0.12] bg-lux-bg2 shadow-[0_20px_60px_rgba(0,0,0,0.55)] py-1 backdrop-blur-xl"
+              className="overflow-y-auto overscroll-contain rounded-xl border border-white/[0.12] bg-lux-bg2 shadow-[0_20px_60px_rgba(0,0,0,0.55)] py-1 backdrop-blur-xl [scrollbar-width:thin] [scrollbar-color:rgba(34,211,238,0.35)_transparent]"
             >
               {options.map((opt, i) => {
                 const active = opt.value === value;

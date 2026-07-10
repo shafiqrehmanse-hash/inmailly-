@@ -61,7 +61,8 @@ export default function TeamBroadcastComposer({
       const data = await res.json();
       setMembers(
         (data.members || []).filter(
-          (m: TeamMember) => m.is_active && m.role !== "campaign_manager"
+          (m: TeamMember) =>
+            m.is_active && m.role !== "campaign_manager" && m.role !== "content_manager"
         )
       );
       return;
@@ -177,7 +178,7 @@ export default function TeamBroadcastComposer({
           </div>
 
           {!sendToAll && (
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
               {members.map((m) => (
                 <button
                   key={m.id}

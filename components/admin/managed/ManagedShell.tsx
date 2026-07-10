@@ -116,7 +116,9 @@ export default function ManagedShell({
             options={flat.map((i) => ({ value: i.href, label: i.label }))}
           />
         </header>
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-5 sm:p-8 pb-16">{children}</main>
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain p-5 sm:p-8 pb-16 scroll-smooth">
+          {children}
+        </main>
       </div>
     </div>
   );

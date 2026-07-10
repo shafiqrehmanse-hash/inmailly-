@@ -19,7 +19,12 @@ export default function AdminVictoryAnnounceSection() {
   const loadMembers = useCallback(async () => {
     const res = await fetch(`/api/admin/members?key=${adminKey}`);
     const data = await res.json();
-    setMembers((data.members || []).filter((m: TeamMember) => m.role !== "campaign_manager"));
+    setMembers(
+      (data.members || []).filter(
+        (m: TeamMember) =>
+          m.is_active && m.role !== "campaign_manager" && m.role !== "content_manager"
+      )
+    );
   }, [adminKey]);
 
   useEffect(() => {
@@ -60,7 +65,7 @@ export default function AdminVictoryAnnounceSection() {
   }
 
   return (
-    <div className="lux-card-elite p-5 space-y-4">
+    <div className="lux-card-elite p-5 space-y-4 scroll-mt-6">
       <div>
         <h2 className="font-bricolage font-bold text-xl text-lux-text">Team victory banners</h2>
         <p className="text-sm text-lux-muted mt-1">
@@ -96,7 +101,9 @@ export default function AdminVictoryAnnounceSection() {
       </div>
 
       <label className="block">
-        <span className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-cyan">Team member</span>
+        <span className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-cyan">
+          Team member {members.length > 0 ? `(${members.length})` : ""}
+        </span>
         <LuxSelect
           className="mt-1"
           value={memberId}
