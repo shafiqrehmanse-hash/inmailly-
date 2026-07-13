@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
-import { buildWhitelabelDashboardHtml } from "@/lib/whitelabel-html";
+import { buildWhitelabelDashboardHtml, hashWhitelabelPasswordBrowser } from "@/lib/whitelabel-html";
 
 type WhitelabelInfo = {
   eligible: boolean;
@@ -21,6 +21,10 @@ type WhitelabelInfo = {
 export default function ClientWhitelabelCard() {
   const [info, setInfo] = useState<WhitelabelInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const load = useCallback(() => {
     fetch("/api/client/whitelabel")
@@ -36,11 +40,25 @@ export default function ClientWhitelabelCard() {
     load();
   }, [load]);
 
-  function downloadFile() {
+  async function downloadFile() {
     if (!info?.embedUrl) return;
+    setFormError("");
+    const pwd = password.trim();
+    if (pwd.length < 6) {
+      setFormError("Choose a password with at least 6 characters.");
+      return;
+    }
+    if (pwd !== confirm.trim()) {
+      setFormError("Passwords do not match.");
+      return;
+    }
+
+    const passwordHash = await hashWhitelabelPasswordBrowser(pwd);
     const html = buildWhitelabelDashboardHtml({
       embedUrl: info.embedUrl,
-      pageTitle: `${info.companyName} — Campaign Dashboard`,
+      pageTitle: `${info.companyName} Dashboard`,
+      companyName: `${info.companyName} Dashboard`,
+      passwordHash,
     });
     const blob = new Blob([html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -81,31 +99,64 @@ export default function ClientWhitelabelCard() {
       </p>
       <p className="font-bricolage font-bold text-lux-text text-lg">Host the dashboard on your domain</p>
       <p className="text-sm text-lux-muted mt-2 leading-relaxed">
-        Download one HTML file, upload it to your website folder (cPanel, Netlify, any host). No need to edit{" "}
-        <code className="text-lux-text/80">index.html</code> — just open{" "}
-        <code className="text-lux-text/80">yourdomain.com/{info.filename}</code> or link to it from your menu.
-        Data syncs automatically from InMailly.
+        Download one HTML file, upload it to your website folder (cPanel, Netlify, any host). Visitors see{" "}
+        <strong className="text-lux-text">your brand</strong> and a password login — no third-party branding on
+        the page. Open{" "}
+        <code className="text-lux-text/80">yourdomain.com/{info.filename}</code> or link it from your menu.
       </p>
 
+      <div className="mt-4 space-y-3 max-w-md">
+        <p className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-cyan">Board access password</p>
+        <p className="text-xs text-lux-muted -mt-1">
+          Required. Anyone visiting your white-label URL must enter this password first. Share it only with your
+          client.
+        </p>
+        <div className="relative">
+          <input
+            className="lux-input pr-12"
+            type={showPwd ? "text" : "password"}
+            placeholder="Create password (min 6 characters)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+          />
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-lux-muted text-sm"
+            onClick={() => setShowPwd((v) => !v)}
+            aria-label={showPwd ? "Hide password" : "Show password"}
+          >
+            {showPwd ? "Hide" : "Show"}
+          </button>
+        </div>
+        <input
+          className="lux-input"
+          type={showPwd ? "text" : "password"}
+          placeholder="Confirm password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          autoComplete="new-password"
+        />
+        {formError && <p className="text-sm text-red-400 font-semibold">{formError}</p>}
+      </div>
+
       <ol className="mt-4 space-y-2 text-sm text-lux-muted list-decimal list-inside">
-        <li>Click download below</li>
-        <li>Upload <strong className="text-lux-text">{info.filename}</strong> to your site&apos;s public folder</li>
-        <li>Visit that URL — your live campaign data appears instantly</li>
+        <li>Set a password above, then click download</li>
+        <li>
+          Upload <strong className="text-lux-text">{info.filename}</strong> to your site&apos;s public folder
+          (replace the old file if you had one)
+        </li>
+        <li>Share the page URL + password with your client</li>
       </ol>
 
       <div className="flex flex-wrap gap-2 mt-5">
         <Button variant="lux-cyan" size="sm" onClick={downloadFile}>
           Download {info.filename}
         </Button>
-        <a href={info.embedUrl} target="_blank" rel="noopener noreferrer">
-          <Button variant="lux-soft" size="sm" type="button">
-            Preview embed
-          </Button>
-        </a>
       </div>
 
       <p className="text-[0.62rem] text-lux-muted mt-4">
-        Project: {info.projectName} · Updates every time your team logs activity in InMailly
+        Project: {info.projectName} · Re-download anytime to rotate the password or refresh the board file
       </p>
     </div>
   );

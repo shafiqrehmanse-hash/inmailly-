@@ -26,8 +26,7 @@ export default function EmbedCampaignPortal({ token }: { token: string }) {
         <div className="max-w-md">
           <p className="text-red-400 font-semibold mb-2">{error}</p>
           <p className="text-lux-muted text-sm leading-relaxed">
-            Download a fresh dashboard file from your InMailly client portal, or contact support if this keeps
-            happening.
+            Contact your campaign manager for a fresh dashboard file if this keeps happening.
           </p>
         </div>
       </div>
