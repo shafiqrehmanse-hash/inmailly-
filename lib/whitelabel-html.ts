@@ -103,6 +103,19 @@ export function buildWhitelabelDashboardHtml(opts: {
     .gate-foot { margin-top: 18px; font-size: 11px; color: #52525b; }
     #shell { display: none; height: 100%; }
     #shell.ready { display: block; }
+    /* Keep iframe warm off-screen while password gate is up */
+    #shell:not(.ready) {
+      display: block !important;
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      opacity: 0;
+    }
+    #shell:not(.ready) #loader,
+    #shell:not(.ready) #retry { display: none !important; }
     #loader {
       position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 12px; background: #07070b; z-index: 20; transition: opacity 0.35s;
@@ -195,6 +208,8 @@ export function buildWhitelabelDashboardHtml(opts: {
       var unlockBtn = document.getElementById("unlock-btn");
       var loaded = false;
       var softTimer = null;
+      var dashboardSrc = unpack(PACKED);
+      var preloading = false;
 
       document.getElementById("toggle-pwd").addEventListener("click", function () {
         var show = pwdInput.type === "password";
@@ -210,36 +225,52 @@ export function buildWhitelabelDashboardHtml(opts: {
         retry.classList.add("show");
       }
 
-      function mountDashboard() {
+      /** Start loading dashboard in the background while password gate is visible. */
+      function prefetchDashboard() {
+        if (!dashboardSrc || preloading || frame.getAttribute("src")) return;
+        preloading = true;
+        frame.src = dashboardSrc;
+      }
+
+      function revealDashboard() {
         gate.classList.add("hidden");
         shell.classList.add("ready");
-        loaded = false;
         retry.classList.remove("show");
-        loader.classList.remove("hidden");
-        var src = unpack(PACKED);
-        if (!src) {
-          showRetry();
+        if (loaded) {
+          hideLoader();
           return;
         }
-        frame.removeAttribute("src");
-        frame.src = src;
+        loader.classList.remove("hidden");
+        if (!frame.getAttribute("src")) {
+          if (!dashboardSrc) {
+            showRetry();
+            return;
+          }
+          frame.src = dashboardSrc;
+        }
         if (softTimer) clearTimeout(softTimer);
         softTimer = setTimeout(function () {
           if (!loaded) {
             var p = loader.querySelector("p");
             if (p) p.textContent = "Still opening… one moment";
           }
-        }, 15000);
+        }, 8000);
       }
 
       frame.addEventListener("load", function () {
         loaded = true;
         if (softTimer) clearTimeout(softTimer);
-        setTimeout(hideLoader, 350);
+        // Only hide spinner once the gate is already unlocked
+        if (shell.classList.contains("ready")) {
+          setTimeout(hideLoader, 120);
+        }
       });
 
       document.getElementById("retry-btn").addEventListener("click", function () {
-        mountDashboard();
+        loaded = false;
+        frame.removeAttribute("src");
+        preloading = false;
+        revealDashboard();
       });
 
       form.addEventListener("submit", function (e) {
@@ -255,16 +286,20 @@ export function buildWhitelabelDashboardHtml(opts: {
             return;
           }
           try { sessionStorage.setItem(SESSION_KEY, "1"); } catch (err) {}
-          mountDashboard();
+          revealDashboard();
         }).catch(function () {
           unlockBtn.disabled = false;
           gateError.classList.add("show");
         });
       });
 
+      // Warm the dashboard while the visitor types their password
+      setTimeout(prefetchDashboard, 200);
+      pwdInput.addEventListener("focus", prefetchDashboard, { once: true });
+
       try {
         if (sessionStorage.getItem(SESSION_KEY) === "1") {
-          mountDashboard();
+          revealDashboard();
         }
       } catch (err) {}
     })();

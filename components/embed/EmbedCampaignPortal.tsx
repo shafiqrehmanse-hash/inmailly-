@@ -9,29 +9,41 @@ import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 export default function EmbedCampaignPortal({
   token,
   brandName,
+  initialLive = null,
 }: {
   token: string;
   /** Optional white-label client name override from ?brand= */
   brandName?: string | null;
+  /** Server-prefetched data so the board paints without waiting for a second round-trip */
+  initialLive?: ClientDashboardLiveData | null;
 }) {
-  const [live, setLive] = useState<ClientDashboardLiveData | null>(null);
+  const [live, setLive] = useState<ClientDashboardLiveData | null>(initialLive);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Refresh in background if we already have SSR data; otherwise load fresh
+    let cancelled = false;
     fetch(`/api/embed/portal?token=${encodeURIComponent(token)}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.error) setError(d.error);
-        else {
-          const mapped = mapPortalToDashboard(d);
-          const brand = brandName?.trim();
-          setLive(brand ? { ...mapped, clientLabel: brand } : mapped);
+        if (cancelled) return;
+        if (d.error) {
+          if (!initialLive) setError(d.error);
+          return;
         }
+        const mapped = mapPortalToDashboard(d);
+        const brand = brandName?.trim();
+        setLive(brand ? { ...mapped, clientLabel: brand } : mapped);
       })
-      .catch(() => setError("Failed to load campaign data"));
-  }, [token, brandName]);
+      .catch(() => {
+        if (!cancelled && !initialLive) setError("Failed to load campaign data");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, brandName, initialLive]);
 
-  if (error) {
+  if (error && !live) {
     return (
       <div className="min-h-screen bg-lux-bg flex items-center justify-center p-6 text-center">
         <div className="max-w-md">
@@ -47,7 +59,7 @@ export default function EmbedCampaignPortal({
   if (!live) {
     return (
       <div className="min-h-screen bg-lux-bg flex items-center justify-center text-lux-muted text-sm">
-        Loading campaign…
+        Opening dashboard…
       </div>
     );
   }

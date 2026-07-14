@@ -23,54 +23,55 @@ export async function fetchEmbedPortalByToken(admin: SupabaseClient, token: stri
 
   if (error || !project || !project.embed_token) return null;
 
+  // Do not await — avoid adding write latency on every dashboard open
   if (!project.whitelabel_enabled) {
-    await admin
+    void admin
       .from("projects")
       .update({ whitelabel_enabled: true, updated_at: new Date().toISOString() })
       .eq("id", project.id);
   }
 
-  const { data: responses } = await admin
-    .from("leads")
-    .select(
-      "id, name, company, position, profile_url, status, notes, client_followup_message, client_followup_at, created_at, updated_at"
-    )
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  // Parallel reads — biggest speed win for white-label boards
+  const [responsesRes, totalRes, interestedRes, proofRowsRes] = await Promise.all([
+    admin
+      .from("leads")
+      .select(
+        "id, name, company, position, profile_url, status, notes, client_followup_message, client_followup_at, created_at, updated_at"
+      )
+      .eq("project_id", project.id)
+      .eq("visible_to_client", true)
+      .order("created_at", { ascending: false })
+      .limit(40),
+    admin
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .eq("project_id", project.id)
+      .eq("visible_to_client", true),
+    admin
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .eq("project_id", project.id)
+      .eq("visible_to_client", true)
+      .in("status", ["interested", "replied"]),
+    admin
+      .from("send_proofs")
+      .select("id, display_path, created_at")
+      .eq("project_id", project.id)
+      .eq("visible_to_client", true)
+      .order("created_at", { ascending: false })
+      .limit(24),
+  ]);
 
-  const { count: total } = await admin
-    .from("leads")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true);
-
-  const { count: interested } = await admin
-    .from("leads")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true)
-    .in("status", ["interested", "replied"]);
-
-  const { data: proofRows } = await admin
-    .from("send_proofs")
-    .select("id, display_path, created_at")
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  const proofs = await signedProofUrls(admin, proofRows || []);
+  const proofs = await signedProofUrls(admin, proofRowsRes.data || []);
 
   return {
     project,
     stats: {
-      total: total || 0,
-      interested: interested || 0,
+      total: totalRes.count || 0,
+      interested: interestedRes.count || 0,
       sends: proofs.filter((p) => p.image_url).length,
     },
-    responses: responses || [],
+    responses: responsesRes.data || [],
     proofs: proofs.filter((p) => p.image_url),
   };
 }
