@@ -21,14 +21,16 @@ export default function EmbedCampaignPortal({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Refresh in background if we already have SSR data; otherwise load fresh
+    // If the server already sent data, skip the extra round-trip on first paint
+    if (initialLive) return;
+
     let cancelled = false;
     fetch(`/api/embed/portal?token=${encodeURIComponent(token)}`)
       .then((r) => r.json())
       .then((d) => {
         if (cancelled) return;
         if (d.error) {
-          if (!initialLive) setError(d.error);
+          setError(d.error);
           return;
         }
         const mapped = mapPortalToDashboard(d);
@@ -36,7 +38,7 @@ export default function EmbedCampaignPortal({
         setLive(brand ? { ...mapped, clientLabel: brand } : mapped);
       })
       .catch(() => {
-        if (!cancelled && !initialLive) setError("Failed to load campaign data");
+        if (!cancelled) setError("Failed to load campaign data");
       });
     return () => {
       cancelled = true;

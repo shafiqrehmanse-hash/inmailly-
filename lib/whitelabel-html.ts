@@ -60,7 +60,10 @@ export function buildWhitelabelDashboardHtml(opts: {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
+  <!-- wl-v3-fast -->
   <title>${title}</title>
+  <link rel="dns-prefetch" href="https://www.inmailly.com">
+  <link rel="preconnect" href="https://www.inmailly.com" crossorigin>
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; height: 100%; background: #07070b; color: #e4e4e7; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }

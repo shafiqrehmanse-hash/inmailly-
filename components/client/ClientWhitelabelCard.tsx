@@ -114,6 +114,10 @@ export default function ClientWhitelabelCard() {
         the page. Open{" "}
         <code className="text-lux-text/80">yourdomain.com/{info.filename}</code> or link it from your menu.
       </p>
+      <p className="text-sm text-amber-300/90 mt-3 leading-relaxed border border-amber-500/30 bg-amber-500/10 px-3 py-2 rounded-lg">
+        Important: after every download, <strong>replace the old HTML file</strong> on your host. Old files stay
+        slow and outdated — the live page only updates when you overwrite it in cPanel / File Manager.
+      </p>
 
       <div className="mt-4 space-y-3 max-w-md">
         <div>
