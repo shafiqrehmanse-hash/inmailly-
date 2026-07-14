@@ -15,25 +15,30 @@ function escJs(s: string) {
     .replace(/\r/g, "");
 }
 
-/** Obfuscate URL so casual View Source does not show a clear third-party domain. */
-function packUrl(url: string): string {
-  const bytes = new TextEncoder().encode(url);
+function toBase64(utf8: string): string {
+  const bytes = new TextEncoder().encode(utf8);
   let binary = "";
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
-  const b64 =
-    typeof btoa !== "undefined"
-      ? btoa(binary)
-      : Buffer.from(url, "utf8").toString("base64");
-  return b64.split("").reverse().join("");
+  if (typeof btoa !== "undefined") return btoa(binary);
+  return Buffer.from(utf8, "utf8").toString("base64");
 }
 
-/** Browser SHA-256 hex — used when downloading the white-label HTML. */
+/** Obfuscate URL so casual View Source does not show a clear third-party domain. */
+function packUrl(url: string): string {
+  return toBase64(url).split("").reverse().join("");
+}
+
+/**
+ * Password gate token — works on HTTP and HTTPS.
+ * (Browsers block crypto.subtle on http:// which broke unlock on client hosts.)
+ */
+export function sealWhitelabelPassword(password: string): string {
+  return toBase64(`wl-v4:${password.trim()}`).split("").reverse().join("");
+}
+
+/** Kept for download UI — async wrapper around HTTP-safe seal. */
 export async function hashWhitelabelPasswordBrowser(password: string): Promise<string> {
-  const data = new TextEncoder().encode(password.trim());
-  const buf = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  return sealWhitelabelPassword(password);
 }
 
 /**
@@ -41,18 +46,19 @@ export async function hashWhitelabelPasswordBrowser(password: string): Promise<s
  * - Password gate before the dashboard appears
  * - No third-party brand text / no "open on another site" link
  * - Soft loading (never times out into an external redirect)
+ * - Unlock works on HTTP (no crypto.subtle)
  */
 export function buildWhitelabelDashboardHtml(opts: {
   embedUrl: string;
   pageTitle: string;
-  /** SHA-256 hex of the access password */
+  /** Sealed access password from sealWhitelabelPassword / hashWhitelabelPasswordBrowser */
   passwordHash: string;
   companyName?: string;
 }) {
   const title = esc(opts.pageTitle);
   const brand = esc((opts.companyName || opts.pageTitle).trim() || "Dashboard");
   const packed = escJs(packUrl(opts.embedUrl));
-  const passwordHash = escJs(opts.passwordHash);
+  const passwordSeal = escJs(opts.passwordHash);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -60,7 +66,7 @@ export function buildWhitelabelDashboardHtml(opts: {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <!-- wl-v3-fast -->
+  <!-- wl-v4-http -->
   <title>${title}</title>
   <link rel="dns-prefetch" href="https://www.inmailly.com">
   <link rel="preconnect" href="https://www.inmailly.com" crossorigin>
@@ -71,7 +77,7 @@ export function buildWhitelabelDashboardHtml(opts: {
       position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
       padding: 24px; background: #07070b; z-index: 40;
     }
-    #gate.hidden { display: none; }
+    #gate.hidden { display: none !important; }
     .gate-card {
       width: 100%; max-width: 400px; padding: 36px 32px; border-radius: 16px;
       background: #12121a; border: 1px solid rgba(255,255,255,0.08);
@@ -104,21 +110,29 @@ export function buildWhitelabelDashboardHtml(opts: {
     #gate-error { display: none; margin-top: 12px; color: #f87171; font-size: 13px; font-weight: 600; }
     #gate-error.show { display: block; }
     .gate-foot { margin-top: 18px; font-size: 11px; color: #52525b; }
-    #shell { display: none; height: 100%; }
-    #shell.ready { display: block; }
-    /* Keep iframe warm off-screen while password gate is up */
-    #shell:not(.ready) {
+    #shell {
+      display: none;
+      height: 100%;
+    }
+    #shell.ready {
+      display: block !important;
+      position: static !important;
+      left: auto !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+    #shell.warming {
       display: block !important;
       position: fixed;
-      left: -9999px;
+      left: -10000px;
       top: 0;
       width: 100vw;
       height: 100vh;
       pointer-events: none;
       opacity: 0;
     }
-    #shell:not(.ready) #loader,
-    #shell:not(.ready) #retry { display: none !important; }
+    #shell.warming #loader,
+    #shell.warming #retry { display: none !important; }
     #loader {
       position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 12px; background: #07070b; z-index: 20; transition: opacity 0.35s;
@@ -179,8 +193,8 @@ export function buildWhitelabelDashboardHtml(opts: {
   <script>
     (function () {
       var PACKED = "${packed}";
-      var HASH = "${passwordHash}";
-      var SESSION_KEY = "wl_unlocked_" + HASH.slice(0, 16);
+      var SEAL = "${passwordSeal}";
+      var SESSION_KEY = "wl_unlocked_" + SEAL.slice(0, 12);
 
       function unpack(s) {
         try {
@@ -191,13 +205,15 @@ export function buildWhitelabelDashboardHtml(opts: {
         }
       }
 
-      function sha256Hex(text) {
-        var data = new TextEncoder().encode(text);
-        return crypto.subtle.digest("SHA-256", data).then(function (buf) {
-          return Array.from(new Uint8Array(buf))
-            .map(function (b) { return b.toString(16).padStart(2, "0"); })
+      function sealPassword(password) {
+        try {
+          return btoa(unescape(encodeURIComponent("wl-v4:" + String(password || "").trim())))
+            .split("")
+            .reverse()
             .join("");
-        });
+        } catch (e) {
+          return "";
+        }
       }
 
       var gate = document.getElementById("gate");
@@ -210,13 +226,10 @@ export function buildWhitelabelDashboardHtml(opts: {
       var gateError = document.getElementById("gate-error");
       var unlockBtn = document.getElementById("unlock-btn");
       var loaded = false;
-      var softTimer = null;
       var dashboardSrc = unpack(PACKED);
-      var preloading = false;
 
       document.getElementById("toggle-pwd").addEventListener("click", function () {
-        var show = pwdInput.type === "password";
-        pwdInput.type = show ? "text" : "password";
+        pwdInput.type = pwdInput.type === "password" ? "text" : "password";
       });
 
       function hideLoader() {
@@ -228,77 +241,80 @@ export function buildWhitelabelDashboardHtml(opts: {
         retry.classList.add("show");
       }
 
-      /** Start loading dashboard in the background while password gate is visible. */
-      function prefetchDashboard() {
-        if (!dashboardSrc || preloading || frame.getAttribute("src")) return;
-        preloading = true;
+      function warmDashboard() {
+        if (!dashboardSrc || frame.getAttribute("src")) return;
+        shell.classList.add("warming");
         frame.src = dashboardSrc;
       }
 
       function revealDashboard() {
         gate.classList.add("hidden");
+        shell.classList.remove("warming");
         shell.classList.add("ready");
         retry.classList.remove("show");
-        if (loaded) {
-          hideLoader();
+
+        if (!dashboardSrc) {
+          showRetry();
           return;
         }
-        loader.classList.remove("hidden");
+
         if (!frame.getAttribute("src")) {
-          if (!dashboardSrc) {
-            showRetry();
-            return;
-          }
           frame.src = dashboardSrc;
         }
-        if (softTimer) clearTimeout(softTimer);
-        softTimer = setTimeout(function () {
-          if (!loaded) {
-            var p = loader.querySelector("p");
-            if (p) p.textContent = "Still opening… one moment";
-          }
-        }, 8000);
+
+        if (loaded) {
+          hideLoader();
+        } else {
+          loader.classList.remove("hidden");
+          setTimeout(function () {
+            if (!loaded) {
+              var p = loader.querySelector("p");
+              if (p) p.textContent = "Still opening… one moment";
+            }
+          }, 6000);
+          setTimeout(function () {
+            if (shell.classList.contains("ready")) hideLoader();
+          }, 18000);
+        }
       }
 
       frame.addEventListener("load", function () {
+        if (!frame.getAttribute("src")) return;
         loaded = true;
-        if (softTimer) clearTimeout(softTimer);
-        // Only hide spinner once the gate is already unlocked
-        if (shell.classList.contains("ready")) {
-          setTimeout(hideLoader, 120);
-        }
+        if (shell.classList.contains("ready")) hideLoader();
       });
 
       document.getElementById("retry-btn").addEventListener("click", function () {
         loaded = false;
         frame.removeAttribute("src");
-        preloading = false;
+        shell.classList.remove("ready");
         revealDashboard();
       });
 
       form.addEventListener("submit", function (e) {
         e.preventDefault();
         gateError.classList.remove("show");
-        unlockBtn.disabled = true;
         var entered = (pwdInput.value || "").trim();
-        sha256Hex(entered).then(function (hex) {
-          unlockBtn.disabled = false;
-          if (hex !== HASH) {
-            gateError.classList.add("show");
-            pwdInput.focus();
-            return;
-          }
-          try { sessionStorage.setItem(SESSION_KEY, "1"); } catch (err) {}
-          revealDashboard();
-        }).catch(function () {
-          unlockBtn.disabled = false;
+        if (!entered) {
+          gateError.textContent = "Enter your password.";
           gateError.classList.add("show");
-        });
+          return;
+        }
+        unlockBtn.disabled = true;
+        var ok = sealPassword(entered) === SEAL;
+        unlockBtn.disabled = false;
+        if (!ok) {
+          gateError.textContent = "Incorrect password. Try again.";
+          gateError.classList.add("show");
+          pwdInput.focus();
+          return;
+        }
+        try { sessionStorage.setItem(SESSION_KEY, "1"); } catch (err) {}
+        revealDashboard();
       });
 
-      // Warm the dashboard while the visitor types their password
-      setTimeout(prefetchDashboard, 200);
-      pwdInput.addEventListener("focus", prefetchDashboard, { once: true });
+      setTimeout(warmDashboard, 100);
+      pwdInput.addEventListener("focus", warmDashboard, { once: true });
 
       try {
         if (sessionStorage.getItem(SESSION_KEY) === "1") {
