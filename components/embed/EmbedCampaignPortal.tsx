@@ -6,7 +6,14 @@ import ClientPackageProgress from "@/components/client/ClientPackageProgress";
 import { mapPortalToDashboard } from "@/lib/map-portal-to-dashboard";
 import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 
-export default function EmbedCampaignPortal({ token }: { token: string }) {
+export default function EmbedCampaignPortal({
+  token,
+  brandName,
+}: {
+  token: string;
+  /** Optional white-label client name override from ?brand= */
+  brandName?: string | null;
+}) {
   const [live, setLive] = useState<ClientDashboardLiveData | null>(null);
   const [error, setError] = useState("");
 
@@ -15,10 +22,14 @@ export default function EmbedCampaignPortal({ token }: { token: string }) {
       .then((r) => r.json())
       .then((d) => {
         if (d.error) setError(d.error);
-        else setLive(mapPortalToDashboard(d));
+        else {
+          const mapped = mapPortalToDashboard(d);
+          const brand = brandName?.trim();
+          setLive(brand ? { ...mapped, clientLabel: brand } : mapped);
+        }
       })
       .catch(() => setError("Failed to load campaign data"));
-  }, [token]);
+  }, [token, brandName]);
 
   if (error) {
     return (

@@ -21,6 +21,7 @@ type WhitelabelInfo = {
 export default function ClientWhitelabelCard() {
   const [info, setInfo] = useState<WhitelabelInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [clientName, setClientName] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -30,7 +31,10 @@ export default function ClientWhitelabelCard() {
     fetch("/api/client/whitelabel")
       .then((r) => r.json())
       .then((d) => {
-        if (!d.error) setInfo(d);
+        if (!d.error) {
+          setInfo(d);
+          setClientName((prev) => prev || d.companyName || "");
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -43,6 +47,11 @@ export default function ClientWhitelabelCard() {
   async function downloadFile() {
     if (!info?.embedUrl) return;
     setFormError("");
+    const brand = clientName.trim();
+    if (!brand) {
+      setFormError("Enter your client name — it appears on the login screen and dashboard.");
+      return;
+    }
     const pwd = password.trim();
     if (pwd.length < 6) {
       setFormError("Choose a password with at least 6 characters.");
@@ -54,10 +63,11 @@ export default function ClientWhitelabelCard() {
     }
 
     const passwordHash = await hashWhitelabelPasswordBrowser(pwd);
+    const embedWithBrand = `${info.embedUrl}${info.embedUrl.includes("?") ? "&" : "?"}brand=${encodeURIComponent(brand)}`;
     const html = buildWhitelabelDashboardHtml({
-      embedUrl: info.embedUrl,
-      pageTitle: `${info.companyName} Dashboard`,
-      companyName: `${info.companyName} Dashboard`,
+      embedUrl: embedWithBrand,
+      pageTitle: `${brand} Dashboard`,
+      companyName: brand,
       passwordHash,
     });
     const blob = new Blob([html], { type: "text/html;charset=utf-8" });
@@ -106,7 +116,23 @@ export default function ClientWhitelabelCard() {
       </p>
 
       <div className="mt-4 space-y-3 max-w-md">
-        <p className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-cyan">Board access password</p>
+        <div>
+          <p className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-cyan">Client name</p>
+          <p className="text-xs text-lux-muted mt-1 mb-2">
+            Shown on the password login and inside the dashboard header — use your client&apos;s brand name (e.g.
+            Peachy Leads).
+          </p>
+          <input
+            className="lux-input"
+            type="text"
+            placeholder="e.g. Peachy Leads"
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            autoComplete="organization"
+          />
+        </div>
+
+        <p className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-cyan pt-1">Board access password</p>
         <p className="text-xs text-lux-muted -mt-1">
           Required. Anyone visiting your white-label URL must enter this password first. Share it only with your
           client.
@@ -141,7 +167,7 @@ export default function ClientWhitelabelCard() {
       </div>
 
       <ol className="mt-4 space-y-2 text-sm text-lux-muted list-decimal list-inside">
-        <li>Set a password above, then click download</li>
+        <li>Enter client name + password, then click download</li>
         <li>
           Upload <strong className="text-lux-text">{info.filename}</strong> to your site&apos;s public folder
           (replace the old file if you had one)
