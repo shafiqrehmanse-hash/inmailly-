@@ -193,7 +193,7 @@ export function parseNamedLinksFromPaste(paste: string): NamedLinkParse[] {
     if (parts.length < 3) continue;
 
     // Find URL part (usually last)
-    let urlIdx = parts.findIndex((p) => /linkedin\.com|https?:\/\//i.test(p));
+    const urlIdx = parts.findIndex((p) => /linkedin\.com|https?:\/\//i.test(p));
     if (urlIdx < 0) {
       const extracted = extractUrlFromLine(line);
       if (!extracted) continue;
