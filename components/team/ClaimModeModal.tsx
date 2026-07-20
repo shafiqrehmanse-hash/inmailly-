@@ -8,25 +8,37 @@ export default function ClaimModeModal({
   onClose,
   onChoose,
   intelligenceAvailable,
+  intelligenceBlocked,
+  intelligenceBlockMessage,
   checking,
 }: {
   open: boolean;
   onClose: () => void;
   onChoose: (mode: "intelligence" | "usual") => void;
   intelligenceAvailable: number | null;
+  intelligenceBlocked?: boolean;
+  intelligenceBlockMessage?: string | null;
   checking?: boolean;
 }) {
   const noIntel = intelligenceAvailable === 0;
+  const finishFirst = Boolean(intelligenceBlocked);
 
   return (
     <Modal open={open} onClose={onClose} title="How do you want to work this link?">
       <div className="space-y-4">
         <p className="text-sm text-lux-muted leading-relaxed">
-          Choose your outreach mode. Intelligence uses a LinkedIn profile screenshot to write a personalized
-          InMail for you.
+          Prefer using <strong className="text-lux-text">Get Usual / Get Intelligence</strong> buttons above for
+          batches. Or claim this one link now.
         </p>
 
-        {noIntel && (
+        {finishFirst && (
+          <div className="rounded-xl border-2 border-amber-500/50 bg-amber-500/15 px-4 py-3 text-sm text-amber-100 font-semibold leading-relaxed">
+            {intelligenceBlockMessage ||
+              "You already have Intelligence links. Please finish those first before claiming more."}
+          </div>
+        )}
+
+        {noIntel && !finishFirst && (
           <div className="rounded-xl border-2 border-red-500/50 bg-red-500/15 px-4 py-3 text-sm text-red-200 font-semibold leading-relaxed">
             No intelligence links in the pool right now. Ask admin to upload links with{" "}
             <span className="text-red-100">First name, Last name, LinkedIn URL</span>. You can still use Usual
@@ -37,10 +49,10 @@ export default function ClaimModeModal({
         <div className="grid sm:grid-cols-2 gap-3">
           <button
             type="button"
-            disabled={checking || noIntel}
+            disabled={checking || noIntel || finishFirst}
             onClick={() => onChoose("intelligence")}
             className={`text-left rounded-2xl border p-4 transition-all ${
-              noIntel
+              noIntel || finishFirst
                 ? "border-red-500/30 bg-red-500/5 opacity-60 cursor-not-allowed"
                 : "border-lux-cyan/40 bg-lux-cyan/10 hover:border-lux-cyan hover:bg-lux-cyan/15"
             }`}
@@ -50,7 +62,7 @@ export default function ClaimModeModal({
             <p className="text-xs text-lux-muted mt-2 leading-relaxed">
               Open profile → paste screenshot → AI writes custom subject + InMail → send → mark complete.
             </p>
-            {intelligenceAvailable != null && intelligenceAvailable > 0 && (
+            {intelligenceAvailable != null && intelligenceAvailable > 0 && !finishFirst && (
               <p className="text-[0.7rem] text-lux-cyan mt-2 tabular-nums">
                 {intelligenceAvailable} named link{intelligenceAvailable === 1 ? "" : "s"} ready
               </p>

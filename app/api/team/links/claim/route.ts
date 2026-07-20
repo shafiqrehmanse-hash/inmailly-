@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  LINK_INTELLIGENCE_ASSIGN,
+  intelligenceAssignBlockMessage,
+} from "@/lib/link-auto-assign";
 import { canUseOutreachTools } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentMember } from "@/lib/team";
 
-/** Count available intelligence-ready links in the pool. */
+/** Count available intelligence-ready links + member's active intelligence count. */
 export async function GET() {
   const member = await getCurrentMember();
   if (!member?.is_active || !canUseOutreachTools(member.role)) {
@@ -11,15 +15,33 @@ export async function GET() {
   }
 
   const admin = createAdminClient();
-  const { count } = await admin
-    .from("outreach_links")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "available")
-    .is("member_id", null)
-    .not("first_name", "is", null)
-    .neq("first_name", "");
+  const [poolRes, activeRes] = await Promise.all([
+    admin
+      .from("outreach_links")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "available")
+      .is("member_id", null)
+      .not("first_name", "is", null)
+      .neq("first_name", ""),
+    admin
+      .from("outreach_links")
+      .select("*", { count: "exact", head: true })
+      .eq("member_id", member.id)
+      .eq("status", "claimed")
+      .eq("outreach_mode", "intelligence"),
+  ]);
 
-  return NextResponse.json({ intelligenceAvailable: count || 0 });
+  const intelligenceAvailable = poolRes.count || 0;
+  const intelligenceActive = activeRes.count || 0;
+  const blocked =
+    intelligenceActive >= LINK_INTELLIGENCE_ASSIGN.maxActiveBeforeBlock;
+
+  return NextResponse.json({
+    intelligenceAvailable,
+    intelligenceActive,
+    blocked,
+    blockMessage: blocked ? intelligenceAssignBlockMessage(intelligenceActive) : null,
+  });
 }
 
 /**
@@ -40,6 +62,24 @@ export async function POST(request: NextRequest) {
   const now = new Date().toISOString();
 
   if (mode === "intelligence") {
+    const { count: intelActive } = await admin
+      .from("outreach_links")
+      .select("*", { count: "exact", head: true })
+      .eq("member_id", member.id)
+      .eq("status", "claimed")
+      .eq("outreach_mode", "intelligence");
+
+    if ((intelActive || 0) >= LINK_INTELLIGENCE_ASSIGN.maxActiveBeforeBlock) {
+      return NextResponse.json(
+        {
+          error: intelligenceAssignBlockMessage(intelActive || 0),
+          code: "FINISH_INTELLIGENCE_FIRST",
+          intelligenceActive: intelActive || 0,
+        },
+        { status: 409 }
+      );
+    }
+
     const { count: intelCount } = await admin
       .from("outreach_links")
       .select("*", { count: "exact", head: true })

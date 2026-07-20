@@ -37,6 +37,8 @@ export default function LinksPage() {
   const [claimTarget, setClaimTarget] = useState<OutreachLink | null>(null);
   const [claimOpen, setClaimOpen] = useState(false);
   const [intelAvailable, setIntelAvailable] = useState<number | null>(null);
+  const [intelClaimBlocked, setIntelClaimBlocked] = useState(false);
+  const [intelClaimBlockMsg, setIntelClaimBlockMsg] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [intelLink, setIntelLink] = useState<OutreachLink | null>(null);
   const [intelOpen, setIntelOpen] = useState(false);
@@ -164,10 +166,14 @@ export default function LinksPage() {
     setClaimTarget(link);
     setClaimOpen(true);
     setIntelAvailable(null);
+    setIntelClaimBlocked(false);
+    setIntelClaimBlockMsg(null);
     const res = await fetch("/api/team/links/claim");
     if (res.ok) {
       const data = await res.json();
       setIntelAvailable(data.intelligenceAvailable ?? 0);
+      setIntelClaimBlocked(Boolean(data.blocked));
+      setIntelClaimBlockMsg(data.blockMessage || null);
     } else {
       setIntelAvailable(0);
     }
@@ -185,6 +191,12 @@ export default function LinksPage() {
     setClaiming(false);
 
     if (!res.ok) {
+      if (data.code === "FINISH_INTELLIGENCE_FIRST") {
+        setIntelClaimBlocked(true);
+        setIntelClaimBlockMsg(data.error || null);
+        showToast(data.error || "Finish your Intelligence links first", "error");
+        return;
+      }
       if (data.code === "NO_INTELLIGENCE_LINKS") {
         setIntelAvailable(0);
         showToast("No intelligence links available — upload named links or use Usual", "error");
@@ -261,8 +273,8 @@ export default function LinksPage() {
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl lux-gradient-text">🔗 Outreach Links</h1>
         <p className="text-lux-muted text-[0.88rem] mt-2 leading-relaxed max-w-2xl">
-          Claim a link, choose <strong className="text-lux-text">Intelligence</strong> or{" "}
-          <strong className="text-lux-text">Usual</strong>, run outreach, then mark complete.
+          Use the buttons below to get <strong className="text-lux-text">Usual</strong> or{" "}
+          <strong className="text-lux-text">Intelligence</strong> links, finish outreach, then mark complete.
         </p>
       </div>
 
@@ -353,6 +365,8 @@ export default function LinksPage() {
         }}
         onChoose={handleClaimMode}
         intelligenceAvailable={intelAvailable}
+        intelligenceBlocked={intelClaimBlocked}
+        intelligenceBlockMessage={intelClaimBlockMsg}
         checking={claiming || intelAvailable === null}
       />
 

@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
-import { LINK_AUTO_ASSIGN } from "@/lib/link-auto-assign";
+import { LINK_AUTO_ASSIGN, LINK_INTELLIGENCE_ASSIGN } from "@/lib/link-auto-assign";
 import { cn } from "@/lib/utils";
 
-type AutoAssignStatus = {
+type AssignStatus = {
+  mode: "usual" | "intelligence";
   activeCount: number;
   poolCount: number;
   batchSize: number;
@@ -23,14 +24,19 @@ export default function AutoAssignPanel({
   onAssigned: () => void;
   onToast: (message: string, type?: "success" | "error" | "info") => void;
 }) {
-  const [status, setStatus] = useState<AutoAssignStatus | null>(null);
+  const [usual, setUsual] = useState<AssignStatus | null>(null);
+  const [intel, setIntel] = useState<AssignStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [assigning, setAssigning] = useState(false);
+  const [assigning, setAssigning] = useState<"usual" | "intelligence" | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/team/links/auto-assign");
-    if (res.ok) setStatus(await res.json());
+    const [uRes, iRes] = await Promise.all([
+      fetch("/api/team/links/auto-assign?mode=usual"),
+      fetch("/api/team/links/auto-assign?mode=intelligence"),
+    ]);
+    if (uRes.ok) setUsual(await uRes.json());
+    if (iRes.ok) setIntel(await iRes.json());
     setLoading(false);
   }, []);
 
@@ -38,14 +44,18 @@ export default function AutoAssignPanel({
     load();
   }, [load]);
 
-  async function handleAutoAssign() {
-    setAssigning(true);
-    const res = await fetch("/api/team/links/auto-assign", { method: "POST" });
+  async function handleAssign(mode: "usual" | "intelligence") {
+    setAssigning(mode);
+    const res = await fetch("/api/team/links/auto-assign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode }),
+    });
     const data = await res.json();
-    setAssigning(false);
+    setAssigning(null);
 
     if (!res.ok) {
-      onToast(data.error || "Could not auto-assign", "error");
+      onToast(data.error || "Could not assign links", "error");
       load();
       return;
     }
@@ -55,70 +65,129 @@ export default function AutoAssignPanel({
     onAssigned();
   }
 
-  if (loading && !status) {
-    return <div className="lux-skeleton h-28 rounded-2xl" />;
+  if (loading && !usual && !intel) {
+    return <div className="lux-skeleton h-36 rounded-2xl" />;
   }
 
-  if (!status) return null;
-
   return (
-    <div
-      className={cn(
-        "lux-card-featured p-5 sm:p-6 space-y-4",
-        status.blocked && "border-amber-500/25"
-      )}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-lux-cyan mb-1">
-            Auto-assign from pool
-          </p>
-          <h2 className="font-bricolage font-extrabold text-lg text-lux-text">
-            Get up to {LINK_AUTO_ASSIGN.batchSize} links instantly
-          </h2>
-          <p className="text-sm text-lux-muted mt-1 max-w-lg leading-relaxed">
-            One click assigns links from the shared pool — no admin needed. You must have fewer than{" "}
-            {LINK_AUTO_ASSIGN.maxActiveBeforeBlock} active links, then mark each{" "}
-            <strong className="text-lux-text">Used</strong> when outreach is done.
-          </p>
-        </div>
-        <div className="text-right text-sm tabular-nums">
-          <div className="text-lux-muted">
-            Your active:{" "}
-            <span className={cn("font-bold", status.blocked ? "text-amber-300" : "text-lux-cyan")}>
-              {status.activeCount}
-            </span>
-          </div>
-          <div className="text-lux-muted mt-0.5">
-            Pool: <span className="font-bold text-red-400">{status.poolCount}</span>
-          </div>
-        </div>
+    <div className="lux-card-featured p-5 sm:p-6 space-y-5">
+      <div>
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-lux-cyan mb-1">
+          Get links from pool
+        </p>
+        <h2 className="font-bricolage font-extrabold text-lg text-lux-text">
+          Choose Usual or Intelligence
+        </h2>
+        <p className="text-sm text-lux-muted mt-1 max-w-2xl leading-relaxed">
+          Usual uses normal URL links. Intelligence uses named links (up to{" "}
+          {LINK_INTELLIGENCE_ASSIGN.batchSize} at a time) — finish your active Intelligence links before
+          requesting another batch.
+        </p>
       </div>
 
-      {status.blocked ? (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-4 py-3 text-sm text-amber-100/90">
-          {status.blockMessage}
+      <div className="grid sm:grid-cols-2 gap-4">
+        {/* Usual */}
+        <div
+          className={cn(
+            "rounded-2xl border p-4 space-y-3",
+            usual?.blocked ? "border-amber-500/30 bg-amber-500/[0.06]" : "border-white/10 bg-white/[0.03]"
+          )}
+        >
+          <div>
+            <p className="text-[0.65rem] font-bold uppercase tracking-widest text-lux-muted mb-1">Normal</p>
+            <p className="font-bricolage font-extrabold text-lux-text text-lg">Usual links</p>
+            <p className="text-xs text-lux-muted mt-1.5 leading-relaxed">
+              Up to {LINK_AUTO_ASSIGN.batchSize} links. Need fewer than{" "}
+              {LINK_AUTO_ASSIGN.maxActiveBeforeBlock} active Usual links.
+            </p>
+          </div>
+          {usual && (
+            <div className="text-xs text-lux-muted tabular-nums space-y-0.5">
+              <div>
+                Your active:{" "}
+                <span className={cn("font-bold", usual.blocked ? "text-amber-300" : "text-lux-text")}>
+                  {usual.activeCount}
+                </span>
+              </div>
+              <div>
+                Pool: <span className="font-bold text-red-400">{usual.poolCount}</span>
+              </div>
+            </div>
+          )}
+          {usual?.blocked ? (
+            <p className="text-xs text-amber-100/90 leading-relaxed">{usual.blockMessage}</p>
+          ) : usual?.poolCount === 0 ? (
+            <p className="text-xs text-lux-muted">No Usual links in the pool right now.</p>
+          ) : (
+            <p className="text-xs text-lux-muted">
+              Ready: <strong className="text-lux-cyan">{usual?.wouldAssign ?? 0}</strong> link
+              {(usual?.wouldAssign ?? 0) === 1 ? "" : "s"}
+            </p>
+          )}
+          <Button
+            variant="lux-cyan"
+            size="md"
+            disabled={!usual?.canAutoAssign || assigning !== null}
+            onClick={() => handleAssign("usual")}
+            className="w-full"
+          >
+            {assigning === "usual" ? "Assigning…" : "Get Usual links"}
+          </Button>
         </div>
-      ) : status.poolCount === 0 ? (
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-lux-muted">
-          Pool is empty — check back when admin adds more links.
-        </div>
-      ) : (
-        <p className="text-xs text-lux-muted">
-          Ready to assign <strong className="text-lux-cyan">{status.wouldAssign}</strong> link
-          {status.wouldAssign === 1 ? "" : "s"} to your queue.
-        </p>
-      )}
 
-      <Button
-        variant="lux-cyan"
-        size="md"
-        disabled={!status.canAutoAssign || assigning}
-        onClick={handleAutoAssign}
-        className="w-full sm:w-auto"
-      >
-        {assigning ? "Assigning…" : "Auto assign me"}
-      </Button>
+        {/* Intelligence */}
+        <div
+          className={cn(
+            "rounded-2xl border p-4 space-y-3",
+            intel?.blocked
+              ? "border-amber-500/30 bg-amber-500/[0.06]"
+              : "border-lux-cyan/35 bg-lux-cyan/10"
+          )}
+        >
+          <div>
+            <p className="text-[0.65rem] font-bold uppercase tracking-widest text-lux-cyan mb-1">✦ AI</p>
+            <p className="font-bricolage font-extrabold text-lux-text text-lg">Intelligence links</p>
+            <p className="text-xs text-lux-muted mt-1.5 leading-relaxed">
+              Up to {LINK_INTELLIGENCE_ASSIGN.batchSize} named links. You must have{" "}
+              <strong className="text-lux-text">0</strong> active Intelligence links to request more.
+            </p>
+          </div>
+          {intel && (
+            <div className="text-xs text-lux-muted tabular-nums space-y-0.5">
+              <div>
+                Your Intelligence active:{" "}
+                <span className={cn("font-bold", intel.blocked ? "text-amber-300" : "text-lux-cyan")}>
+                  {intel.activeCount}
+                </span>
+              </div>
+              <div>
+                Named pool: <span className="font-bold text-lux-cyan">{intel.poolCount}</span>
+              </div>
+            </div>
+          )}
+          {intel?.blocked ? (
+            <p className="text-xs text-amber-100/90 leading-relaxed font-semibold">{intel.blockMessage}</p>
+          ) : intel?.poolCount === 0 ? (
+            <p className="text-xs text-lux-muted">
+              No named Intelligence links — ask admin to upload with First, Last, URL.
+            </p>
+          ) : (
+            <p className="text-xs text-lux-muted">
+              Ready: <strong className="text-lux-cyan">{intel?.wouldAssign ?? 0}</strong> link
+              {(intel?.wouldAssign ?? 0) === 1 ? "" : "s"}
+            </p>
+          )}
+          <Button
+            variant="lux"
+            size="md"
+            disabled={!intel?.canAutoAssign || assigning !== null}
+            onClick={() => handleAssign("intelligence")}
+            className="w-full"
+          >
+            {assigning === "intelligence" ? "Assigning…" : "Get Intelligence links"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

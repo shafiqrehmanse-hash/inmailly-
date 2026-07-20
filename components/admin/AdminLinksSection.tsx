@@ -369,8 +369,9 @@ export default function AdminLinksSection({
     <div className="space-y-6">
       <div className="lux-card p-5 space-y-4">
         <h3 className="font-bricolage font-bold">Import links</h3>
-        <p className="text-xs text-lux-cyan font-semibold -mt-2">
-          New: choose URLs only or ✦ Named (Intelligence) below
+        <p className="text-xs text-lux-muted -mt-2">
+          Choose upload type: <strong className="text-lux-text">Normal</strong> (Usual pool) or{" "}
+          <strong className="text-lux-cyan">Intelligence</strong> (named First + Last + URL).
         </p>
         <div className="flex flex-wrap gap-2">
           <button
@@ -382,7 +383,7 @@ export default function AdminLinksSection({
                 : "border-white/10 text-lux-muted"
             }`}
           >
-            URLs only (usual)
+            Normal (Usual)
           </button>
           <button
             type="button"
@@ -393,7 +394,7 @@ export default function AdminLinksSection({
                 : "border-white/10 text-lux-muted"
             }`}
           >
-            ✦ Named (Intelligence)
+            ✦ Intelligence
           </button>
         </div>
         <textarea
