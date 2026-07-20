@@ -115,6 +115,13 @@ export default function LinkCard({
         {truncateUrl(link.url, 60)}
       </a>
 
+      {mode === "mine" && link.outreach_mode === "intelligence" && (
+        <div className="text-xs text-lux-cyan/90 bg-lux-cyan/[0.07] border border-lux-cyan/25 pl-3 py-2.5 mb-3 rounded-xl leading-relaxed">
+          Open profile → <strong className="text-lux-text">Win+Shift+S</strong> → click{" "}
+          <strong className="text-lux-text">Paste screenshot</strong> → Ctrl+V → generate InMail.
+        </div>
+      )}
+
       {link.ai_hint && (
         <div className="text-xs text-lux-muted/90 bg-gradient-to-r from-lux-blue/10 to-transparent border border-lux-blue/20 border-l-lux-blue/50 pl-3 py-2.5 mb-3 rounded-xl">
           {link.ai_hint}
@@ -158,7 +165,7 @@ export default function LinkCard({
             )}
             {showIntelBtn && (
               <Button variant="lux" size="sm" className={btnClass} onClick={onIntelligenceInMail}>
-                ✦ Generate InMail
+                ✦ Paste screenshot
               </Button>
             )}
             {mode === "mine" && onMarkUsed && (

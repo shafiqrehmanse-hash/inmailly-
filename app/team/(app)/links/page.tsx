@@ -289,8 +289,9 @@ export default function LinksPage() {
 
       <div className="lux-card-elite p-4 text-lux-muted text-[0.84rem] leading-relaxed">
         <strong className="text-lux-cyan text-[0.7rem] uppercase tracking-wide block mb-1.5">✦ Intelligence tips</strong>
-        Named links (first + last name) unlock Intelligence mode. Open profile → Print Screen → paste screenshot →
-        generate personalized InMail → send on LinkedIn → mark complete.
+        On an Intelligence link, click <strong className="text-lux-text">Paste screenshot</strong>. Open the profile,
+        crop with <strong className="text-lux-text">Win+Shift+S</strong>, then <strong className="text-lux-text">Ctrl+V</strong>{" "}
+        (or upload / drag a PNG). AI writes the InMail — copy, send on LinkedIn, mark complete.
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

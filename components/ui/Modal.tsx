@@ -40,7 +40,7 @@ export default function Modal({
       <div
         className={cn(
           "relative lux-modal-panel w-full max-h-[90vh] overflow-y-auto z-10 animate-slide-up",
-          wide ? "max-w-3xl" : "max-w-lg"
+          wide ? "max-w-4xl" : "max-w-lg"
         )}
       >
         {title && (
