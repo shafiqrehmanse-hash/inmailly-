@@ -34,6 +34,12 @@ export type OutreachLink = {
   added_by: string;
   created_at: string;
   updated_at: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  outreach_mode?: "usual" | "intelligence" | null;
+  generated_subject?: string | null;
+  generated_body?: string | null;
+  generated_at?: string | null;
 };
 
 export type Lead = {

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import LinkCard from "@/components/team/LinkCard";
 import AutoAssignPanel from "@/components/team/AutoAssignPanel";
+import ClaimModeModal from "@/components/team/ClaimModeModal";
+import IntelligenceInMailModal from "@/components/team/IntelligenceInMailModal";
 import StatCard from "@/components/team/StatCard";
 import Toast, { ToastType } from "@/components/team/Toast";
 import Pagination from "@/components/ui/Pagination";
@@ -32,8 +34,14 @@ export default function LinksPage() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const { nextGeneration, isLatest } = useFetchGeneration();
 
-  const showToast = (message: string, type: ToastType = "success") =>
-    setToast({ message, type });
+  const [claimTarget, setClaimTarget] = useState<OutreachLink | null>(null);
+  const [claimOpen, setClaimOpen] = useState(false);
+  const [intelAvailable, setIntelAvailable] = useState<number | null>(null);
+  const [claiming, setClaiming] = useState(false);
+  const [intelLink, setIntelLink] = useState<OutreachLink | null>(null);
+  const [intelOpen, setIntelOpen] = useState(false);
+
+  const showToast = (message: string, type: ToastType = "success") => setToast({ message, type });
 
   const ensureMember = useCallback(async () => {
     if (memberRef.current) return memberRef.current;
@@ -41,11 +49,7 @@ export default function LinksPage() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return null;
-    const { data } = await supabase
-      .from("team_members")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
+    const { data } = await supabase.from("team_members").select("*").eq("user_id", user.id).single();
     const m = data as TeamMember | null;
     if (m) {
       memberRef.current = m;
@@ -57,25 +61,10 @@ export default function LinksPage() {
   const fetchStats = useCallback(
     async (memberId: string) => {
       const [pool, claimed, myActive, iUsed] = await Promise.all([
-        supabase
-          .from("outreach_links")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "available")
-          .is("member_id", null),
-        supabase
-          .from("outreach_links")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "claimed"),
-        supabase
-          .from("outreach_links")
-          .select("*", { count: "exact", head: true })
-          .eq("member_id", memberId)
-          .eq("status", "claimed"),
-        supabase
-          .from("outreach_links")
-          .select("*", { count: "exact", head: true })
-          .eq("used_by_member_id", memberId)
-          .eq("status", "used"),
+        supabase.from("outreach_links").select("*", { count: "exact", head: true }).eq("status", "available").is("member_id", null),
+        supabase.from("outreach_links").select("*", { count: "exact", head: true }).eq("status", "claimed"),
+        supabase.from("outreach_links").select("*", { count: "exact", head: true }).eq("member_id", memberId).eq("status", "claimed"),
+        supabase.from("outreach_links").select("*", { count: "exact", head: true }).eq("used_by_member_id", memberId).eq("status", "used"),
       ]);
       setStats({
         pool: pool.count || 0,
@@ -95,20 +84,11 @@ export default function LinksPage() {
       let query = supabase.from("outreach_links").select("*", { count: "exact" });
 
       if (activeTab === "pool") {
-        query = query
-          .eq("status", "available")
-          .is("member_id", null)
-          .order("created_at", { ascending: false });
+        query = query.eq("status", "available").is("member_id", null).order("created_at", { ascending: false });
       } else if (activeTab === "mine") {
-        query = query
-          .eq("member_id", memberId)
-          .eq("status", "claimed")
-          .order("claimed_at", { ascending: false });
+        query = query.eq("member_id", memberId).eq("status", "claimed").order("claimed_at", { ascending: false });
       } else {
-        query = query
-          .eq("used_by_member_id", memberId)
-          .eq("status", "used")
-          .order("used_at", { ascending: false });
+        query = query.eq("used_by_member_id", memberId).eq("status", "used").order("used_at", { ascending: false });
       }
 
       const { data, count, error } = await query.range(from, to);
@@ -180,27 +160,51 @@ export default function LinksPage() {
     };
   }, [supabase, refresh, tab, page]);
 
-  async function handleClaim(link: OutreachLink) {
-    if (!member) return;
-    setLinks((prev) => prev.filter((l) => l.id !== link.id));
-    const { data } = await supabase
-      .from("outreach_links")
-      .update({
-        status: "claimed",
-        member_id: member.id,
-        claimed_at: new Date().toISOString(),
-      })
-      .eq("id", link.id)
-      .eq("status", "available")
-      .is("member_id", null)
-      .select()
-      .single();
-    if (data) {
-      showToast("Link claimed!");
+  async function openClaimModal(link: OutreachLink) {
+    setClaimTarget(link);
+    setClaimOpen(true);
+    setIntelAvailable(null);
+    const res = await fetch("/api/team/links/claim");
+    if (res.ok) {
+      const data = await res.json();
+      setIntelAvailable(data.intelligenceAvailable ?? 0);
     } else {
-      showToast("Link already claimed by someone else", "error");
+      setIntelAvailable(0);
     }
-    refresh(tab, page);
+  }
+
+  async function handleClaimMode(mode: "intelligence" | "usual") {
+    if (!claimTarget) return;
+    setClaiming(true);
+    const res = await fetch("/api/team/links/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ linkId: claimTarget.id, mode }),
+    });
+    const data = await res.json();
+    setClaiming(false);
+
+    if (!res.ok) {
+      if (data.code === "NO_INTELLIGENCE_LINKS") {
+        setIntelAvailable(0);
+        showToast("No intelligence links available — upload named links or use Usual", "error");
+        return;
+      }
+      showToast(data.error || "Could not claim link", "error");
+      return;
+    }
+
+    setClaimOpen(false);
+    setClaimTarget(null);
+    showToast(mode === "intelligence" ? "Intelligence link claimed ✦" : "Link claimed!");
+    setTab("mine");
+    setPage(1);
+    refresh("mine", 1);
+
+    if (mode === "intelligence" && data.link) {
+      setIntelLink(data.link);
+      setIntelOpen(true);
+    }
   }
 
   async function handleMarkUsed(link: OutreachLink) {
@@ -224,7 +228,12 @@ export default function LinksPage() {
     setLinks((prev) => prev.filter((l) => l.id !== link.id));
     await supabase
       .from("outreach_links")
-      .update({ status: "available", member_id: null, claimed_at: null })
+      .update({
+        status: "available",
+        member_id: null,
+        claimed_at: null,
+        outreach_mode: null,
+      })
       .eq("id", link.id)
       .eq("member_id", member.id);
     showToast("Link released to pool");
@@ -232,9 +241,10 @@ export default function LinksPage() {
   }
 
   function handleAddLead(link: OutreachLink) {
+    const name = [link.first_name, link.last_name].filter(Boolean).join(" ") || link.smart_label || "";
     const params = new URLSearchParams({
       prefill_url: link.url,
-      prefill_name: link.smart_label || "",
+      prefill_name: name,
       source_link_id: link.id,
     });
     router.push(`/team/leads?${params.toString()}`);
@@ -251,8 +261,8 @@ export default function LinksPage() {
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl lux-gradient-text">🔗 Outreach Links</h1>
         <p className="text-lux-muted text-[0.88rem] mt-2 leading-relaxed max-w-2xl">
-          Pick a profile link from the pool admin shared — claim it, run outreach on LinkedIn,
-          mark <strong className="text-lux-text">Used</strong>, then add as a Lead when they reply.
+          Claim a link, choose <strong className="text-lux-text">Intelligence</strong> or{" "}
+          <strong className="text-lux-text">Usual</strong>, run outreach, then mark complete.
         </p>
       </div>
 
@@ -266,12 +276,9 @@ export default function LinksPage() {
       />
 
       <div className="lux-card-elite p-4 text-lux-muted text-[0.84rem] leading-relaxed">
-        <strong className="text-lux-cyan text-[0.7rem] uppercase tracking-wide block mb-1.5">
-          ✨ Smart workflow tips
-        </strong>
-        Newest links appear first. Choose <strong className="text-lux-text">10 or 25 per page</strong> below.
-        Opened links turn <strong className="text-emerald-400/90">green</strong> so you know what you already visited.
-        Always mark <strong className="text-lux-text">Used</strong> after outreach.
+        <strong className="text-lux-cyan text-[0.7rem] uppercase tracking-wide block mb-1.5">✦ Intelligence tips</strong>
+        Named links (first + last name) unlock Intelligence mode. Open profile → Print Screen → paste screenshot →
+        generate personalized InMail → send on LinkedIn → mark complete.
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -283,14 +290,7 @@ export default function LinksPage() {
 
       <div className="flex gap-2 flex-wrap items-center">
         {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => selectTab(t.id)}
-            className={cn(
-              "lux-tab-pill",
-              tab === t.id && "lux-tab-pill-active"
-            )}
-          >
+          <button key={t.id} onClick={() => selectTab(t.id)} className={cn("lux-tab-pill", tab === t.id && "lux-tab-pill-active")}>
             {t.id === "pool" && "📥 "}
             {t.id === "mine" && "🎯 "}
             {t.id === "used" && "✅ "}
@@ -329,25 +329,49 @@ export default function LinksPage() {
               key={link.id}
               link={link}
               mode={tab}
-              onClaim={() => handleClaim(link)}
+              onClaim={() => openClaimModal(link)}
               onMarkUsed={() => handleMarkUsed(link)}
               onRelease={() => handleRelease(link)}
               onAddLead={() => handleAddLead(link)}
+              onIntelligenceInMail={() => {
+                setIntelLink(link);
+                setIntelOpen(true);
+              }}
             />
           ))}
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            total={listTotal}
-            pageSize={pageSize}
-            onPage={setPage}
-          />
+          <Pagination page={page} totalPages={totalPages} total={listTotal} pageSize={pageSize} onPage={setPage} />
         </div>
       )}
 
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
-      )}
+      <ClaimModeModal
+        open={claimOpen}
+        onClose={() => {
+          if (!claiming) {
+            setClaimOpen(false);
+            setClaimTarget(null);
+          }
+        }}
+        onChoose={handleClaimMode}
+        intelligenceAvailable={intelAvailable}
+        checking={claiming || intelAvailable === null}
+      />
+
+      <IntelligenceInMailModal
+        open={intelOpen}
+        link={intelLink}
+        onClose={() => {
+          setIntelOpen(false);
+          setIntelLink(null);
+        }}
+        onCompleted={() => {
+          setIntelOpen(false);
+          setIntelLink(null);
+          showToast("Marked complete — great send ✦");
+          refresh("mine", page);
+        }}
+      />
+
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
     </div>
   );
 }

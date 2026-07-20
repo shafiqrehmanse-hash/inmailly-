@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
 import { importLinksFromPaste } from "@/lib/link-import";
+import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
 
 function checkKey(request: NextRequest) {
   const key = request.headers.get("x-admin-key") || request.nextUrl.searchParams.get("key");
@@ -12,11 +12,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { paste, batchName } = await request.json();
+  const { paste, batchName, mode } = await request.json();
+  const importMode = mode === "named" ? "named" : "urls";
   const admin = createAdminClient();
 
   try {
-    const result = await importLinksFromPaste(admin, paste || "", batchName);
+    const result = await importLinksFromPaste(admin, paste || "", batchName, importMode);
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Import failed";

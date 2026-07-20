@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
-import { categoryIcon } from "@/lib/links";
+import { categoryIcon, displayLinkName, isIntelligenceReady } from "@/lib/links";
 import type { OutreachLink } from "@/lib/types";
 import { getVisitedLinkIds, markLinkVisited } from "@/lib/visited-links";
 import { cn, formatDate, truncateUrl } from "@/lib/utils";
@@ -15,6 +15,7 @@ export default function LinkCard({
   onMarkUsed,
   onRelease,
   onAddLead,
+  onIntelligenceInMail,
 }: {
   link: OutreachLink;
   mode: "pool" | "mine" | "used";
@@ -22,6 +23,7 @@ export default function LinkCard({
   onMarkUsed?: () => void;
   onRelease?: () => void;
   onAddLead?: () => void;
+  onIntelligenceInMail?: () => void;
 }) {
   const [opened, setOpened] = useState(false);
 
@@ -35,6 +37,9 @@ export default function LinkCard({
   }
 
   const isUsed = link.status === "used" || mode === "used";
+  const isIntel =
+    link.outreach_mode === "intelligence" || (mode === "pool" && isIntelligenceReady(link));
+  const name = displayLinkName(link);
 
   return (
     <div
@@ -69,11 +74,16 @@ export default function LinkCard({
                 opened && !isUsed ? "text-emerald-300" : "text-lux-text"
               )}
             >
-              {link.smart_label || "Link"}
+              {name}
             </span>
             <Badge variant={link.category} className="normal-case tracking-normal text-[0.58rem]">
               {link.category}
             </Badge>
+            {isIntel && (
+              <span className="inline-flex items-center gap-1 text-[0.58rem] font-bold uppercase tracking-wider text-lux-cyan bg-lux-cyan/10 border border-lux-cyan/30 px-2 py-0.5 rounded-lg">
+                ✦ Intelligence
+              </span>
+            )}
             {opened && !isUsed && (
               <span className="inline-flex items-center gap-1 text-[0.6rem] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-500/10 border border-emerald-400/30 px-2 py-0.5 rounded-lg shadow-[0_0_12px_rgba(52,211,153,0.1)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
@@ -99,9 +109,7 @@ export default function LinkCard({
         onClick={handleOpen}
         className={cn(
           "text-sm block truncate mb-3 pl-1 font-medium transition-colors",
-          opened
-            ? "text-emerald-400 hover:text-emerald-300"
-            : "text-lux-cyan hover:text-lux-cyan/80"
+          opened ? "text-emerald-400 hover:text-emerald-300" : "text-lux-cyan hover:text-lux-cyan/80"
         )}
       >
         {truncateUrl(link.url, 60)}
@@ -127,22 +135,18 @@ export default function LinkCard({
 
       {(() => {
         const btnClass = "w-full h-9 min-h-9";
+        const showIntelBtn = mode === "mine" && link.outreach_mode === "intelligence" && onIntelligenceInMail;
         const count =
           1 +
           (mode === "pool" && onClaim ? 1 : 0) +
-          (mode === "mine" ? (onMarkUsed ? 1 : 0) + (onRelease ? 1 : 0) : 0) +
+          (mode === "mine" ? (onMarkUsed ? 1 : 0) + (onRelease ? 1 : 0) + (showIntelBtn ? 1 : 0) : 0) +
           ((mode === "mine" || mode === "used") && onAddLead ? 1 : 0);
-        const cols = count >= 4 ? "grid-cols-2 sm:grid-cols-4" : count === 3 ? "grid-cols-3" : count === 2 ? "grid-cols-2" : "grid-cols-1";
+        const cols =
+          count >= 4 ? "grid-cols-2 sm:grid-cols-4" : count === 3 ? "grid-cols-3" : count === 2 ? "grid-cols-2" : "grid-cols-1";
 
         return (
           <div className={cn("grid gap-2 pl-1", cols)}>
-            <a
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={handleOpen}
-              className="min-w-0"
-            >
+            <a href={link.url} target="_blank" rel="noopener noreferrer" onClick={handleOpen} className="min-w-0">
               <Button variant="lux-soft" size="sm" className={btnClass}>
                 {opened ? "Open again ↗" : "Open profile ↗"}
               </Button>
@@ -150,6 +154,11 @@ export default function LinkCard({
             {mode === "pool" && onClaim && (
               <Button variant="lux-cyan" size="sm" className={btnClass} onClick={onClaim}>
                 Claim link
+              </Button>
+            )}
+            {showIntelBtn && (
+              <Button variant="lux" size="sm" className={btnClass} onClick={onIntelligenceInMail}>
+                ✦ Generate InMail
               </Button>
             )}
             {mode === "mine" && onMarkUsed && (

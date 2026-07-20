@@ -168,6 +168,93 @@ export function parseLinksFromPaste(paste: string): { url: string; key: string }
   return results;
 }
 
+export type NamedLinkParse = {
+  url: string;
+  key: string;
+  first_name: string;
+  last_name: string;
+};
+
+/** Parse lines like: First,Last,https://linkedin.com/in/...  (comma/tab/pipe). */
+export function parseNamedLinksFromPaste(paste: string): NamedLinkParse[] {
+  const text = (paste || "").replace(/^\uFEFF/, "");
+  const lines = text.split(/\r?\n/);
+  const seen = new Set<string>();
+  const results: NamedLinkParse[] = [];
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+
+    let parts = line.split(/\t+/).map((p) => p.trim()).filter(Boolean);
+    if (parts.length < 3) {
+      parts = line.split(/\s*[|,]\s*/).map((p) => p.trim()).filter(Boolean);
+    }
+    if (parts.length < 3) continue;
+
+    // Find URL part (usually last)
+    let urlIdx = parts.findIndex((p) => /linkedin\.com|https?:\/\//i.test(p));
+    if (urlIdx < 0) {
+      const extracted = extractUrlFromLine(line);
+      if (!extracted) continue;
+      const first = parts[0] || "";
+      const last = parts[1] || "";
+      if (!first) continue;
+      const key = urlKey(extracted);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      results.push({
+        url: extracted,
+        key,
+        first_name: titleCaseName(first),
+        last_name: titleCaseName(last),
+      });
+      continue;
+    }
+
+    const urlRaw = parts[urlIdx]!;
+    const nameParts = parts.filter((_, i) => i !== urlIdx);
+    const first = nameParts[0] || "";
+    const last = nameParts.slice(1).join(" ").trim();
+    if (!first) continue;
+
+    const urls = extractUrlsFromLine(urlRaw);
+    const url = urls[0];
+    if (!url) continue;
+    const key = urlKey(url);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    results.push({
+      url,
+      key,
+      first_name: titleCaseName(first),
+      last_name: titleCaseName(last),
+    });
+  }
+
+  return results;
+}
+
+function titleCaseName(s: string): string {
+  return s
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function displayLinkName(link: {
+  first_name?: string | null;
+  last_name?: string | null;
+  smart_label?: string | null;
+}): string {
+  const full = [link.first_name, link.last_name].filter(Boolean).join(" ").trim();
+  return full || link.smart_label || "Link";
+}
+
+export function isIntelligenceReady(link: { first_name?: string | null }): boolean {
+  return Boolean(link.first_name?.trim());
+}
+
 /** Count raw URL-like tokens before deduplication (for duplicate-in-paste stats). */
 export function countRawUrlsInPaste(paste: string): number {
   const text = paste.replace(/^\uFEFF/, "").trim();

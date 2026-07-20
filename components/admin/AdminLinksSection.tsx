@@ -101,6 +101,7 @@ export default function AdminLinksSection({
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const [paste, setPaste] = useState("");
   const [batchName, setBatchName] = useState("");
+  const [importMode, setImportMode] = useState<"urls" | "named">("urls");
   const [preview, setPreview] = useState<LinkImportStats | null>(null);
   const [confirmImportOpen, setConfirmImportOpen] = useState(false);
   const [previewOnlyOpen, setPreviewOnlyOpen] = useState(false);
@@ -216,7 +217,7 @@ export default function AdminLinksSection({
     const res = await fetch(`/api/admin/links/preview?key=${adminKey}`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ paste }),
+      body: JSON.stringify({ paste, mode: importMode }),
     });
     const data = await res.json();
     setPreviewLoading(false);
@@ -254,7 +255,7 @@ export default function AdminLinksSection({
     const res = await fetch(`/api/admin/links/import?key=${adminKey}`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ paste, batchName }),
+      body: JSON.stringify({ paste, batchName, mode: importMode }),
     });
     const data = await res.json();
     setImporting(false);
@@ -368,9 +369,37 @@ export default function AdminLinksSection({
     <div className="space-y-6">
       <div className="lux-card p-5 space-y-4">
         <h3 className="font-bricolage font-bold">Import links</h3>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setImportMode("urls")}
+            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg border ${
+              importMode === "urls"
+                ? "border-lux-cyan/40 bg-lux-cyan/10 text-lux-cyan"
+                : "border-white/10 text-lux-muted"
+            }`}
+          >
+            URLs only (usual)
+          </button>
+          <button
+            type="button"
+            onClick={() => setImportMode("named")}
+            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg border ${
+              importMode === "named"
+                ? "border-lux-cyan/40 bg-lux-cyan/10 text-lux-cyan"
+                : "border-white/10 text-lux-muted"
+            }`}
+          >
+            ✦ Named (Intelligence)
+          </button>
+        </div>
         <textarea
           className="lux-input min-h-[120px] font-mono text-sm"
-          placeholder="Paste URLs — one per line, or comma / tab separated on the same line"
+          placeholder={
+            importMode === "named"
+              ? "FirstName,LastName,https://linkedin.com/in/...\nJane\tDoe\thttps://linkedin.com/in/jane-doe"
+              : "Paste URLs — one per line, or comma / tab separated on the same line"
+          }
           value={paste}
           onChange={(e) => setPaste(e.target.value)}
         />
@@ -390,19 +419,29 @@ export default function AdminLinksSection({
         </div>
         {preview && (
           <p className="text-sm text-lux-muted leading-relaxed">
-            <strong className="text-lux-text">{preview.rawUrlTokens ?? preview.parsed}</strong> URLs found →{" "}
+            <strong className="text-lux-text">{preview.rawUrlTokens ?? preview.parsed}</strong>{" "}
+            {importMode === "named" ? "named rows" : "URLs"} found →{" "}
             <strong className="text-lux-text">{preview.parsed}</strong> unique profiles →{" "}
             <strong className="text-emerald-400">{preview.new}</strong> new to import
             {(preview.duplicateInPaste ?? 0) > 0 && (
               <> · {preview.duplicateInPaste} repeated in paste (same LinkedIn profile)</>
             )}
             {(preview.duplicateInDb ?? 0) > 0 && <> · {preview.duplicateInDb} already in pool</>}
-            {preview.invalid > 0 && <> · {preview.invalid} lines with no URL</>}
+            {preview.invalid > 0 && <> · {preview.invalid} invalid lines</>}
           </p>
         )}
         <p className="text-xs text-lux-muted leading-relaxed">
-          Click <strong className="text-lux-text">Import</strong> to see a breakdown popup, confirm upload, then a
-          success summary. Same LinkedIn profile in different URL formats counts once.
+          {importMode === "named" ? (
+            <>
+              Named import unlocks <strong className="text-lux-cyan">Intelligence outreach</strong> (screenshot → AI
+              InMail). Format: <code className="text-lux-text/80">First,Last,URL</code> per line.
+            </>
+          ) : (
+            <>
+              Click <strong className="text-lux-text">Import</strong> to see a breakdown popup, confirm upload, then a
+              success summary. Same LinkedIn profile in different URL formats counts once.
+            </>
+          )}
         </p>
       </div>
 
