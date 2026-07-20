@@ -369,6 +369,9 @@ export default function AdminLinksSection({
     <div className="space-y-6">
       <div className="lux-card p-5 space-y-4">
         <h3 className="font-bricolage font-bold">Import links</h3>
+        <p className="text-xs text-lux-cyan font-semibold -mt-2">
+          New: choose URLs only or ✦ Named (Intelligence) below
+        </p>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
