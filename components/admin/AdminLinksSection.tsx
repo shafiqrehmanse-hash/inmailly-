@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -8,6 +8,7 @@ import Modal from "@/components/ui/Modal";
 import LuxSelect from "@/components/ui/LuxSelect";
 import Pagination from "@/components/ui/Pagination";
 import PageSizeSelect from "@/components/ui/PageSizeSelect";
+import { NAMED_LINK_FILE_ACCEPT, namedRowsToPaste, readNamedLinksFile } from "@/lib/named-link-file";
 import type { OutreachLink, TeamMember } from "@/lib/types";
 import { DEFAULT_PAGE_SIZE, readStoredPageSize, storePageSize } from "@/lib/pagination";
 import { useFetchGeneration } from "@/lib/use-fetch-generation";
@@ -102,6 +103,9 @@ export default function AdminLinksSection({
   const [paste, setPaste] = useState("");
   const [batchName, setBatchName] = useState("");
   const [importMode, setImportMode] = useState<"urls" | "named">("urls");
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [fileLoading, setFileLoading] = useState(false);
+  const intelligenceFileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<LinkImportStats | null>(null);
   const [confirmImportOpen, setConfirmImportOpen] = useState(false);
   const [previewOnlyOpen, setPreviewOnlyOpen] = useState(false);
@@ -206,6 +210,44 @@ export default function AdminLinksSection({
       else next.add(id);
       return next;
     });
+  }
+
+  async function handleIntelligenceFile(file: File | null) {
+    if (!file) return;
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!["csv", "xlsx", "xls"].includes(ext)) {
+      onToast("Use a CSV or Excel file (.csv, .xlsx, .xls)", "error");
+      return;
+    }
+
+    setFileLoading(true);
+    try {
+      const result = await readNamedLinksFile(file);
+      if (result.rows.length === 0) {
+        onToast(
+          result.invalid > 0
+            ? `No valid rows in ${file.name}. Need First name, Last name, LinkedIn URL columns.`
+            : `File ${file.name} is empty.`,
+          "error"
+        );
+        return;
+      }
+
+      const text = namedRowsToPaste(result.rows);
+      setPaste((prev) => (prev.trim() ? `${prev.trim()}\n${text}` : text));
+      setUploadedFileName(file.name);
+      setPreview(null);
+      onToast(
+        `Loaded ${result.rows.length} row${result.rows.length === 1 ? "" : "s"} from ${file.name}` +
+          (result.invalid > 0 ? ` (${result.invalid} skipped)` : ""),
+        "success"
+      );
+    } catch {
+      onToast("Could not read that file — check the format and try again.", "error");
+    } finally {
+      setFileLoading(false);
+      if (intelligenceFileRef.current) intelligenceFileRef.current.value = "";
+    }
   }
 
   async function fetchPreviewStats(): Promise<LinkImportStats | null> {
@@ -397,6 +439,57 @@ export default function AdminLinksSection({
             ✦ Intelligence
           </button>
         </div>
+        {importMode === "named" && (
+          <div className="rounded-xl border border-lux-cyan/25 bg-lux-cyan/[0.05] p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-lux-text">Upload CSV or Excel</p>
+                <p className="text-xs text-lux-muted mt-0.5">
+                  Columns: <strong className="text-lux-text">First name</strong>,{" "}
+                  <strong className="text-lux-text">Last name</strong>,{" "}
+                  <strong className="text-lux-text">LinkedIn URL</strong> (header row optional)
+                </p>
+              </div>
+              <Button
+                variant="lux-soft"
+                size="sm"
+                disabled={fileLoading || importing}
+                onClick={() => intelligenceFileRef.current?.click()}
+              >
+                {fileLoading ? "Reading file…" : "Choose file"}
+              </Button>
+            </div>
+            <input
+              ref={intelligenceFileRef}
+              type="file"
+              accept={NAMED_LINK_FILE_ACCEPT}
+              className="hidden"
+              onChange={(e) => handleIntelligenceFile(e.target.files?.[0] || null)}
+            />
+            <div
+              role="button"
+              tabIndex={0}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleIntelligenceFile(e.dataTransfer.files?.[0] || null);
+              }}
+              onClick={() => intelligenceFileRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") intelligenceFileRef.current?.click();
+              }}
+              className="rounded-xl border-2 border-dashed border-lux-cyan/30 bg-black/20 px-4 py-6 text-center cursor-pointer hover:border-lux-cyan/50 hover:bg-lux-cyan/[0.06] transition-colors"
+            >
+              <p className="text-sm text-lux-muted">
+                Drag & drop <strong className="text-lux-cyan">.csv</strong> or{" "}
+                <strong className="text-lux-cyan">.xlsx</strong> here
+              </p>
+              {uploadedFileName && (
+                <p className="text-xs text-emerald-300 mt-2 font-semibold">Last loaded: {uploadedFileName}</p>
+              )}
+            </div>
+          </div>
+        )}
         <textarea
           className="lux-input min-h-[120px] font-mono text-sm"
           placeholder={
@@ -437,8 +530,8 @@ export default function AdminLinksSection({
         <p className="text-xs text-lux-muted leading-relaxed">
           {importMode === "named" ? (
             <>
-              Named import unlocks <strong className="text-lux-cyan">Intelligence outreach</strong> (screenshot → AI
-              InMail). Format: <code className="text-lux-text/80">First,Last,URL</code> per line.
+              Upload a <strong className="text-lux-cyan">CSV or Excel</strong> file, or paste rows manually.
+              Format: <code className="text-lux-text/80">First,Last,URL</code>. Unlocks Intelligence outreach.
             </>
           ) : (
             <>
