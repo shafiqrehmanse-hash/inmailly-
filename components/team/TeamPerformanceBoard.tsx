@@ -79,7 +79,7 @@ export default function TeamPerformanceBoard({
       {mode === "admin" && (data?.totals?.needsAttention ?? 0) > 0 && data?.totals && (
         <div className="lux-card-elite border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 text-sm text-lux-muted">
           <strong className="text-amber-300">{data.totals.needsAttention} member(s) need attention</strong> — inactive
-          24h+, stale claimed links (48h+), or many claims with zero completions.
+          24h+, stale claimed links (48h+), unfinished Intelligence links, or many claims with zero completions.
         </div>
       )}
 
@@ -192,6 +192,14 @@ export default function TeamPerformanceBoard({
                   <th className="px-2.5 py-2.5 font-bold whitespace-nowrap min-w-[120px]">Member</th>
                   <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap">Claimed</th>
                   <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap">Used</th>
+                  {mode === "admin" && (
+                    <th
+                      className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap"
+                      title="Intelligence links completed this week"
+                    >
+                      ✦ Intel
+                    </th>
+                  )}
                   <th className="px-2.5 py-2.5 font-bold text-center whitespace-nowrap" title="Used today · leads today">
                     Today
                   </th>
@@ -211,10 +219,11 @@ export default function TeamPerformanceBoard({
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((m) => (
+                {sorted.map((m, displayRank) => (
                   <MemberRow
                     key={m.id}
                     m={m}
+                    displayRank={displayRank + 1}
                     mode={mode}
                     isYou={currentMemberId === m.id}
                     maxDaily={maxDaily}
@@ -231,9 +240,11 @@ export default function TeamPerformanceBoard({
         <p className="text-[0.65rem] font-bold uppercase tracking-widest text-lux-violet mb-2">
           How productivity score works
         </p>
-        {data?.scoreFormula || PRODUCTIVITY_SCORE_FORMULA}. Closed deals and referral SDRs boost your rank the most —
-        close wins and invite teammates with your referral link. Inactive 24h means no login, leads, used links, claims,
-        or auto-assigns in the last day. Stale = claimed 48h+ without completing outreach. Add your photo in Settings.
+        {data?.scoreFormula || PRODUCTIVITY_SCORE_FORMULA}. Intelligence links score{" "}
+        <strong className="text-lux-text">13 pts</strong> vs 10 for Usual. Each deal counts once (50 pts) plus 10 bonus
+        if closed this week. 7-day chart includes <strong className="text-lux-text">today</strong>. Sort order updates
+        the # column. Inactive 24h = no login, leads, used links, claims, or auto-assigns in the last day. Stale =
+        claimed 48h+ without completing.
       </div>
     </div>
   );
@@ -241,12 +252,14 @@ export default function TeamPerformanceBoard({
 
 function MemberRow({
   m,
+  displayRank,
   mode,
   isYou,
   maxDaily,
   dayLabels,
 }: {
   m: MemberPerformance;
+  displayRank: number;
   mode: "admin" | "team";
   isYou: boolean;
   maxDaily: number;
@@ -260,7 +273,7 @@ function MemberRow({
       )}
     >
       <td className="px-2.5 py-2.5 font-bricolage font-bold text-lux-violet tabular-nums whitespace-nowrap">
-        {m.rank}
+        {displayRank}
       </td>
       <td className="px-2.5 py-2.5 whitespace-nowrap">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -292,12 +305,30 @@ function MemberRow({
           <span className="font-semibold">{m.claimed}</span>
         )}
         {m.staleClaimed > 0 && mode === "admin" && (
-          <div className="text-[0.58rem] text-amber-400">{m.staleClaimed} stale</div>
+          <div className="text-[0.58rem] text-amber-400">
+            {m.staleClaimed} stale
+            {m.staleIntelligence > 0 ? ` · ${m.staleIntelligence} intel` : ""}
+          </div>
+        )}
+        {m.claimedIntelligence > 0 && mode === "admin" && (
+          <div className="text-[0.58rem] text-lux-cyan">{m.claimedIntelligence} intel active</div>
         )}
       </td>
       <td className="px-2.5 py-2.5 text-center tabular-nums font-semibold text-lux-text whitespace-nowrap">
         {m.used}
       </td>
+      {mode === "admin" && (
+        <td
+          className="px-2.5 py-2.5 text-center tabular-nums whitespace-nowrap"
+          title="Intelligence links marked complete this week"
+        >
+          {m.intelligenceUsedWeek > 0 ? (
+            <span className="font-semibold text-lux-cyan">✦ {m.intelligenceUsedWeek}</span>
+          ) : (
+            <span className="text-lux-muted">0</span>
+          )}
+        </td>
+      )}
       <td
         className="px-2.5 py-2.5 text-center tabular-nums text-lux-muted whitespace-nowrap"
         title={`${m.usedToday} used today · ${m.leadsToday} leads today`}

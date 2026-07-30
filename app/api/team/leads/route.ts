@@ -83,16 +83,19 @@ export async function POST(request: NextRequest) {
   }
 
   const note = typeof lead.notes === "string" ? lead.notes.trim() : "";
-  if (note) {
-    void notifyAdminLeadNote({
-      leadName: lead.name,
-      note,
-      memberName: member.name,
-      status: lead.status,
-      profileUrl: lead.profile_url,
-      company: lead.company,
-    });
-  }
+  void notifyAdminLeadNote({
+    leadName: lead.name,
+    note: note || null,
+    memberName: member.name,
+    status: lead.status,
+    profileUrl: lead.profile_url,
+    company: lead.company,
+    isNewLead: true,
+  }).then((result) => {
+    if (!result.ok && !("skipped" in result && result.skipped)) {
+      console.error("[email] new lead notify failed:", "error" in result ? result.error : "unknown");
+    }
+  });
 
   return NextResponse.json({ lead });
 }

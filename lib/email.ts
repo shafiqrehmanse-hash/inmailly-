@@ -317,20 +317,32 @@ export async function notifyAdminBrandingSubmitted(data: {
 
 export async function notifyAdminLeadNote(data: {
   leadName: string;
-  note: string;
+  note?: string | null;
   memberName?: string | null;
   status?: string | null;
   profileUrl?: string | null;
   company?: string | null;
+  isNewLead?: boolean;
 }) {
-  const note = data.note.trim();
-  if (!note) return { ok: false as const, skipped: true };
+  const note = (data.note || "").trim();
+  const isNew = Boolean(data.isNewLead);
+  const subject = isNew
+    ? `New lead: ${data.leadName}`
+    : note
+      ? `Lead note: ${data.leadName}`
+      : `Lead updated: ${data.leadName}`;
 
   return sendEmailSafe({
     to: getNotifyEmail(),
-    subject: `Lead note: ${data.leadName}`,
-    html: adminLeadNoteEmail({ ...data, note }),
-    text: `Lead: ${data.leadName}\nAdded by: ${data.memberName || "Team"}\nStatus: ${data.status || "—"}\n\nNote / what they said:\n${note}`,
+    subject,
+    html: adminLeadNoteEmail({ ...data, note: note || null, isNewLead: isNew }),
+    text: [
+      isNew ? "New lead logged" : "Lead updated",
+      `Lead: ${data.leadName}`,
+      `Added by: ${data.memberName || "Team"}`,
+      `Status: ${data.status || "—"}`,
+      note ? `\nNote / what they said:\n${note}` : "\n(No note provided)",
+    ].join("\n"),
   });
 }
 

@@ -555,32 +555,42 @@ export function teamMeetingBookedEmail(data: {
 
 export function adminLeadNoteEmail(data: {
   leadName: string;
-  note: string;
+  note?: string | null;
   memberName?: string | null;
   status?: string | null;
   profileUrl?: string | null;
   company?: string | null;
+  isNewLead?: boolean;
 }) {
   const site = getSiteUrl();
-  const noteHtml = esc(data.note).replace(/\n/g, "<br/>");
+  const note = (data.note || "").trim();
+  const noteHtml = note ? esc(note).replace(/\n/g, "<br/>") : "";
   return emailLayout({
-    preheader: `${data.leadName}: ${data.note.slice(0, 80)}`,
-    eyebrow: "Outreach lead note",
-    title: "Team added a lead note",
+    preheader: note
+      ? `${data.leadName}: ${note.slice(0, 80)}`
+      : `New lead logged: ${data.leadName}`,
+    eyebrow: data.isNewLead ? "New outreach lead" : "Outreach lead update",
+    title: data.isNewLead ? "Team added a new lead" : "Team updated a lead",
     bodyHtml: [
       p(
-        `Your team logged a lead with a note (what the lead said / response). Track it here without opening the admin panel.`
+        data.isNewLead
+          ? `Your team logged a new lead in the outreach pipeline.`
+          : `Your team updated a lead in the outreach pipeline.`
       ),
       detailRow("Lead name", data.leadName),
       data.memberName ? detailRow("Added by", data.memberName) : "",
       data.status ? detailRow("Status", data.status.replace(/_/g, " ")) : "",
       data.company ? detailRow("Company", data.company) : "",
       data.profileUrl ? detailRow("Profile", data.profileUrl) : "",
-      `<p style="margin:18px 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#22d3ee;">Note / what they said</p>`,
-      `<div style="margin:0 0 14px;padding:16px 18px;background:rgba(34,211,238,0.06);border:1px solid rgba(34,211,238,0.22);font-size:15px;line-height:1.65;color:#fafafa;white-space:pre-wrap;">${noteHtml}</div>`,
+      note
+        ? `<p style="margin:18px 0 8px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#22d3ee;">Note / what they said</p>
+      <div style="margin:0 0 14px;padding:16px 18px;background:rgba(34,211,238,0.06);border:1px solid rgba(34,211,238,0.22);font-size:15px;line-height:1.65;color:#fafafa;white-space:pre-wrap;">${noteHtml}</div>`
+        : `<p style="margin:14px 0 0;font-size:14px;color:#94a3b8;">No note was added — open admin to see full details.</p>`,
     ].join(""),
     cta: { href: `${site}/admin/team/leads`, label: "Open outreach leads →" },
-    footerNote: "You get this email whenever the team adds or updates a lead note.",
+    footerNote: data.isNewLead
+      ? "You get this email whenever the team adds a new lead."
+      : "You get this email whenever the team adds or updates a lead note.",
   });
 }
 

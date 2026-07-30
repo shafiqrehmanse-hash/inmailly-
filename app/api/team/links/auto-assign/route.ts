@@ -181,6 +181,18 @@ export async function POST(request: NextRequest) {
 
     const assigned = updated?.length || 0;
 
+    if (assigned > 0) {
+      await admin.from("link_auto_assign_events").insert({
+        member_id: member.id,
+        assigned_count: assigned,
+        active_before: active,
+        active_after: active + assigned,
+        pool_remaining: null,
+      }).then(({ error: logErr }) => {
+        if (logErr) console.error("intelligence auto-assign log failed:", logErr.message);
+      });
+    }
+
     return NextResponse.json({
       success: true,
       mode: "intelligence",

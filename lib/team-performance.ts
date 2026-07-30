@@ -8,13 +8,15 @@ export type MemberPerformance = {
   role: string;
   photoUrl: string | null;
   lastLogin: string | null;
-  /** Latest of login, lead, used link, claim, or auto-assign — used for inactive status */
+  /** Latest real work activity — login, lead, used link, claim, or auto-assign */
   lastActiveAt: string | null;
   joinedAt: string;
   claimed: number;
+  claimedIntelligence: number;
   used: number;
   usedToday: number;
   usedWeek: number;
+  intelligenceUsedWeek: number;
   leads: number;
   leadsToday: number;
   leadsWeek: number;
@@ -23,6 +25,7 @@ export type MemberPerformance = {
   dealsClosedWeek: number;
   referralsJoined: number;
   staleClaimed: number;
+  staleIntelligence: number;
   productivityScore: number;
   rank: number;
   inactive24h: boolean;
@@ -56,9 +59,24 @@ export type TeamPerformanceData = {
   scope?: "global" | "assigned_team";
 };
 
-/** Closed deals and referral SDRs weigh heavily so the board rewards wins, not only volume. */
+/** Rolling 7 calendar days including today (fixes chart off-by-one). */
+export function rollingWeekStart(d = new Date()) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - 6);
+  return x;
+}
+
+function dayIndexInRollingWeek(iso: string, periodStart: Date): number {
+  const t = new Date(iso).getTime();
+  const idx = Math.floor((t - periodStart.getTime()) / (24 * 60 * 60 * 1000));
+  return idx >= 0 && idx < 7 ? idx : -1;
+}
+
+/** Each deal counts once; weekly closes get a bonus. Intelligence links score higher. */
 export function productivityScoreFor(a: {
   usedWeek: number;
+  intelligenceUsedWeek: number;
   leadsWeek: number;
   usedToday: number;
   leadsToday: number;
@@ -66,19 +84,21 @@ export function productivityScoreFor(a: {
   dealsClosedWeek: number;
   referralsJoined: number;
 }) {
+  const usualWeek = Math.max(0, a.usedWeek - a.intelligenceUsedWeek);
   return (
-    a.usedWeek * 10 +
+    usualWeek * 10 +
+    a.intelligenceUsedWeek * 13 +
     a.leadsWeek * 15 +
     a.usedToday * 5 +
     a.leadsToday * 8 +
-    a.dealsClosedWeek * 40 +
     a.dealsClosed * 50 +
+    a.dealsClosedWeek * 10 +
     a.referralsJoined * 25
   );
 }
 
 export const PRODUCTIVITY_SCORE_FORMULA =
-  "Weekly used x10 + weekly leads x15 + today's used x5 + today's leads x8 + deals closed this week x40 + all-time closed deals x50 + referral SDRs x25";
+  "Usual links used this week x10 + Intelligence links used this week x13 + weekly leads x15 + today's used x5 + today's leads x8 + all deals x50 + deals closed this week bonus x10 + referral SDRs x25";
 
 function startOfDay(d = new Date()) {
   const x = new Date(d);
@@ -89,8 +109,7 @@ function startOfDay(d = new Date()) {
 export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
   const admin = createAdminClient();
   const today = startOfDay();
-  const weekAgo = new Date(today);
-  weekAgo.setDate(weekAgo.getDate() - 7);
+  const periodStart = rollingWeekStart(today);
   const inactiveCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const staleCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
@@ -104,51 +123,50 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     poolRes,
     referralsRes,
   ] = await Promise.all([
-      admin
-        .from("team_members")
-        .select("id, name, email, role, photo_url, last_login, joined_at, is_active")
-        .eq("is_active", true)
-        .in("role", [...OUTREACH_REPORTING_ROLES]),
-      admin
-        .from("outreach_links")
-        .select("member_id, claimed_at")
-        .eq("status", "claimed")
-        .not("member_id", "is", null),
-      admin
-        .from("outreach_links")
-        .select("used_by_member_id, used_at")
-        .eq("status", "used")
-        .not("used_by_member_id", "is", null),
-      admin
-        .from("leads")
-        .select("member_id, created_at, status, deal_closed, closed_at")
-        .is("project_id", null),
-      admin
-        .from("link_auto_assign_events")
-        .select("member_id, assigned_count, created_at")
-        .gte("created_at", weekAgo.toISOString()),
-      admin
-        .from("link_auto_assign_events")
-        .select("assigned_count")
-        .gte("created_at", today.toISOString()),
-      admin
-        .from("outreach_links")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "available")
-        .is("member_id", null),
-      admin
-        .from("referrals")
-        .select("referrer_id, status")
-        .in("status", ["joined", "converted"]),
-    ]);
+    admin
+      .from("team_members")
+      .select("id, name, email, role, photo_url, last_login, joined_at, is_active")
+      .eq("is_active", true)
+      .in("role", [...OUTREACH_REPORTING_ROLES]),
+    admin
+      .from("outreach_links")
+      .select("member_id, claimed_at, outreach_mode")
+      .eq("status", "claimed")
+      .not("member_id", "is", null),
+    admin
+      .from("outreach_links")
+      .select("used_by_member_id, used_at, outreach_mode")
+      .eq("status", "used")
+      .not("used_by_member_id", "is", null),
+    admin
+      .from("leads")
+      .select("member_id, created_at, status, deal_closed, closed_at")
+      .is("project_id", null),
+    admin
+      .from("link_auto_assign_events")
+      .select("member_id, assigned_count, created_at")
+      .gte("created_at", periodStart.toISOString()),
+    admin
+      .from("link_auto_assign_events")
+      .select("assigned_count")
+      .gte("created_at", today.toISOString()),
+    admin
+      .from("outreach_links")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "available")
+      .is("member_id", null),
+    admin.from("referrals").select("referrer_id, status").in("status", ["joined", "converted"]),
+  ]);
 
   const members = membersRes.data || [];
 
   type Acc = {
     claimed: number;
+    claimedIntelligence: number;
     used: number;
     usedToday: number;
     usedWeek: number;
+    intelligenceUsedWeek: number;
     leads: number;
     leadsToday: number;
     leadsWeek: number;
@@ -157,15 +175,18 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     dealsClosedWeek: number;
     referralsJoined: number;
     staleClaimed: number;
+    staleIntelligence: number;
     dailyUsed: number[];
     lastActivityMs: number;
   };
 
   const acc = (): Acc => ({
     claimed: 0,
+    claimedIntelligence: 0,
     used: 0,
     usedToday: 0,
     usedWeek: 0,
+    intelligenceUsedWeek: 0,
     leads: 0,
     leadsToday: 0,
     leadsWeek: 0,
@@ -174,6 +195,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     dealsClosedWeek: 0,
     referralsJoined: 0,
     staleClaimed: 0,
+    staleIntelligence: 0,
     dailyUsed: [0, 0, 0, 0, 0, 0, 0],
     lastActivityMs: 0,
   });
@@ -192,7 +214,12 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     if (!row.member_id) continue;
     const a = byMember.get(row.member_id) || acc();
     a.claimed += 1;
-    if (row.claimed_at && new Date(row.claimed_at) < staleCutoff) a.staleClaimed += 1;
+    if (row.outreach_mode === "intelligence") a.claimedIntelligence += 1;
+    const isStale = row.claimed_at && new Date(row.claimed_at) < staleCutoff;
+    if (isStale) {
+      a.staleClaimed += 1;
+      if (row.outreach_mode === "intelligence") a.staleIntelligence += 1;
+    }
     bumpActivity(a, row.claimed_at);
     byMember.set(row.member_id, a);
   }
@@ -200,13 +227,15 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
   for (const row of usedRows.data || []) {
     if (!row.used_by_member_id || !row.used_at) continue;
     const a = byMember.get(row.used_by_member_id) || acc();
+    const isIntel = row.outreach_mode === "intelligence";
     a.used += 1;
     const usedAt = new Date(row.used_at);
     if (usedAt >= today) a.usedToday += 1;
-    if (usedAt >= weekAgo) {
+    if (usedAt >= periodStart) {
       a.usedWeek += 1;
-      const dayIndex = Math.floor((usedAt.getTime() - weekAgo.getTime()) / (24 * 60 * 60 * 1000));
-      if (dayIndex >= 0 && dayIndex < 7) a.dailyUsed[dayIndex] += 1;
+      if (isIntel) a.intelligenceUsedWeek += 1;
+      const dayIndex = dayIndexInRollingWeek(row.used_at, periodStart);
+      if (dayIndex >= 0) a.dailyUsed[dayIndex] += 1;
     }
     bumpActivity(a, row.used_at);
     byMember.set(row.used_by_member_id, a);
@@ -220,7 +249,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     a.leads += 1;
     const created = new Date(row.created_at);
     if (created >= today) a.leadsToday += 1;
-    if (created >= weekAgo) {
+    if (created >= periodStart) {
       a.leadsWeek += 1;
       leadsWeekTotal += 1;
     }
@@ -229,7 +258,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
     if (row.deal_closed) {
       a.dealsClosed += 1;
       const closedAt = row.closed_at ? new Date(row.closed_at) : created;
-      if (closedAt >= weekAgo) a.dealsClosedWeek += 1;
+      if (closedAt >= periodStart) a.dealsClosedWeek += 1;
       bumpActivity(a, row.closed_at || row.created_at);
     }
     byMember.set(row.member_id, a);
@@ -265,12 +294,14 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
       const auto = autoAssignByMember[m.id] || { week: 0, lastAt: null };
       const productivityScore = productivityScoreFor(a);
       bumpActivity(a, m.last_login);
-      bumpActivity(a, m.joined_at);
       const lastActiveAt = a.lastActivityMs > 0 ? new Date(a.lastActivityMs).toISOString() : null;
-      // Active if they logged in, added leads, used/claimed links, or auto-assigned within 24h
       const inactive24h = !lastActiveAt || a.lastActivityMs < inactiveCutoffMs;
       const needsAttention =
-        inactive24h || a.staleClaimed > 0 || (a.claimed > 0 && a.used === 0 && a.claimed >= 3);
+        inactive24h ||
+        a.staleClaimed > 0 ||
+        a.staleIntelligence > 0 ||
+        (a.claimedIntelligence > 0 && a.intelligenceUsedWeek === 0 && a.claimedIntelligence >= 1) ||
+        (a.claimed > 0 && a.used === 0 && a.claimed >= 3);
 
       return {
         id: m.id,
@@ -282,9 +313,11 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
         lastActiveAt,
         joinedAt: m.joined_at,
         claimed: a.claimed,
+        claimedIntelligence: a.claimedIntelligence,
         used: a.used,
         usedToday: a.usedToday,
         usedWeek: a.usedWeek,
+        intelligenceUsedWeek: a.intelligenceUsedWeek,
         leads: a.leads,
         leadsToday: a.leadsToday,
         leadsWeek: a.leadsWeek,
@@ -293,6 +326,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
         dealsClosedWeek: a.dealsClosedWeek,
         referralsJoined: a.referralsJoined,
         staleClaimed: a.staleClaimed,
+        staleIntelligence: a.staleIntelligence,
         productivityScore,
         inactive24h,
         needsAttention,
@@ -331,7 +365,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
   );
 
   const dayLabels = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekAgo);
+    const d = new Date(periodStart);
     d.setDate(d.getDate() + i);
     return d.toLocaleDateString("en-US", { weekday: "short" });
   });
