@@ -6,6 +6,7 @@ import TeamLeadersCard from "@/components/team/TeamLeadersCard";
 import TeamPerformancePodium from "@/components/team/TeamPerformancePodium";
 import TeamProgressChart from "@/components/team/TeamProgressChart";
 import TeamContractHubCard from "@/components/team/TeamContractHubCard";
+import TeamInfoDocHubCard from "@/components/team/TeamInfoDocHubCard";
 import TeamWeeklyGoalBar from "@/components/team/TeamWeeklyGoalBar";
 import WorkerTasksCard from "@/components/team/WorkerTasksCard";
 import { isTeamLeader } from "@/lib/roles";
@@ -151,6 +152,7 @@ export default async function HubPage() {
       <HubFocusBanner />
 
       <TeamContractHubCard />
+      <TeamInfoDocHubCard />
 
       <TeamWeeklyGoalBar />
 

@@ -69,6 +69,12 @@ export function getContractDashboardPath(role: string): string {
   return "/team/contract";
 }
 
+/** Where employee info docs are filled in the dashboard. */
+export function getInfoDocDashboardPath(role: string): string {
+  if (isCampaignManager(role)) return "/campaign/info-doc";
+  return "/team/info-doc";
+}
+
 export function roleLabel(role: string): string {
   if (isTeamLeader(role)) return "Team leader";
   if (isCampaignManager(role)) return "Campaign manager";

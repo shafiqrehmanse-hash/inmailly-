@@ -82,6 +82,7 @@ export default function TeamOverviewPage() {
           { href: "/admin/team/live-chat", label: "Live chat", desc: "Assign leaders & monitor chats" },
           { href: "/admin/team/members", label: "Team members", desc: "Roles & invites" },
           { href: "/admin/team/offer-letter", label: "Offer letters", desc: "PDF offers — salary & commission" },
+          { href: "/admin/team/info-doc", label: "Info Docs", desc: "Employee ID, references & employment" },
           { href: "/admin/team/email", label: "Email team", desc: "Broadcast with signature" },
           { href: "/admin/team/scripts", label: "Daily scripts", desc: "Add Note & InMail templates" },
         ].map((q) => (
