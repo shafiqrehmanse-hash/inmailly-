@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getPendingContractForMember } from "@/lib/team-pending-actions";
 import { getCurrentMember } from "@/lib/team";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -7,27 +8,20 @@ export async function GET() {
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = createAdminClient();
-  const email = member.email.toLowerCase();
+  const email = member.email.trim().toLowerCase();
   const memberFilter = `member_id.eq.${member.id},candidate_email.eq.${email}`;
 
-  const [{ data: pendingOffer }, { data: latest }] = await Promise.all([
-    admin
-      .from("employment_contracts")
-      .select("*")
-      .or(memberFilter)
-      .eq("status", "pending_signature")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+  const [pendingOffer, { data: latestRows }] = await Promise.all([
+    getPendingContractForMember(member),
     admin
       .from("employment_contracts")
       .select("*")
       .or(memberFilter)
       .in("status", ["signed", "terminated"])
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(1),
   ]);
+  const latest = latestRows?.[0] ?? null;
 
   let termination = null;
   if (latest?.status === "terminated") {

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import TeamPendingActionsBanner from "@/components/team/TeamPendingActionsBanner";
 import TeamVictoryBanner from "@/components/team/TeamVictoryBanner";
 import Sidebar from "@/components/team/Sidebar";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
@@ -67,6 +68,7 @@ export default async function TeamAppLayout({
       />
       <div className="lg:ml-[240px] min-h-screen flex flex-col relative">
         <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-[1200px] mx-auto w-full">
+          <TeamPendingActionsBanner member={member} />
           <TeamVictoryBanner />
           {children}
         </main>

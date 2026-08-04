@@ -408,7 +408,7 @@ export default function AdminOfferLetterSection() {
               {busy === "dashboard" ? "Sending…" : "Send to dashboard for signature"}
             </Button>
             <Button variant="lux-soft" onClick={sendEmail} disabled={!!busy || !form.candidateEmail}>
-              {busy === "send" ? "Sending…" : "Email PDF only"}
+              {busy === "send" ? "Sending…" : "Email PDF only (no dashboard)"}
             </Button>
           </div>
         </div>

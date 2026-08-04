@@ -56,13 +56,17 @@ export async function POST(request: NextRequest) {
   const { data: member } = await admin
     .from("team_members")
     .select("id, name, email, role")
-    .eq("email", email)
+    .ilike("email", email)
     .maybeSingle();
+
+  const pendingDeleteFilter = member?.id
+    ? `candidate_email.eq.${email},member_id.eq.${member.id}`
+    : `candidate_email.eq.${email}`;
 
   await admin
     .from("employment_contracts")
     .delete()
-    .eq("candidate_email", email)
+    .or(pendingDeleteFilter)
     .eq("status", "pending_signature");
 
   const { data: contract, error } = await admin
