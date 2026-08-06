@@ -29,20 +29,20 @@ export function getOpenAiApiKeyForScope(scope: OpenAiKeyScope): string | null {
     : getIntelligenceOpenAiApiKey();
 }
 
-export function getOpenAiVisionModel(scope: OpenAiKeyScope = "intelligence"): string {
-  const model =
-    (scope === "reply-assistant"
-      ? process.env.REPLY_ASSISTANT_OPENAI_VISION_MODEL?.trim()
-      : null) ||
-    process.env.OPENAI_VISION_MODEL?.trim() ||
-    "gpt-4o-mini";
+function resolveVisionModel(raw: string | undefined, fallback: string): string {
+  const model = raw?.trim() || fallback;
+  if (model.startsWith("sk-")) return fallback;
+  return model;
+}
 
-  if (model.startsWith("sk-")) {
-    throw new Error(
-      "An OpenAI API key was pasted into a model env var by mistake. Use OPENAI_API_KEY (Intelligence) or REPLY_ASSISTANT_OPENAI_API_KEY (Reply Assistant). Set model vars to gpt-4o-mini or delete them."
+export function getOpenAiVisionModel(scope: OpenAiKeyScope = "intelligence"): string {
+  if (scope === "reply-assistant") {
+    return resolveVisionModel(
+      process.env.REPLY_ASSISTANT_OPENAI_VISION_MODEL?.trim(),
+      resolveVisionModel(process.env.OPENAI_VISION_MODEL?.trim(), "gpt-4o-mini")
     );
   }
-  return model;
+  return resolveVisionModel(process.env.OPENAI_VISION_MODEL?.trim(), "gpt-4o-mini");
 }
 
 export function assertOpenAiConfigured(scope: OpenAiKeyScope = "intelligence"): string {
