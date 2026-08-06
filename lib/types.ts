@@ -71,6 +71,8 @@ export type LeadMessage = {
   sender_name: string;
   msg_type: "message" | "followup" | "reply" | "inmail" | "note";
   content: string;
+  ai_generated?: boolean;
+  from_screenshot?: boolean;
   created_at: string;
 };
 

@@ -38,6 +38,7 @@ const sections: { label: string; tone: string; items: NavItem[] }[] = [
     tone: "text-lux-violet/70",
     items: [
       { id: "responses", href: "/team/responses", label: "Responses", icon: "💬", accent: "violet" },
+      { id: "reply-assistant", href: "/team/reply-assistant", label: "Reply Assistant", icon: "🤖", accent: "cyan" },
       { id: "referrals", href: "/team/referrals", label: "Earn & Refer", icon: "✦", accent: "amber" },
     ],
   },

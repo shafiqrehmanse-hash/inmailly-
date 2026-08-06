@@ -1,0 +1,64 @@
+import { NextRequest, NextResponse } from "next/server";
+import {
+  generateReplyFromScreenshot,
+  getReplyAssistantMeetingLink,
+} from "@/lib/reply-assistant";
+import { MAX_SCREENSHOT_DATA_URL_CHARS } from "@/lib/screenshot-data-url";
+import { getOutreachEligibleMember } from "@/lib/team-auth-server";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export async function POST(request: NextRequest) {
+  const member = await getOutreachEligibleMember();
+  if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await request.json();
+  const leadId = String(body.leadId || "").trim();
+  const imageDataUrl = String(body.imageDataUrl || "").trim();
+  const includeMeetingLink = Boolean(body.includeMeetingLink);
+
+  if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
+  if (!imageDataUrl.startsWith("data:image/")) {
+    return NextResponse.json({ error: "Paste a screenshot image (Print Screen → Ctrl+V)" }, { status: 400 });
+  }
+  if (imageDataUrl.length > MAX_SCREENSHOT_DATA_URL_CHARS) {
+    return NextResponse.json({ error: "Screenshot too large — crop and try again" }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
+  const { data: lead } = await admin
+    .from("leads")
+    .select("*")
+    .eq("id", leadId)
+    .eq("member_id", member.id)
+    .is("project_id", null)
+    .maybeSingle();
+
+  if (!lead) return NextResponse.json({ error: "Thread not found" }, { status: 404 });
+
+  const { data: messages } = await admin
+    .from("lead_messages")
+    .select("*")
+    .eq("lead_id", leadId)
+    .order("created_at", { ascending: true });
+
+  const meetingLink = await getReplyAssistantMeetingLink(admin);
+
+  try {
+    const result = await generateReplyFromScreenshot({
+      imageDataUrl,
+      lead,
+      messages: messages || [],
+      includeMeetingLink,
+      meetingLink,
+    });
+
+    return NextResponse.json({
+      ...result,
+      meetingLink: includeMeetingLink ? meetingLink : null,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not generate reply";
+    const status = message.includes("OPENAI") ? 503 : 502;
+    return NextResponse.json({ error: message }, { status });
+  }
+}
