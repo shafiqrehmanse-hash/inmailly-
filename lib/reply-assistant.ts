@@ -1,4 +1,5 @@
 import { getIntelligenceServicesPitch } from "@/lib/intelligence-pitch";
+import { completeOpenAiVisionJson } from "@/lib/openai-vision";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { Lead, LeadMessage } from "@/lib/types";
 
@@ -44,11 +45,6 @@ export async function generateReplyFromScreenshot(input: {
   includeMeetingLink: boolean;
   meetingLink: string | null;
 }): Promise<ReplyAssistantGenerateResult> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not configured on the server.");
-  }
-
   const pitch = getIntelligenceServicesPitch();
   const thread = formatThreadForPrompt(input.messages, input.lead);
   const meetingNote = input.includeMeetingLink && input.meetingLink
@@ -81,45 +77,20 @@ ${thread}
 
 Read the screenshot. Draft the SDR's next reply JSON now.`;
 
-  const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_VISION_MODEL?.trim() || "gpt-4o-mini",
-      temperature: 0.65,
-      max_tokens: 900,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: userText },
-            { type: "image_url", image_url: { url: input.imageDataUrl, detail: "high" } },
-          ],
-        },
-      ],
-    }),
+  const parsed = await completeOpenAiVisionJson<{
+    reply?: string;
+    prospect_message?: string | null;
+    suggest_meeting?: boolean;
+  }>({
+    systemPrompt,
+    userText,
+    imageDataUrl: input.imageDataUrl,
+    temperature: 0.65,
+    maxTokens: 900,
+    logLabel: "reply-assistant",
+    userFacingError:
+      "AI could not read this screenshot. Try a clearer capture of the LinkedIn thread.",
   });
-
-  if (!openaiRes.ok) {
-    const errText = await openaiRes.text();
-    console.error("Reply assistant OpenAI:", openaiRes.status, errText.slice(0, 400));
-    throw new Error("AI could not read this screenshot. Try a clearer capture of the LinkedIn thread.");
-  }
-
-  const openaiJson = await openaiRes.json();
-  const raw = openaiJson.choices?.[0]?.message?.content || "";
-
-  let parsed: { reply?: string; prospect_message?: string | null; suggest_meeting?: boolean };
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new Error("AI returned an invalid reply — try again.");
-  }
 
   const reply = String(parsed.reply || "").trim();
   if (!reply) throw new Error("AI returned an empty reply — try again.");

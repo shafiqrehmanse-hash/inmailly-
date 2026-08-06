@@ -1,4 +1,6 @@
-export const MAX_SCREENSHOT_DATA_URL_CHARS = 5_500_000;
+import { OPENAI_VISION_MAX_IMAGE_CHARS } from "@/lib/openai-vision";
+
+export const MAX_SCREENSHOT_DATA_URL_CHARS = OPENAI_VISION_MAX_IMAGE_CHARS;
 
 /** Shrink huge Print Screens so they fit API limits. */
 export async function normalizeScreenshotDataUrl(dataUrl: string): Promise<string> {

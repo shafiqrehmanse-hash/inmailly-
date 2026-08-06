@@ -3,7 +3,7 @@ import {
   generateReplyFromScreenshot,
   getReplyAssistantMeetingLink,
 } from "@/lib/reply-assistant";
-import { MAX_SCREENSHOT_DATA_URL_CHARS } from "@/lib/screenshot-data-url";
+import { getOpenAiApiKey, validateScreenshotDataUrl } from "@/lib/openai-vision";
 import { getOutreachEligibleMember } from "@/lib/team-auth-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -11,18 +11,21 @@ export async function POST(request: NextRequest) {
   const member = await getOutreachEligibleMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  if (!getOpenAiApiKey()) {
+    return NextResponse.json(
+      { error: "OPENAI_API_KEY is not configured on the server. Add it to Vercel env." },
+      { status: 503 }
+    );
+  }
+
   const body = await request.json();
   const leadId = String(body.leadId || "").trim();
   const imageDataUrl = String(body.imageDataUrl || "").trim();
   const includeMeetingLink = Boolean(body.includeMeetingLink);
 
   if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
-  if (!imageDataUrl.startsWith("data:image/")) {
-    return NextResponse.json({ error: "Paste a screenshot image (Print Screen → Ctrl+V)" }, { status: 400 });
-  }
-  if (imageDataUrl.length > MAX_SCREENSHOT_DATA_URL_CHARS) {
-    return NextResponse.json({ error: "Screenshot too large — crop and try again" }, { status: 400 });
-  }
+  const imageError = validateScreenshotDataUrl(imageDataUrl);
+  if (imageError) return NextResponse.json({ error: imageError }, { status: 400 });
 
   const admin = createAdminClient();
   const { data: lead } = await admin

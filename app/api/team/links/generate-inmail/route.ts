@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getIntelligenceServicesPitch } from "@/lib/intelligence-pitch";
+import {
+  completeOpenAiVisionJson,
+  getOpenAiApiKey,
+  validateScreenshotDataUrl,
+} from "@/lib/openai-vision";
 import { canUseOutreachTools } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentMember } from "@/lib/team";
-
-const MAX_IMAGE_CHARS = 6_500_000; // ~4.5MB base64
 
 export async function POST(request: NextRequest) {
   const member = await getCurrentMember();
@@ -12,8 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
+  if (!getOpenAiApiKey()) {
     return NextResponse.json(
       { error: "OPENAI_API_KEY is not configured on the server. Add it to Vercel env." },
       { status: 503 }
@@ -25,12 +27,8 @@ export async function POST(request: NextRequest) {
   const imageDataUrl = String(body.imageDataUrl || "").trim();
 
   if (!linkId) return NextResponse.json({ error: "linkId required" }, { status: 400 });
-  if (!imageDataUrl.startsWith("data:image/")) {
-    return NextResponse.json({ error: "Paste a screenshot image (Print Screen → Ctrl+V)" }, { status: 400 });
-  }
-  if (imageDataUrl.length > MAX_IMAGE_CHARS) {
-    return NextResponse.json({ error: "Screenshot too large — crop or compress and try again" }, { status: 400 });
-  }
+  const imageError = validateScreenshotDataUrl(imageDataUrl);
+  if (imageError) return NextResponse.json({ error: imageError }, { status: 400 });
 
   const admin = createAdminClient();
   const { data: link } = await admin
@@ -72,71 +70,46 @@ ${pitch}
 
 Write the personalized InMail JSON now based on the screenshot.`;
 
-  const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_VISION_MODEL?.trim() || "gpt-4o-mini",
-      temperature: 0.7,
-      max_tokens: 700,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: userText },
-            { type: "image_url", image_url: { url: imageDataUrl, detail: "high" } },
-          ],
-        },
-      ],
-    }),
-  });
-
-  if (!openaiRes.ok) {
-    const errText = await openaiRes.text();
-    console.error("OpenAI generate-inmail:", openaiRes.status, errText.slice(0, 400));
-    return NextResponse.json(
-      { error: "AI could not read this screenshot. Try a clearer Print Screen of the profile." },
-      { status: 502 }
-    );
-  }
-
-  const openaiJson = await openaiRes.json();
-  const raw = openaiJson.choices?.[0]?.message?.content || "";
-  let subject = "";
-  let messageBody = "";
   try {
-    const parsed = JSON.parse(raw);
-    subject = String(parsed.subject || "").trim();
-    messageBody = String(parsed.body || "").trim();
-  } catch {
-    return NextResponse.json({ error: "AI returned an invalid message — try again" }, { status: 502 });
+    const parsed = await completeOpenAiVisionJson<{ subject?: string; body?: string }>({
+      systemPrompt,
+      userText,
+      imageDataUrl,
+      temperature: 0.7,
+      maxTokens: 700,
+      logLabel: "generate-inmail",
+      userFacingError:
+        "AI could not read this screenshot. Try a clearer Print Screen of the profile.",
+    });
+
+    const subject = String(parsed.subject || "").trim();
+    const messageBody = String(parsed.body || "").trim();
+
+    if (!subject || !messageBody) {
+      return NextResponse.json({ error: "AI returned an empty message — try again" }, { status: 502 });
+    }
+
+    const now = new Date().toISOString();
+    await admin
+      .from("outreach_links")
+      .update({
+        generated_subject: subject,
+        generated_body: messageBody,
+        generated_at: now,
+        outreach_mode: "intelligence",
+        updated_at: now,
+      })
+      .eq("id", linkId)
+      .eq("member_id", member.id);
+
+    return NextResponse.json({
+      subject,
+      body: messageBody,
+      prospectName: fullName,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not generate InMail";
+    const status = message.includes("OPENAI_API_KEY") ? 503 : 502;
+    return NextResponse.json({ error: message }, { status });
   }
-
-  if (!subject || !messageBody) {
-    return NextResponse.json({ error: "AI returned an empty message — try again" }, { status: 502 });
-  }
-
-  const now = new Date().toISOString();
-  await admin
-    .from("outreach_links")
-    .update({
-      generated_subject: subject,
-      generated_body: messageBody,
-      generated_at: now,
-      outreach_mode: "intelligence",
-      updated_at: now,
-    })
-    .eq("id", linkId)
-    .eq("member_id", member.id);
-
-  return NextResponse.json({
-    subject,
-    body: messageBody,
-    prospectName: fullName,
-  });
 }
