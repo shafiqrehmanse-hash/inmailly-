@@ -2,24 +2,57 @@
 
 export const OPENAI_VISION_MAX_IMAGE_CHARS = 6_500_000;
 
-export function getOpenAiApiKey(): string | null {
+export type OpenAiKeyScope = "intelligence" | "reply-assistant";
+
+/** Intelligence InMail (Work Links screenshot → InMail). */
+export function getIntelligenceOpenAiApiKey(): string | null {
   return process.env.OPENAI_API_KEY?.trim() || null;
 }
 
-export function getOpenAiVisionModel(): string {
-  const model = process.env.OPENAI_VISION_MODEL?.trim() || "gpt-4o-mini";
+/** Reply Assistant — separate env name so Vercel can hold its own key; falls back to OPENAI_API_KEY. */
+export function getReplyAssistantOpenAiApiKey(): string | null {
+  return (
+    process.env.REPLY_ASSISTANT_OPENAI_API_KEY?.trim() ||
+    process.env.OPENAI_API_KEY?.trim() ||
+    null
+  );
+}
+
+/** @deprecated use getIntelligenceOpenAiApiKey or getReplyAssistantOpenAiApiKey */
+export function getOpenAiApiKey(): string | null {
+  return getIntelligenceOpenAiApiKey();
+}
+
+export function getOpenAiApiKeyForScope(scope: OpenAiKeyScope): string | null {
+  return scope === "reply-assistant"
+    ? getReplyAssistantOpenAiApiKey()
+    : getIntelligenceOpenAiApiKey();
+}
+
+export function getOpenAiVisionModel(scope: OpenAiKeyScope = "intelligence"): string {
+  const model =
+    (scope === "reply-assistant"
+      ? process.env.REPLY_ASSISTANT_OPENAI_VISION_MODEL?.trim()
+      : null) ||
+    process.env.OPENAI_VISION_MODEL?.trim() ||
+    "gpt-4o-mini";
+
   if (model.startsWith("sk-")) {
     throw new Error(
-      "OPENAI_VISION_MODEL is set to an API key by mistake. In Vercel: put the sk-… key in OPENAI_API_KEY only, and set OPENAI_VISION_MODEL to gpt-4o-mini (or delete OPENAI_VISION_MODEL)."
+      "An OpenAI API key was pasted into a model env var by mistake. Use OPENAI_API_KEY (Intelligence) or REPLY_ASSISTANT_OPENAI_API_KEY (Reply Assistant). Set model vars to gpt-4o-mini or delete them."
     );
   }
   return model;
 }
 
-export function assertOpenAiConfigured(): string {
-  const key = getOpenAiApiKey();
+export function assertOpenAiConfigured(scope: OpenAiKeyScope = "intelligence"): string {
+  const key = getOpenAiApiKeyForScope(scope);
   if (!key) {
-    throw new Error("OPENAI_API_KEY is not configured on the server. Add it to Vercel env.");
+    throw new Error(
+      scope === "reply-assistant"
+        ? "REPLY_ASSISTANT_OPENAI_API_KEY is not set in Vercel (or set OPENAI_API_KEY as fallback)."
+        : "OPENAI_API_KEY is not configured on the server. Add it to Vercel env."
+    );
   }
   return key;
 }
@@ -41,10 +74,12 @@ type VisionJsonInput = {
   temperature?: number;
   maxTokens?: number;
   logLabel?: string;
-  userFacingError?: string;
+  apiKeyScope?: OpenAiKeyScope;
 };
 
-function openAiErrorMessage(status: number, errText: string): string {
+function openAiErrorMessage(status: number, errText: string, scope: OpenAiKeyScope): string {
+  const keyHint =
+    scope === "reply-assistant" ? "REPLY_ASSISTANT_OPENAI_API_KEY" : "OPENAI_API_KEY";
   let detail = "";
   try {
     const parsed = JSON.parse(errText) as { error?: { message?: string; code?: string; type?: string } };
@@ -61,7 +96,7 @@ function openAiErrorMessage(status: number, errText: string): string {
       return "OpenAI billing issue — add a payment method at platform.openai.com → Settings → Billing.";
     }
     if (status === 401 || detail.toLowerCase().includes("incorrect api key")) {
-      return "Invalid OPENAI_API_KEY — check the key in Vercel env and redeploy.";
+      return `Invalid ${keyHint} — check the key in Vercel env and redeploy.`;
     }
     if (status === 429) {
       return "OpenAI rate limit — wait a minute and try again, or check billing/credits.";
@@ -70,7 +105,7 @@ function openAiErrorMessage(status: number, errText: string): string {
   } catch {
     /* use status fallback */
   }
-  if (status === 401) return "Invalid OPENAI_API_KEY — check Vercel env and redeploy.";
+  if (status === 401) return `Invalid ${keyHint} — check Vercel env and redeploy.`;
   if (status === 429) return "OpenAI rate limit or no credits — check platform.openai.com billing.";
   if (status === 402) return "OpenAI payment required — add billing at platform.openai.com.";
   return "OpenAI request failed — check API key and billing, then redeploy on Vercel.";
@@ -80,7 +115,8 @@ function openAiErrorMessage(status: number, errText: string): string {
 export async function completeOpenAiVisionJson<T extends Record<string, unknown>>(
   input: VisionJsonInput
 ): Promise<T> {
-  const apiKey = assertOpenAiConfigured();
+  const scope = input.apiKeyScope || "intelligence";
+  const apiKey = assertOpenAiConfigured(scope);
   const label = input.logLabel || "openai-vision";
 
   const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -90,7 +126,7 @@ export async function completeOpenAiVisionJson<T extends Record<string, unknown>
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: getOpenAiVisionModel(),
+      model: getOpenAiVisionModel(scope),
       temperature: input.temperature ?? 0.7,
       max_tokens: input.maxTokens ?? 700,
       response_format: { type: "json_object" },
@@ -110,7 +146,7 @@ export async function completeOpenAiVisionJson<T extends Record<string, unknown>
   if (!openaiRes.ok) {
     const errText = await openaiRes.text();
     console.error(`OpenAI ${label}:`, openaiRes.status, errText.slice(0, 400));
-    throw new Error(openAiErrorMessage(openaiRes.status, errText));
+    throw new Error(openAiErrorMessage(openaiRes.status, errText, scope));
   }
 
   const openaiJson = await openaiRes.json();

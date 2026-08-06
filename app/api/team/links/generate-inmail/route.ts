@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getIntelligenceServicesPitch } from "@/lib/intelligence-pitch";
 import {
   completeOpenAiVisionJson,
-  getOpenAiApiKey,
+  getIntelligenceOpenAiApiKey,
   validateScreenshotDataUrl,
 } from "@/lib/openai-vision";
 import { canUseOutreachTools } from "@/lib/roles";
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!getOpenAiApiKey()) {
+  if (!getIntelligenceOpenAiApiKey()) {
     return NextResponse.json(
       { error: "OPENAI_API_KEY is not configured on the server. Add it to Vercel env." },
       { status: 503 }
@@ -78,8 +78,7 @@ Write the personalized InMail JSON now based on the screenshot.`;
       temperature: 0.7,
       maxTokens: 700,
       logLabel: "generate-inmail",
-      userFacingError:
-        "AI could not read this screenshot. Try a clearer Print Screen of the profile.",
+      apiKeyScope: "intelligence",
     });
 
     const subject = String(parsed.subject || "").trim();

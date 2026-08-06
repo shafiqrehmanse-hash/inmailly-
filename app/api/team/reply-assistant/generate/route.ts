@@ -3,7 +3,7 @@ import {
   generateReplyFromScreenshot,
   getReplyAssistantMeetingLink,
 } from "@/lib/reply-assistant";
-import { getOpenAiApiKey, validateScreenshotDataUrl } from "@/lib/openai-vision";
+import { getReplyAssistantOpenAiApiKey, validateScreenshotDataUrl } from "@/lib/openai-vision";
 import { getOutreachEligibleMember } from "@/lib/team-auth-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -11,9 +11,12 @@ export async function POST(request: NextRequest) {
   const member = await getOutreachEligibleMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!getOpenAiApiKey()) {
+  if (!getReplyAssistantOpenAiApiKey()) {
     return NextResponse.json(
-      { error: "OPENAI_API_KEY is not configured on the server. Add it to Vercel env." },
+      {
+        error:
+          "REPLY_ASSISTANT_OPENAI_API_KEY is not set in Vercel (or set OPENAI_API_KEY as fallback).",
+      },
       { status: 503 }
     );
   }

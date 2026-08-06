@@ -88,8 +88,7 @@ Read the screenshot. Draft the SDR's next reply JSON now.`;
     temperature: 0.65,
     maxTokens: 900,
     logLabel: "reply-assistant",
-    userFacingError:
-      "AI could not read this screenshot. Try a clearer capture of the LinkedIn thread.",
+    apiKeyScope: "reply-assistant",
   });
 
   const reply = String(parsed.reply || "").trim();
