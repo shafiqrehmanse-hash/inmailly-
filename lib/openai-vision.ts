@@ -7,7 +7,13 @@ export function getOpenAiApiKey(): string | null {
 }
 
 export function getOpenAiVisionModel(): string {
-  return process.env.OPENAI_VISION_MODEL?.trim() || "gpt-4o-mini";
+  const model = process.env.OPENAI_VISION_MODEL?.trim() || "gpt-4o-mini";
+  if (model.startsWith("sk-")) {
+    throw new Error(
+      "OPENAI_VISION_MODEL is set to an API key by mistake. In Vercel: put the sk-… key in OPENAI_API_KEY only, and set OPENAI_VISION_MODEL to gpt-4o-mini (or delete OPENAI_VISION_MODEL)."
+    );
+  }
+  return model;
 }
 
 export function assertOpenAiConfigured(): string {
