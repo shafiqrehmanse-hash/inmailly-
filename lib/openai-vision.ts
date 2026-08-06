@@ -38,6 +38,38 @@ type VisionJsonInput = {
   userFacingError?: string;
 };
 
+function openAiErrorMessage(status: number, errText: string): string {
+  let detail = "";
+  try {
+    const parsed = JSON.parse(errText) as { error?: { message?: string; code?: string; type?: string } };
+    detail = parsed.error?.message || "";
+    const code = (parsed.error?.code || parsed.error?.type || "").toLowerCase();
+    if (
+      code.includes("insufficient_quota") ||
+      detail.toLowerCase().includes("insufficient quota") ||
+      detail.toLowerCase().includes("exceeded your current quota")
+    ) {
+      return "OpenAI credits exhausted — add billing or top up at platform.openai.com → Settings → Billing.";
+    }
+    if (code.includes("billing") || detail.toLowerCase().includes("billing")) {
+      return "OpenAI billing issue — add a payment method at platform.openai.com → Settings → Billing.";
+    }
+    if (status === 401 || detail.toLowerCase().includes("incorrect api key")) {
+      return "Invalid OPENAI_API_KEY — check the key in Vercel env and redeploy.";
+    }
+    if (status === 429) {
+      return "OpenAI rate limit — wait a minute and try again, or check billing/credits.";
+    }
+    if (detail) return detail.slice(0, 220);
+  } catch {
+    /* use status fallback */
+  }
+  if (status === 401) return "Invalid OPENAI_API_KEY — check Vercel env and redeploy.";
+  if (status === 429) return "OpenAI rate limit or no credits — check platform.openai.com billing.";
+  if (status === 402) return "OpenAI payment required — add billing at platform.openai.com.";
+  return "OpenAI request failed — check API key and billing, then redeploy on Vercel.";
+}
+
 /** Vision chat completion that returns parsed JSON from the model response. */
 export async function completeOpenAiVisionJson<T extends Record<string, unknown>>(
   input: VisionJsonInput
@@ -72,10 +104,7 @@ export async function completeOpenAiVisionJson<T extends Record<string, unknown>
   if (!openaiRes.ok) {
     const errText = await openaiRes.text();
     console.error(`OpenAI ${label}:`, openaiRes.status, errText.slice(0, 400));
-    throw new Error(
-      input.userFacingError ||
-        "AI could not read this screenshot. Try a clearer Print Screen capture."
-    );
+    throw new Error(openAiErrorMessage(openaiRes.status, errText));
   }
 
   const openaiJson = await openaiRes.json();
