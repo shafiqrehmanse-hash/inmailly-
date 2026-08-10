@@ -8,7 +8,7 @@ export async function GET() {
 
   // Global leaderboard for everyone (workers + team leaders).
   // Leaders still cannot act on non-assigned members via leader APIs.
-  const data = await computeTeamPerformance();
+  const data = await computeTeamPerformance({ viewerMemberId: member.id });
   return NextResponse.json({
     ...data,
     currentMemberId: member.id,

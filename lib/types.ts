@@ -9,6 +9,8 @@ export type TeamMember = {
   /** Outreach worker's assigned team leader (null for leaders / unassigned). */
   leader_id: string | null;
   is_active: boolean;
+  /** Hidden from team leaderboard and announcements for other members (admin still sees all). */
+  hidden_from_team?: boolean;
   invite_code: string | null;
   joined_at: string;
   last_login: string | null;

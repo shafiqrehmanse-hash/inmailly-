@@ -73,7 +73,7 @@ export async function PATCH(request: NextRequest) {
   if (!checkKey(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { memberId, is_active, role, leader_id } = await request.json();
+  const { memberId, is_active, role, leader_id, hidden_from_team } = await request.json();
   if (!memberId) {
     return NextResponse.json({ error: "memberId required" }, { status: 400 });
   }
@@ -91,6 +91,7 @@ export async function PATCH(request: NextRequest) {
 
   const updates: Record<string, unknown> = {};
   if (typeof is_active === "boolean") updates.is_active = is_active;
+  if (typeof hidden_from_team === "boolean") updates.hidden_from_team = hidden_from_team;
 
   if (role) {
     updates.role = role;

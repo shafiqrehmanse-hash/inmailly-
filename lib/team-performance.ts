@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { memberVisibleToTeamViewer } from "@/lib/team-member-visibility";
 import { OUTREACH_REPORTING_ROLES } from "@/lib/roles";
 
 export type MemberPerformance = {
@@ -106,7 +107,16 @@ function startOfDay(d = new Date()) {
   return x;
 }
 
-export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
+export type ComputeTeamPerformanceOptions = {
+  /** Omit hidden members except the viewer always sees their own row. */
+  viewerMemberId?: string | null;
+  /** Admin views: include hidden members in leaderboard and totals. */
+  includeHidden?: boolean;
+};
+
+export async function computeTeamPerformance(
+  opts?: ComputeTeamPerformanceOptions
+): Promise<TeamPerformanceData> {
   const admin = createAdminClient();
   const today = startOfDay();
   const periodStart = rollingWeekStart(today);
@@ -125,7 +135,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
   ] = await Promise.all([
     admin
       .from("team_members")
-      .select("id, name, email, role, photo_url, last_login, joined_at, is_active")
+      .select("id, name, email, role, photo_url, last_login, joined_at, is_active, hidden_from_team")
       .eq("is_active", true)
       .in("role", [...OUTREACH_REPORTING_ROLES]),
     admin
@@ -288,7 +298,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
   const autoAssignBatchesToday = autoAssignTodayRows.length;
   const inactiveCutoffMs = inactiveCutoff.getTime();
 
-  const teamMembers = members
+  let teamMembers: Omit<MemberPerformance, "rank">[] = members
     .map((m) => {
       const a = byMember.get(m.id) || acc();
       const auto = autoAssignByMember[m.id] || { week: 0, lastAt: null };
@@ -336,10 +346,21 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
         lastAutoAssignAt: auto.lastAt,
       };
     })
-    .sort((a, b) => b.productivityScore - a.productivityScore)
-    .map((m, i) => ({ ...m, rank: i + 1 }));
+    .sort((a, b) => b.productivityScore - a.productivityScore);
 
-  const totals = teamMembers.reduce(
+  if (!opts?.includeHidden) {
+    teamMembers = teamMembers.filter((m) => {
+      const raw = members.find((row) => row.id === m.id);
+      return memberVisibleToTeamViewer(
+        { id: m.id, hidden_from_team: raw?.hidden_from_team },
+        opts?.viewerMemberId
+      );
+    });
+  }
+
+  const rankedMembers: MemberPerformance[] = teamMembers.map((m, i) => ({ ...m, rank: i + 1 }));
+
+  const totals = rankedMembers.reduce(
     (s, m) => ({
       claimed: s.claimed + m.claimed,
       used: s.used + m.used,
@@ -371,7 +392,7 @@ export async function computeTeamPerformance(): Promise<TeamPerformanceData> {
   });
 
   return {
-    members: teamMembers,
+    members: rankedMembers,
     totals: {
       ...totals,
       leadsWeek: leadsWeekTotal,

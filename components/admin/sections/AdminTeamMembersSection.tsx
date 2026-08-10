@@ -70,6 +70,20 @@ export default function AdminTeamMembersSection() {
     loadMembers();
   }
 
+  async function toggleHiddenFromTeam(memberId: string, hidden_from_team: boolean) {
+    const res = await fetch(`/api/admin/members?key=${adminKey}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ memberId, hidden_from_team }),
+    });
+    const data = await res.json();
+    if (data.error) showToast(data.error, "error");
+    else {
+      showToast(hidden_from_team ? "Hidden from team views" : "Visible to team again");
+      loadMembers();
+    }
+  }
+
   async function updateRole(memberId: string, role: string) {
     const res = await fetch(`/api/admin/members?key=${adminKey}`, {
       method: "PATCH",
@@ -209,7 +223,7 @@ export default function AdminTeamMembersSection() {
           <div>
             <p className="admin-section-title">All members</p>
             <p className="text-xs text-lux-muted mt-1">
-              Assign each outreach worker to one team leader. Leaders only see their assigned members.
+              Assign each outreach worker to one team leader. Use &quot;Hide from team&quot; to remove someone from the leaderboard and victory banners for everyone else — they can still log in and work.
             </p>
           </div>
           <span className="text-xs text-lux-muted">{members.length} total</span>
@@ -226,6 +240,7 @@ export default function AdminTeamMembersSection() {
                 <th className="text-left px-4 py-3 font-semibold">Links</th>
                 <th className="text-left px-4 py-3 font-semibold">Leads</th>
                 <th className="text-left px-4 py-3 font-semibold">Deals</th>
+                <th className="text-left px-4 py-3 font-semibold">Hide from team</th>
                 <th className="text-left px-4 py-3 font-semibold">Active</th>
                 <th className="text-left px-4 py-3 font-semibold">Actions</th>
               </tr>
@@ -233,7 +248,7 @@ export default function AdminTeamMembersSection() {
             <tbody>
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-12 text-center text-lux-muted">
+                  <td colSpan={11} className="px-4 py-12 text-center text-lux-muted">
                     No team members yet.
                   </td>
                 </tr>
@@ -245,6 +260,11 @@ export default function AdminTeamMembersSection() {
                         <TeamAvatar name={m.name} photoUrl={m.photo_url} size="sm" />
                         <div className="flex flex-wrap items-center gap-2 min-w-0">
                           {m.name}
+                          {m.hidden_from_team && (
+                            <span className="text-[0.58rem] font-bold uppercase tracking-wider text-slate-300 bg-slate-500/15 border border-slate-400/25 px-2 py-0.5 rounded-md">
+                              Hidden from team
+                            </span>
+                          )}
                           {m.role === "team_leader" && (
                             <span className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
                               Team leader · {members.filter((w) => w.leader_id === m.id).length} workers
@@ -282,6 +302,17 @@ export default function AdminTeamMembersSection() {
                     <td className="px-4 py-3">{m.active_links}</td>
                     <td className="px-4 py-3">{m.leads_count}</td>
                     <td className="px-4 py-3 text-emerald-400">{m.deals_closed || 0}</td>
+                    <td className="px-4 py-3">
+                      <label className="inline-flex items-center gap-2 cursor-pointer" title="Hide from leaderboard and victory banners for other team members">
+                        <input
+                          type="checkbox"
+                          className="rounded border-white/20 text-lux-violet focus:ring-lux-violet"
+                          checked={Boolean(m.hidden_from_team)}
+                          onChange={(e) => toggleHiddenFromTeam(m.id, e.target.checked)}
+                        />
+                        <span className="text-[0.65rem] text-lux-muted hidden lg:inline">Hide</span>
+                      </label>
+                    </td>
                     <td className="px-4 py-3">
                       <input type="checkbox" className="rounded border-white/20 text-lux-cyan focus:ring-lux-cyan" checked={m.is_active} onChange={(e) => toggleActive(m.id, e.target.checked)} />
                     </td>

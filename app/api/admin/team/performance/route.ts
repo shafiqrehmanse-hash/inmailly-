@@ -12,6 +12,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const data = await computeTeamPerformance();
+  const data = await computeTeamPerformance({ includeHidden: true });
   return NextResponse.json(data);
 }

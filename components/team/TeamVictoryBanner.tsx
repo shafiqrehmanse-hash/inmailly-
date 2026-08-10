@@ -1,4 +1,5 @@
 import { getActiveVictoryAnnouncements, victoryBannerText, type VictoryKind } from "@/lib/team-victory";
+import { getCurrentMember } from "@/lib/team";
 import { cn } from "@/lib/utils";
 
 const KIND_STYLES: Record<
@@ -36,7 +37,8 @@ const KIND_STYLES: Record<
 };
 
 export default async function TeamVictoryBanner() {
-  const rows = await getActiveVictoryAnnouncements(5);
+  const member = await getCurrentMember();
+  const rows = await getActiveVictoryAnnouncements(5, { viewerMemberId: member?.id });
   if (rows.length === 0) return null;
 
   return (

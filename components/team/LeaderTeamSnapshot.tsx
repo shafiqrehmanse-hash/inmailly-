@@ -8,7 +8,7 @@ export default async function LeaderTeamSnapshot() {
   if (!member) return null;
 
   const assignedIds = new Set(await getLeaderAssignedWorkerIds(member.id));
-  const data = await computeTeamPerformance();
+  const data = await computeTeamPerformance({ viewerMemberId: member.id });
   const workers = data.members.filter((m) => assignedIds.has(m.id));
 
   const usedToday = workers.reduce((s, m) => s + m.usedToday, 0);

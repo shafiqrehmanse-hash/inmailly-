@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { memberVisibleToTeamViewer } from "@/lib/team-member-visibility";
 
 export type VictoryKind = "deal_closed" | "meeting_booked" | "custom" | "birthday";
 
@@ -39,7 +40,10 @@ export async function publishVictoryAnnouncement(opts: {
   if (error) console.error("publishVictoryAnnouncement:", error.message);
 }
 
-export async function getActiveVictoryAnnouncements(limit = 5): Promise<TeamVictoryAnnouncement[]> {
+export async function getActiveVictoryAnnouncements(
+  limit = 5,
+  opts?: { viewerMemberId?: string | null }
+): Promise<TeamVictoryAnnouncement[]> {
   const admin = createAdminClient();
   const now = new Date().toISOString();
 
@@ -48,14 +52,39 @@ export async function getActiveVictoryAnnouncements(limit = 5): Promise<TeamVict
     .select("*")
     .gt("expires_at", now)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(Math.max(limit * 3, limit));
 
   if (error) {
     console.error("getActiveVictoryAnnouncements:", error.message);
     return [];
   }
 
-  return (data || []) as TeamVictoryAnnouncement[];
+  const rows = (data || []) as TeamVictoryAnnouncement[];
+  const memberIds = Array.from(
+    new Set(rows.map((r) => r.member_id).filter((id): id is string => Boolean(id)))
+  );
+  if (memberIds.length === 0) return rows.slice(0, limit);
+
+  const { data: members } = await admin
+    .from("team_members")
+    .select("id, hidden_from_team")
+    .in("id", memberIds);
+
+  const hiddenById = new Map(
+    (members || []).map((m) => [m.id, m.hidden_from_team === true] as const)
+  );
+
+  return rows
+    .filter((row) => {
+      if (!row.member_id) return true;
+      const hidden = hiddenById.get(row.member_id) === true;
+      if (!hidden) return true;
+      return memberVisibleToTeamViewer(
+        { id: row.member_id, hidden_from_team: true },
+        opts?.viewerMemberId
+      );
+    })
+    .slice(0, limit);
 }
 
 export function victoryBannerText(row: TeamVictoryAnnouncement): string {

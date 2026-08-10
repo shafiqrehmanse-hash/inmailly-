@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Member is not on your assigned team" }, { status: 400 });
   }
 
-  const perf = await computeTeamPerformance();
+  const perf = await computeTeamPerformance({ includeHidden: true });
   const memberPerf = perf.members.find((m) => m.id === target.id);
   const tpl = NUDGE_TEMPLATES[template as NudgeTemplateKey];
   const body = tpl.buildBody({
