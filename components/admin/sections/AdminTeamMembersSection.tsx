@@ -189,20 +189,13 @@ export default function AdminTeamMembersSection() {
         <p className="text-sm text-lux-muted mt-1">Access, roles, invites, and outreach worker accounts.</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <AdminStatCard value={outreachMembers.length} label="Outreach members" />
-        <AdminStatCard value={totalLeads} label="Outreach leads" />
-        <AdminStatCard value={totalDeals} label="Deals closed" />
-        <AdminStatCard value={totalLinks} label="Active links" />
-      </div>
-
-      <section className="lux-card-elite p-5 border-lux-violet/30 bg-gradient-to-br from-lux-violet/[0.08] via-transparent to-lux-blue/[0.04]">
+      <section className="lux-card-elite p-5 border-2 border-lux-violet/40 bg-gradient-to-br from-lux-violet/[0.12] via-lux-bg2/50 to-lux-blue/[0.06] shadow-[0_0_40px_rgba(139,92,246,0.12)]">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
           <div>
             <p className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-violet mb-1">
               Hide from team
             </p>
-            <h2 className="font-bricolage font-bold text-lg text-lux-text">Keep someone off the leaderboard</h2>
+            <h2 className="font-bricolage font-bold text-xl text-lux-text">Keep someone off the leaderboard</h2>
             <p className="text-sm text-lux-muted mt-1 max-w-2xl">
               Hidden members can still log in and work. They won&apos;t appear on the team performance board, hub podium, or victory banners for everyone else. You still see them here and in admin performance.
             </p>
@@ -236,7 +229,7 @@ export default function AdminTeamMembersSection() {
               if (!picked) return;
               toggleHiddenFromTeam(picked.id, !picked.hidden_from_team);
             }}
-            className="shrink-0"
+            className="shrink-0 min-w-[160px]"
           >
             {members.find((m) => m.id === hidePickerId)?.hidden_from_team
               ? "Show to team again"
@@ -266,6 +259,13 @@ export default function AdminTeamMembersSection() {
           </div>
         )}
       </section>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <AdminStatCard value={outreachMembers.length} label="Outreach members" />
+        <AdminStatCard value={totalLeads} label="Outreach leads" />
+        <AdminStatCard value={totalDeals} label="Deals closed" />
+        <AdminStatCard value={totalLinks} label="Active links" />
+      </div>
 
       <section>
         <p className="admin-section-title mb-4">Quick actions</p>
@@ -301,24 +301,24 @@ export default function AdminTeamMembersSection() {
           <div>
             <p className="admin-section-title">All members</p>
             <p className="text-xs text-lux-muted mt-1">
-              Assign each outreach worker to one team leader. Use &quot;Hide from team&quot; to remove someone from the leaderboard and victory banners for everyone else — they can still log in and work.
+              Use the <strong className="text-lux-violet">Visibility</strong> column (2nd column) to hide someone from the team leaderboard.
             </p>
           </div>
           <span className="text-xs text-lux-muted">{members.length} total</span>
         </div>
         <div className="lux-card overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[720px]">
             <thead>
               <tr className="text-lux-muted text-xs uppercase bg-lux-bg2 border-b border-white/[0.06]">
                 <th className="text-left px-4 py-3 font-semibold">Name</th>
+                <th className="text-left px-3 py-3 font-semibold whitespace-nowrap">Visibility</th>
                 <th className="text-left px-4 py-3 font-semibold">Email</th>
-                <th className="text-left px-4 py-3 font-semibold">Phone</th>
+                <th className="text-left px-4 py-3 font-semibold hidden xl:table-cell">Phone</th>
                 <th className="text-left px-4 py-3 font-semibold">Role</th>
-                <th className="text-left px-4 py-3 font-semibold">Team leader</th>
-                <th className="text-left px-4 py-3 font-semibold">Links</th>
-                <th className="text-left px-4 py-3 font-semibold">Leads</th>
-                <th className="text-left px-4 py-3 font-semibold">Deals</th>
-                <th className="text-left px-4 py-3 font-semibold">Hide from team</th>
+                <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Team leader</th>
+                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Links</th>
+                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Leads</th>
+                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Deals</th>
                 <th className="text-left px-4 py-3 font-semibold">Active</th>
                 <th className="text-left px-4 py-3 font-semibold">Actions</th>
               </tr>
@@ -351,8 +351,22 @@ export default function AdminTeamMembersSection() {
                         </div>
                       </div>
                     </td>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <Button
+                        variant={m.hidden_from_team ? "lux-ghost" : "lux"}
+                        size="sm"
+                        className={
+                          m.hidden_from_team
+                            ? "text-lux-cyan border-lux-cyan/30 text-xs"
+                            : "text-xs bg-lux-violet/20 border-lux-violet/40 hover:bg-lux-violet/30"
+                        }
+                        onClick={() => toggleHiddenFromTeam(m.id, !m.hidden_from_team)}
+                      >
+                        {m.hidden_from_team ? "Show team" : "Hide team"}
+                      </Button>
+                    </td>
                     <td className="px-4 py-3 text-lux-muted">{m.email}</td>
-                    <td className="px-4 py-3 text-lux-muted whitespace-nowrap text-xs">
+                    <td className="px-4 py-3 text-lux-muted whitespace-nowrap text-xs hidden xl:table-cell">
                       {m.phone ? (
                         <a href={`https://wa.me/${m.phone.replace(/[^0-9]/g, "")}`} className="text-lux-cyan hover:underline" target="_blank" rel="noopener noreferrer">
                           {m.phone}
@@ -364,11 +378,11 @@ export default function AdminTeamMembersSection() {
                     <td className="px-4 py-3">
                       <LuxSelect size="sm" className="min-w-[160px]" value={m.role} onChange={(role) => updateRole(m.id, role)} options={roleOptions} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 hidden lg:table-cell">
                       {canAssignLeader(m.role) ? (
                         <LuxSelect
                           size="sm"
-                          className="min-w-[160px]"
+                          className="min-w-[140px]"
                           value={m.leader_id || ""}
                           onChange={(leaderId) => updateLeader(m.id, leaderId)}
                           options={leaderOptions}
@@ -377,20 +391,9 @@ export default function AdminTeamMembersSection() {
                         <span className="text-xs text-lux-muted">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">{m.active_links}</td>
-                    <td className="px-4 py-3">{m.leads_count}</td>
-                    <td className="px-4 py-3 text-emerald-400">{m.deals_closed || 0}</td>
-                    <td className="px-4 py-3">
-                      <label className="inline-flex items-center gap-2 cursor-pointer" title="Hide from leaderboard and victory banners for other team members">
-                        <input
-                          type="checkbox"
-                          className="rounded border-white/20 text-lux-violet focus:ring-lux-violet"
-                          checked={Boolean(m.hidden_from_team)}
-                          onChange={(e) => toggleHiddenFromTeam(m.id, e.target.checked)}
-                        />
-                        <span className="text-[0.65rem] text-lux-muted hidden lg:inline">Hide</span>
-                      </label>
-                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">{m.active_links}</td>
+                    <td className="px-4 py-3 hidden md:table-cell">{m.leads_count}</td>
+                    <td className="px-4 py-3 text-emerald-400 hidden md:table-cell">{m.deals_closed || 0}</td>
                     <td className="px-4 py-3">
                       <input type="checkbox" className="rounded border-white/20 text-lux-cyan focus:ring-lux-cyan" checked={m.is_active} onChange={(e) => toggleActive(m.id, e.target.checked)} />
                     </td>
@@ -400,14 +403,6 @@ export default function AdminTeamMembersSection() {
                           <Button variant="lux-ghost" size="sm">Links</Button>
                         </Link>
                         <Button variant="lux-ghost" size="sm" onClick={() => resetPassword(m.email)}>Reset pwd</Button>
-                        <Button
-                          variant="lux-ghost"
-                          size="sm"
-                          className={m.hidden_from_team ? "text-lux-cyan" : "text-lux-violet"}
-                          onClick={() => toggleHiddenFromTeam(m.id, !m.hidden_from_team)}
-                        >
-                          {m.hidden_from_team ? "Show to team" : "Hide from team"}
-                        </Button>
                         <Button variant="lux-ghost" size="sm" onClick={() => deleteMember(m)} className="text-red-400 hover:text-red-300">
                           Delete
                         </Button>
