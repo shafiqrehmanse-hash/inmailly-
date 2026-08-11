@@ -35,6 +35,7 @@ export default function AdminTeamMembersSection() {
   const [inviteLabel, setInviteLabel] = useState("");
   const [inviteUses, setInviteUses] = useState(10);
   const [generatedCode, setGeneratedCode] = useState("");
+  const [hidePickerId, setHidePickerId] = useState("");
 
   const loadMembers = useCallback(async () => {
     const res = await fetch(`/api/admin/members?key=${adminKey}`);
@@ -77,8 +78,13 @@ export default function AdminTeamMembersSection() {
       body: JSON.stringify({ memberId, hidden_from_team }),
     });
     const data = await res.json();
-    if (data.error) showToast(data.error, "error");
-    else {
+    if (data.error) {
+      const hint =
+        data.error.includes("hidden_from_team") || data.error.includes("column")
+          ? " Run migration 029_team_member_hidden_from_team.sql in Supabase first."
+          : "";
+      showToast(data.error + hint, "error");
+    } else {
       showToast(hidden_from_team ? "Hidden from team views" : "Visible to team again");
       loadMembers();
     }
@@ -119,6 +125,7 @@ export default function AdminTeamMembersSection() {
   ];
   const canAssignLeader = (role: string) =>
     role === "member" || role === "senior" || role === "admin";
+  const hiddenMembers = members.filter((m) => m.hidden_from_team);
 
   async function resetPassword(email: string) {
     await fetch(`/api/admin/members/reset-password?key=${adminKey}`, {
@@ -188,6 +195,77 @@ export default function AdminTeamMembersSection() {
         <AdminStatCard value={totalDeals} label="Deals closed" />
         <AdminStatCard value={totalLinks} label="Active links" />
       </div>
+
+      <section className="lux-card-elite p-5 border-lux-violet/30 bg-gradient-to-br from-lux-violet/[0.08] via-transparent to-lux-blue/[0.04]">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <p className="text-[0.62rem] font-bold uppercase tracking-widest text-lux-violet mb-1">
+              Hide from team
+            </p>
+            <h2 className="font-bricolage font-bold text-lg text-lux-text">Keep someone off the leaderboard</h2>
+            <p className="text-sm text-lux-muted mt-1 max-w-2xl">
+              Hidden members can still log in and work. They won&apos;t appear on the team performance board, hub podium, or victory banners for everyone else. You still see them here and in admin performance.
+            </p>
+          </div>
+          {hiddenMembers.length > 0 && (
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-300 bg-slate-500/15 border border-slate-400/25 px-3 py-1.5 rounded-lg">
+              {hiddenMembers.length} hidden
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-[0.65rem] font-semibold uppercase tracking-wide text-lux-muted mb-1.5 block">
+              Select member
+            </label>
+            <LuxSelect
+              value={hidePickerId}
+              onChange={setHidePickerId}
+              placeholder="Choose who to hide…"
+              options={members.map((m) => ({
+                value: m.id,
+                label: `${m.name}${m.hidden_from_team ? " (already hidden)" : ""}`,
+              }))}
+            />
+          </div>
+          <Button
+            variant="lux"
+            disabled={!hidePickerId}
+            onClick={() => {
+              const picked = members.find((m) => m.id === hidePickerId);
+              if (!picked) return;
+              toggleHiddenFromTeam(picked.id, !picked.hidden_from_team);
+            }}
+            className="shrink-0"
+          >
+            {members.find((m) => m.id === hidePickerId)?.hidden_from_team
+              ? "Show to team again"
+              : "Hide from team"}
+          </Button>
+        </div>
+        {hiddenMembers.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-white/[0.06]">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-lux-muted mb-2">
+              Currently hidden
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {hiddenMembers.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => toggleHiddenFromTeam(m.id, false)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-400/25 bg-slate-500/10 px-3 py-1.5 text-sm text-lux-text hover:bg-slate-500/20 transition-colors"
+                  title="Click to show this member to the team again"
+                >
+                  <TeamAvatar name={m.name} photoUrl={m.photo_url} size="sm" />
+                  {m.name}
+                  <span className="text-xs text-lux-cyan font-semibold">Show again</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       <section>
         <p className="admin-section-title mb-4">Quick actions</p>
@@ -322,6 +400,14 @@ export default function AdminTeamMembersSection() {
                           <Button variant="lux-ghost" size="sm">Links</Button>
                         </Link>
                         <Button variant="lux-ghost" size="sm" onClick={() => resetPassword(m.email)}>Reset pwd</Button>
+                        <Button
+                          variant="lux-ghost"
+                          size="sm"
+                          className={m.hidden_from_team ? "text-lux-cyan" : "text-lux-violet"}
+                          onClick={() => toggleHiddenFromTeam(m.id, !m.hidden_from_team)}
+                        >
+                          {m.hidden_from_team ? "Show to team" : "Hide from team"}
+                        </Button>
                         <Button variant="lux-ghost" size="sm" onClick={() => deleteMember(m)} className="text-red-400 hover:text-red-300">
                           Delete
                         </Button>
