@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "generate:favicons": "node scripts/generate-favicons.mjs",
+    "generate:team-guide": "node scripts/generate-team-guide-pdf.mjs",
     "adspower:pilot": "node scripts/adspower-open-profile.mjs",
     "adspower:list": "node scripts/adspower-open-profile.mjs --list"
   },
@@ -31,6 +32,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",
+    "puppeteer": "^25.8.0",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }

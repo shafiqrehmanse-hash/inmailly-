@@ -194,6 +194,14 @@ export default async function HubPage() {
           <strong className="text-lux-cyan">4.</strong> Mark used →{" "}
           <strong className="text-lux-cyan">5.</strong> Log leads
         </p>
+        <a
+          href="/guides/InMailly-Team-Operating-Guide.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-lux-cyan hover:underline"
+        >
+          📄 Download full team operating guide (PDF)
+        </a>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

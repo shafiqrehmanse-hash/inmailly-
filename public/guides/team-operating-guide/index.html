@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>InMailly Team Operating Guide</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card: #12121a;
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --cyan: #22d3ee;
+      --violet: #8b5cf6;
+      --amber: #fbbf24;
+      --green: #34d399;
+      --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      font-size: 11pt;
+    }
+    .page { max-width: 210mm; margin: 0 auto; padding: 0 8mm; }
+    .cover {
+      min-height: 260mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      page-break-after: always;
+      background: radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.18), transparent 55%),
+                  radial-gradient(ellipse at 80% 80%, rgba(34,211,238,0.1), transparent 45%);
+      padding: 24mm 12mm;
+    }
+    .cover h1 {
+      font-size: 2.4rem;
+      margin: 0.5rem 0;
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cover .sub { color: var(--muted); font-size: 1.05rem; max-width: 28rem; }
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      border: 1px solid rgba(34,211,238,0.35);
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    h2 {
+      font-size: 1.35rem;
+      margin: 2rem 0 0.75rem;
+      color: var(--text);
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 1.05rem;
+      margin: 1.25rem 0 0.5rem;
+      color: var(--cyan);
+      page-break-after: avoid;
+    }
+    p, li { color: #d4d4d8; }
+    .toc { page-break-after: always; }
+    .toc ol { padding-left: 1.25rem; }
+    .toc li { margin: 0.4rem 0; }
+    .toc a { color: var(--cyan); text-decoration: none; }
+    section { page-break-inside: avoid; margin-bottom: 1.5rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.15rem;
+      margin: 0.75rem 0;
+    }
+    .steps { counter-reset: step; list-style: none; padding: 0; margin: 0; }
+    .steps li {
+      counter-increment: step;
+      position: relative;
+      padding-left: 2.4rem;
+      margin: 0.65rem 0;
+    }
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0.1rem;
+      width: 1.6rem;
+      height: 1.6rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      color: #000;
+      font-weight: 800;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tip {
+      border-left: 3px solid var(--amber);
+      background: rgba(251,191,36,0.08);
+      padding: 0.65rem 0.9rem;
+      border-radius: 0 8px 8px 0;
+      margin: 0.75rem 0;
+      font-size: 0.92rem;
+    }
+    .warn {
+      border-left: 3px solid #f87171;
+      background: rgba(248,113,113,0.08);
+      padding: 0.65rem 0.9rem;
+      border-radius: 0 8px 8px 0;
+      margin: 0.75rem 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin: 0.75rem 0;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.6rem;
+      text-align: left;
+    }
+    th { background: rgba(255,255,255,0.04); color: var(--muted); font-size: 0.72rem; text-transform: uppercase; }
+    code, .btn-label {
+      font-family: Consolas, monospace;
+      background: rgba(34,211,238,0.12);
+      color: var(--cyan);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+    /* Screenshot + highlight overlays */
+    .shot {
+      position: relative;
+      margin: 1rem 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      page-break-inside: avoid;
+    }
+    .shot img { width: 100%; display: block; }
+    .shot .hl {
+      position: absolute;
+      border: 2px solid var(--cyan);
+      box-shadow: 0 0 0 3px rgba(34,211,238,0.25), inset 0 0 12px rgba(34,211,238,0.15);
+      border-radius: 6px;
+      pointer-events: none;
+    }
+    .shot .hl.violet { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(139,92,246,0.25); }
+    .shot .num {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--violet);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .shot-caption {
+      font-size: 0.82rem;
+      color: var(--muted);
+      padding: 0.5rem 0.75rem;
+      background: rgba(0,0,0,0.35);
+      border-top: 1px solid var(--border);
+    }
+    /* UI mock panels (for pages that need login) */
+    .mock {
+      background: #0d0d14;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 1rem 0;
+      page-break-inside: avoid;
+    }
+    .mock-bar {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .mock-body { padding: 1rem; }
+    .mock-nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+    .mock-nav span {
+      text-align: center;
+      padding: 0.35rem;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+    }
+    .mock-nav span.on { background: rgba(34,211,238,0.15); color: var(--cyan); border: 1px solid rgba(34,211,238,0.35); }
+    .mock-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 0.4rem 0;
+      background: rgba(255,255,255,0.02);
+    }
+    .mock-btn {
+      display: inline-block;
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .mock-btn.primary { background: rgba(139,92,246,0.35); color: #e9d5ff; border: 1px solid rgba(139,92,246,0.5); }
+    .mock-btn.cyan { background: rgba(34,211,238,0.2); color: var(--cyan); border: 1px solid rgba(34,211,238,0.4); }
+    .mock-btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .mock-btn.amber { background: rgba(251,191,36,0.15); color: var(--amber); border: 1px solid rgba(251,191,36,0.35); }
+    .hl-callout {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+      margin: 0.35rem 0;
+      font-size: 0.88rem;
+    }
+    .hl-callout .n {
+      flex-shrink: 0;
+      width: 1.35rem;
+      height: 1.35rem;
+      border-radius: 50%;
+      background: var(--violet);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+      margin: 0.75rem 0;
+      font-size: 0.82rem;
+    }
+    .flow span {
+      padding: 0.25rem 0.55rem;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+    }
+    .flow .arrow { color: var(--cyan); background: none; border: none; padding: 0; }
+    @media print {
+      body { background: #fff; color: #111; }
+      .cover { background: #f8fafc !important; }
+      .cover h1 { -webkit-text-fill-color: #0e7490; color: #0e7490; }
+      p, li { color: #333; }
+      .card, .mock, .shot { break-inside: avoid; }
+      a { color: #0e7490; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="cover">
+    <div class="badge">Internal · Team members</div>
+    <h1>InMailly Team Operating Guide</h1>
+    <p class="sub">Step-by-step instructions for login, scripts, Work Links, Intelligence InMail, logging leads, responses, and daily workflow.</p>
+    <p style="margin-top:2rem;color:var(--muted);font-size:0.9rem;">www.inmailly.com/team · Updated March 2026</p>
+  </div>
+
+  <div class="toc card">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#start">Getting started — login &amp; register</a></li>
+      <li><a href="#workflow">Recommended daily workflow</a></li>
+      <li><a href="#hub">Home / Hub dashboard</a></li>
+      <li><a href="#scripts">Scripts — copy Add Note &amp; InMail</a></li>
+      <li><a href="#links">Work Links — claim, open profile, mark used</a></li>
+      <li><a href="#intelligence">Intelligence InMail (screenshot → AI message)</a></li>
+      <li><a href="#leads">My Leads — add &amp; track prospects</a></li>
+      <li><a href="#responses">Responses &amp; Reply Assistant</a></li>
+      <li><a href="#performance">Team performance board</a></li>
+      <li><a href="#referrals">Earn &amp; Refer</a></li>
+      <li><a href="#settings">Settings &amp; profile photo</a></li>
+      <li><a href="#admin-tasks">Offer letter &amp; Info Doc (when required)</a></li>
+      <li><a href="#faq">Quick FAQ &amp; troubleshooting</a></li>
+    </ol>
+  </div>
+
+  <section id="start">
+    <h2>1. Getting started</h2>
+    <p>Your team workspace is at <strong>www.inmailly.com/team</strong>. Bookmark it on your phone and laptop.</p>
+
+    <h3>New members — register</h3>
+    <ol class="steps">
+      <li>Go to <code>/team/register</code> (you need an <strong>invite code</strong> from admin).</li>
+      <li>Fill in full name, email, WhatsApp/phone (with country code, e.g. +92…), password, and invite code.</li>
+      <li>Click <span class="btn-label">Create account →</span></li>
+      <li>Check your email and click <strong>Verify email &amp; join team</strong>.</li>
+      <li>Return to <code>/team/login</code> and sign in.</li>
+    </ol>
+
+    <div class="shot">
+      <img src="screenshots/02-register.png" alt="Team register page" />
+      <div class="hl" style="left:12%;top:52%;width:76%;height:7%;"></div><div class="num" style="left:8%;top:55%;">1</div>
+      <div class="hl violet" style="left:12%;top:78%;width:76%;height:7%;"></div><div class="num" style="left:8%;top:81%;">2</div>
+      <div class="hl" style="left:12%;top:86%;width:76%;height:8%;"></div><div class="num" style="left:8%;top:90%;">3</div>
+      <div class="shot-caption"><strong>Highlighted:</strong> ① WhatsApp/phone · ② Invite code (required) · ③ Create account button</div>
+    </div>
+
+    <h3>Returning members — log in</h3>
+    <ol class="steps">
+      <li>Go to <code>/team/login</code></li>
+      <li>Enter email and password → <span class="btn-label">Log in →</span></li>
+      <li>If email not verified, use <span class="btn-label">Resend verification email</span> below the form.</li>
+    </ol>
+
+    <div class="shot">
+      <img src="screenshots/01-login.png" alt="Team login page" />
+      <div class="hl" style="left:12%;top:38%;width:76%;height:7%;"></div><div class="num" style="left:8%;top:41%;">1</div>
+      <div class="hl" style="left:12%;top:48%;width:76%;height:7%;"></div><div class="num" style="left:8%;top:51%;">2</div>
+      <div class="hl violet" style="left:12%;top:58%;width:76%;height:9%;"></div><div class="num" style="left:8%;top:63%;">3</div>
+      <div class="shot-caption"><strong>Highlighted:</strong> ① Email · ② Password · ③ Log in</div>
+    </div>
+  </section>
+
+  <section id="workflow">
+    <h2>2. Recommended daily workflow</h2>
+    <div class="flow">
+      <span>Scripts</span><span class="arrow">→</span>
+      <span>Work Links</span><span class="arrow">→</span>
+      <span>Open LinkedIn profile</span><span class="arrow">→</span>
+      <span>Send outreach</span><span class="arrow">→</span>
+      <span>Mark complete</span><span class="arrow">→</span>
+      <span>Add lead</span><span class="arrow">→</span>
+      <span>Log replies</span>
+    </div>
+    <div class="tip"><strong>Golden rule:</strong> Never skip marking a link complete after you use it — that keeps your stats accurate and frees the pipeline for the team.</div>
+  </section>
+
+  <section id="hub">
+    <h2>3. Home / Hub (<code>/team/hub</code>)</h2>
+    <p>After login you land on <strong>Welcome back, {your name}</strong>. Use the left sidebar to navigate.</p>
+    <div class="mock">
+      <div class="mock-bar">☰ Sidebar · Home</div>
+      <div class="mock-body">
+        <div class="mock-nav">
+          <span class="on">Home</span><span>Work Links</span><span>Scripts</span><span>My Leads</span>
+        </div>
+        <p style="font-size:0.85rem;margin:0 0 0.5rem;color:var(--muted);">Quick tiles: Scripts · Work Links · My Leads · Responses · Earn &amp; Refer · Team performance</p>
+        <div class="card" style="margin:0;padding:0.65rem;font-size:0.82rem;">
+          <strong style="color:var(--amber);">⚠ Action banners</strong> — if admin sent an offer letter or Info Doc, a red/amber banner appears at the top. Complete those first.
+        </div>
+      </div>
+    </div>
+    <p><strong>Sidebar menu:</strong> Home · Work Links · Scripts · My Leads · Team performance · Responses · Reply Assistant · Earn &amp; Refer · Settings</p>
+  </section>
+
+  <section id="scripts">
+    <h2>4. Scripts (<code>/team/scripts</code>)</h2>
+    <p>Copy outreach text <strong>before</strong> you open Work Links. Tap a script to expand it.</p>
+    <ol class="steps">
+      <li>Open <strong>Scripts</strong> in the sidebar.</li>
+      <li>Tap <strong>Add Note</strong> (LinkedIn connection note, max 350 chars) or <strong>InMail</strong> (Sales Navigator, up to 1,900 chars).</li>
+      <li>Use <span class="btn-label">Copy</span> on <strong>Subject</strong> and <strong>Message</strong> separately.</li>
+      <li>Paste into LinkedIn when you run outreach on a <strong>Usual</strong> link (manual mode).</li>
+    </ol>
+    <div class="mock">
+      <div class="mock-bar">📋 Scripts</div>
+      <div class="mock-body">
+        <div class="mock-row"><strong>Add Note</strong> <span style="color:var(--muted);font-size:0.75rem;">LinkedIn connection note</span> <span class="mock-btn cyan" style="margin-left:auto;">Copy</span></div>
+        <div class="mock-row"><strong>InMail</strong> <span style="color:var(--muted);font-size:0.75rem;">Sales Navigator message</span> <span class="mock-btn cyan" style="margin-left:auto;">Copy</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="links">
+    <h2>5. Work Links (<code>/team/links</code>)</h2>
+    <p>This is where you get LinkedIn profile URLs to work on.</p>
+
+    <h3>Get links from the pool</h3>
+    <table>
+      <tr><th>Button</th><th>What it does</th><th>Rules</th></tr>
+      <tr><td><span class="btn-label">Get Usual links</span></td><td>Standard manual outreach with Scripts</td><td>Up to 35 links; need fewer than 5 active Usual links first</td></tr>
+      <tr><td><span class="btn-label">Get Intelligence links</span></td><td>AI writes custom InMail from screenshot</td><td>Up to 20 links; must have 0 active Intelligence links before requesting more</td></tr>
+    </table>
+
+    <h3>Three tabs</h3>
+    <ul>
+      <li><strong>Available</strong> — pool links you can claim</li>
+      <li><strong>My active</strong> — links assigned to you now</li>
+      <li><strong>Used</strong> — completed links (history)</li>
+    </ul>
+
+    <h3>Claim a link</h3>
+    <ol class="steps">
+      <li>On <strong>Available</strong>, click <span class="btn-label">Claim link</span>.</li>
+      <li>Choose mode:
+        <ul>
+          <li><strong>✦ Intelligence</strong> (recommended) — AI personalized InMail from profile screenshot</li>
+          <li><strong>Usual</strong> — open profile and paste Scripts manually</li>
+        </ul>
+      </li>
+      <li>Click <span class="btn-label">Open profile ↗</span> to open LinkedIn in a new tab.</li>
+    </ol>
+
+    <div class="mock">
+      <div class="mock-bar">🔗 My active link card</div>
+      <div class="mock-body">
+        <div class="mock-row">
+          <span style="font-size:0.8rem;">linkedin.com/in/example</span>
+          <span class="mock-btn ghost">Open profile ↗</span>
+          <span class="mock-btn primary">✦ Paste screenshot</span>
+          <span class="mock-btn cyan">Mark complete</span>
+          <span class="mock-btn ghost">+ Add as lead</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>Usual link — complete</h3>
+    <ol class="steps">
+      <li>Open profile → send Add Note or InMail using Scripts.</li>
+      <li>Back on InMailly, click <span class="btn-label">Mark complete</span>.</li>
+      <li>Optionally click <span class="btn-label">+ Add as lead</span> if they responded or you want to track them.</li>
+    </ol>
+  </section>
+
+  <section id="intelligence">
+    <h2>6. Intelligence InMail (screenshot → AI)</h2>
+    <p>For <strong>Intelligence</strong> links only. The AI reads the profile from your screenshot and writes a custom subject + InMail body.</p>
+    <ol class="steps">
+      <li>Click <span class="btn-label">Open LinkedIn profile ↗</span> on the link card.</li>
+      <li>On the profile, take a screenshot:
+        <ul>
+          <li><strong>Windows:</strong> Win + Shift + S → crop the profile area</li>
+          <li><strong>Mac:</strong> Cmd + Shift + 4</li>
+        </ul>
+      </li>
+      <li>On InMailly, click <span class="btn-label">✦ Paste screenshot</span> (or Ctrl+V in the modal).</li>
+      <li>Click <span class="btn-label">✦ Generate personalized InMail</span></li>
+      <li>Copy <strong>Subject</strong> and <strong>InMail body</strong> → paste into LinkedIn InMail.</li>
+      <li>After sending on LinkedIn, click <span class="btn-label">Sent — mark complete</span>.</li>
+    </ol>
+    <div class="tip"><strong>Tip:</strong> Crop the screenshot to show name, headline, and about section — not the whole screen. Better crop = better message.</div>
+    <div class="warn"><strong>Important:</strong> Always click <em>Sent — mark complete</em> after you send on LinkedIn. Your used-link count and leaderboard depend on it.</div>
+  </section>
+
+  <section id="leads">
+    <h2>7. My Leads (<code>/team/leads</code>)</h2>
+    <p>Log everyone who responds or is worth tracking.</p>
+
+    <h3>Add a new lead</h3>
+    <ol class="steps">
+      <li>Open <strong>My Leads</strong> in the sidebar (or <span class="btn-label">+ Add as lead</span> from a Work Link).</li>
+      <li>Fill in: First name (required), Last name, LinkedIn URL, Email, Phone.</li>
+      <li>Set <strong>Response status</strong> (New, Contacted, Replied, Interested, etc.).</li>
+      <li>Add notes: what they said, next step, meeting time.</li>
+      <li>Click <span class="btn-label">Add Lead →</span></li>
+    </ol>
+
+    <h3>From Work Links (prefilled)</h3>
+    <p>When you click <span class="btn-label">+ Add as lead</span> on a link card, the LinkedIn URL is filled automatically. You only add name + status + notes.</p>
+
+    <h3>Lead statuses</h3>
+    <table>
+      <tr><th>Status</th><th>When to use</th></tr>
+      <tr><td>New</td><td>Just added, no reply yet</td></tr>
+      <tr><td>Contacted</td><td>You reached out, waiting</td></tr>
+      <tr><td>Replied</td><td>They wrote back — shows on Responses page</td></tr>
+      <tr><td>Interested</td><td>Positive signal</td></tr>
+      <tr><td>Meeting booked</td><td>Use <span class="btn-label">📅 Book meeting</span> button in lead row</td></tr>
+      <tr><td>Follow Up</td><td>Need to chase later</td></tr>
+      <tr><td>Not Interested</td><td>Closed — not a fit</td></tr>
+      <tr><td>Deal closed</td><td>Check <strong>Deal closed</strong> in thread when they sign / pay</td></tr>
+    </table>
+
+    <h3>Lead thread (conversation log)</h3>
+    <ol class="steps">
+      <li>Click <span class="btn-label">💬 Thread</span> on any lead row.</li>
+      <li>Add messages — toggle sender: <strong>team</strong> (you) or <strong>lead</strong> (prospect).</li>
+      <li>When the lead sends a message, set sender to <strong>lead</strong> → status auto-updates to Replied.</li>
+      <li>When deal wins, check <strong>Deal closed</strong> — team celebration banner may appear for 24h.</li>
+    </ol>
+  </section>
+
+  <section id="responses">
+    <h2>8. Responses &amp; Reply Assistant</h2>
+
+    <h3>Responses (<code>/team/responses</code>)</h3>
+    <p>Shows leads who <strong>replied</strong>, are <strong>interested</strong>, or need <strong>follow up</strong>. Open any card → <span class="btn-label">View thread</span> to continue the conversation.</p>
+
+    <h3>Reply Assistant (<code>/team/reply-assistant</code>)</h3>
+    <p>AI helps you reply to LinkedIn threads from a screenshot.</p>
+    <ol class="steps">
+      <li>Click <span class="btn-label">+ New</span> to create a thread (prospect name + optional company/LinkedIn URL).</li>
+      <li>Screenshot the LinkedIn conversation (Win+Shift+S).</li>
+      <li>Paste screenshot in Reply Assistant (Ctrl+V).</li>
+      <li>Click <span class="btn-label">✦ Generate reply</span> or <span class="btn-label">📅 Meeting link reply</span> if sending a booking link.</li>
+      <li>Edit the draft if needed → <span class="btn-label">Copy reply</span> → paste on LinkedIn.</li>
+      <li>Click <span class="btn-label">✓ Mark sent</span> (or Mark sent + meeting booked).</li>
+    </ol>
+    <div class="mock">
+      <div class="mock-bar">Reply Assistant flow</div>
+      <div class="mock-body">
+        <div class="hl-callout"><span class="n">1</span> Paste screenshot</div>
+        <div class="hl-callout"><span class="n">2</span> Generate reply</div>
+        <div class="hl-callout"><span class="n">3</span> Copy → send on LinkedIn</div>
+        <div class="hl-callout"><span class="n">4</span> Mark sent (keeps your thread history)</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="performance">
+    <h2>9. Team performance (<code>/team/performance</code>)</h2>
+    <p>Leaderboard for the whole team. Your rank is based on links used, leads, deals closed, and referrals.</p>
+    <ul>
+      <li><strong>Intelligence links</strong> score slightly higher than Usual links.</li>
+      <li><strong>Deals closed</strong> give the biggest score boost.</li>
+      <li>Check <strong>Your rank</strong> at the top and sort the table by Productivity, Used, Leads, or Deals.</li>
+    </ul>
+    <div class="tip">Focus on consistent daily output: claim links → complete them → log leads → follow up on responses.</div>
+  </section>
+
+  <section id="referrals">
+    <h2>10. Earn &amp; Refer (<code>/team/referrals</code>)</h2>
+    <ol class="steps">
+      <li>Open <strong>Earn &amp; Refer</strong> in the sidebar.</li>
+      <li>Copy your <strong>shareable link</strong> or referral code.</li>
+      <li>Share with people who might join as outreach workers.</li>
+      <li>When they register and convert, you earn (shown in Earnings history).</li>
+    </ol>
+  </section>
+
+  <section id="settings">
+    <h2>11. Settings (<code>/team/settings</code>)</h2>
+    <ul>
+      <li><strong>Upload profile photo</strong> — circular avatar on leaderboard (prompt appears until you upload).</li>
+      <li><strong>WhatsApp / phone</strong> — keep updated so admin and team leader can reach you.</li>
+      <li>Name and email changes require admin — contact your team leader.</li>
+    </ul>
+  </section>
+
+  <section id="admin-tasks">
+    <h2>12. Offer letter &amp; Info Doc (when admin requests)</h2>
+    <p>Red/amber banners on Home mean action is required.</p>
+
+    <h3>Offer letter (<code>/team/contract</code>)</h3>
+    <ol class="steps">
+      <li>Read the agreement scroll box.</li>
+      <li>Check the confirmation box.</li>
+      <li>Sign with your finger/mouse on the signature pad.</li>
+      <li>Click <span class="btn-label">Sign &amp; submit agreement</span>.</li>
+    </ol>
+
+    <h3>Info Doc (<code>/team/info-doc</code>)</h3>
+    <p>Upload ID photos, address, emergency contact, education, and employment details when admin sends the request. Click <span class="btn-label">Submit Info Doc</span> when complete.</p>
+  </section>
+
+  <section id="faq">
+    <h2>13. FAQ &amp; troubleshooting</h2>
+    <table>
+      <tr><th>Problem</th><th>Fix</th></tr>
+      <tr><td>Can't log in</td><td>Verify email first; use Resend verification. Check you're on /team/login not /campaign/login.</td></tr>
+      <tr><td>No links in pool</td><td>Wait for admin to import links, or try again later. Check Available tab count.</td></tr>
+      <tr><td>Can't get more Intelligence links</td><td>Finish or release your current Intelligence links first (max 0 active before new batch).</td></tr>
+      <tr><td>AI InMail failed</td><td>Retake screenshot — crop profile clearly. Check internet. Tell admin if error persists.</td></tr>
+      <tr><td>Lead not on Responses</td><td>Set status to Replied/Interested, or log an inbound message with sender = lead in Thread.</td></tr>
+      <tr><td>Stats look wrong</td><td>Make sure you clicked Mark complete after each send.</td></tr>
+    </table>
+
+    <div class="card" style="margin-top:1.5rem;text-align:center;">
+      <p style="margin:0;"><strong>Need help?</strong> Message your team leader or admin on WhatsApp.</p>
+      <p style="margin:0.5rem 0 0;color:var(--muted);font-size:0.85rem;">InMailly · Team workspace · www.inmailly.com/team</p>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
