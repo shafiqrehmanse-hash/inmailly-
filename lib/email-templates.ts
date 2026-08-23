@@ -752,3 +752,109 @@ export function contentManagerWelcomeEmail(data: { firstName: string }) {
     footerNote: "Published posts show your photo, title, and bio on inmailly.com/blog.",
   });
 }
+
+function activationKeyBlock(content: string) {
+  const trimmed = content.trim();
+  const isUrl = /^https?:\/\//i.test(trimmed.split(/\s/)[0] || "");
+  const firstLine = trimmed.split(/\r?\n/)[0]?.trim() || trimmed;
+  const linkBlock = isUrl
+    ? `<p style="margin:12px 0 0;"><a href="${esc(firstLine)}" style="color:#22d3ee;font-weight:700;word-break:break-all;">${esc(firstLine)}</a></p>`
+    : "";
+  return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0;">
+    <tr><td style="padding:16px;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.25);border-radius:4px;">
+      <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#22d3ee;">Activation key / link</p>
+      <pre style="margin:0;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:1.5;color:#fafafa;white-space:pre-wrap;word-break:break-word;">${esc(trimmed)}</pre>
+      ${linkBlock}
+    </td></tr>
+  </table>`;
+}
+
+export function adminSalesNavRequestEmail(data: {
+  memberName: string;
+  memberEmail: string;
+  linkedinEmail: string;
+}) {
+  const site = getSiteUrl();
+  return emailLayout({
+    preheader: `${data.memberName} needs Sales Navigator`,
+    eyebrow: "Sales Navigator",
+    title: "New license request",
+    bodyHtml: [
+      p(
+        `<strong style="color:#fafafa;">${esc(data.memberName)}</strong> requested a LinkedIn Sales Navigator license.`
+      ),
+      detailRow("InMailly account", data.memberEmail),
+      detailRow("LinkedIn email (registered)", data.linkedinEmail),
+      p("Open admin → Sales Navigator to paste the activation key and email the member."),
+    ].join(""),
+    cta: { href: `${site}/admin/team/sales-nav`, label: "Open Sales Navigator admin →" },
+  });
+}
+
+export function memberSalesNavActivationEmail(data: {
+  memberName: string;
+  activationKey: string;
+}) {
+  const site = getSiteUrl();
+  return emailLayout({
+    preheader: "Your Sales Navigator license is ready to activate",
+    eyebrow: "Sales Navigator",
+    title: "Your license is ready — activate now",
+    bodyHtml: [
+      p(`Hi ${esc(data.memberName)},`),
+      p(
+        "Your LinkedIn <strong style=\"color:#fafafa;\">Sales Navigator</strong> license has been activated on our side. Use the key or link below to finish setup on your device."
+      ),
+      activationKeyBlock(data.activationKey),
+      p(
+        "<strong style=\"color:#fbbf24;\">Important:</strong> Open this on <strong style=\"color:#fafafa;\">Google Chrome</strong> on a <strong style=\"color:#fafafa;\">desktop or laptop</strong> (not mobile). Sign in with the same LinkedIn email you submitted."
+      ),
+      p("After activation succeeds, return to InMailly and click <strong style=\"color:#fafafa;\">Mark as activated</strong>. If something fails, click <strong style=\"color:#fafafa;\">Report error</strong> so admin can help."),
+    ].join(""),
+    cta: { href: `${site}/team/sales-nav`, label: "Open Sales Navigator page →" },
+    footerNote: "Need help? Reply to your team leader or admin on WhatsApp.",
+  });
+}
+
+export function adminSalesNavActivatedEmail(data: {
+  memberName: string;
+  memberEmail: string;
+  linkedinEmail: string;
+}) {
+  const site = getSiteUrl();
+  return emailLayout({
+    eyebrow: "Sales Navigator",
+    title: `${data.memberName} activated Sales Navigator`,
+    bodyHtml: [
+      p(
+        `<strong style="color:#fafafa;">${esc(data.memberName)}</strong> marked their Sales Navigator license as <strong style="color:#34d399;">activated</strong>.`
+      ),
+      detailRow("InMailly account", data.memberEmail),
+      detailRow("LinkedIn email", data.linkedinEmail),
+    ].join(""),
+    cta: { href: `${site}/admin/team/sales-nav`, label: "View in admin →" },
+  });
+}
+
+export function adminSalesNavErrorEmail(data: {
+  memberName: string;
+  memberEmail: string;
+  linkedinEmail: string;
+  errorNote?: string | null;
+}) {
+  const site = getSiteUrl();
+  return emailLayout({
+    eyebrow: "Sales Navigator",
+    title: `${data.memberName} reported an activation error`,
+    bodyHtml: [
+      p(
+        `<strong style="color:#fafafa;">${esc(data.memberName)}</strong> could not activate Sales Navigator and needs your help.`
+      ),
+      detailRow("InMailly account", data.memberEmail),
+      detailRow("LinkedIn email", data.linkedinEmail),
+      data.errorNote ? detailRow("Their note", data.errorNote) : p("No extra details were provided."),
+      p("Send a new activation key from admin when ready."),
+    ].join(""),
+    cta: { href: `${site}/admin/team/sales-nav`, label: "Open Sales Navigator admin →" },
+  });
+}

@@ -205,3 +205,20 @@ export type TeamWeeklyGoal = {
   created_at: string;
   updated_at: string;
 };
+
+export type SalesNavLicenseStatus = "pending" | "activation_sent" | "activated" | "error";
+
+export type SalesNavLicenseRequest = {
+  id: string;
+  member_id: string;
+  member_name: string;
+  member_email: string;
+  linkedin_email: string;
+  status: SalesNavLicenseStatus;
+  activation_key: string | null;
+  member_error_note: string | null;
+  requested_at: string;
+  activation_sent_at: string | null;
+  resolved_at: string | null;
+  updated_at: string;
+};

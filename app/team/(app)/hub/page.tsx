@@ -123,6 +123,13 @@ export default async function HubPage() {
       go: `${referred} referred →`,
     },
     {
+      href: "/team/sales-nav",
+      label: "Sales Navigator",
+      icon: "🧭",
+      desc: "Request a Sales Navigator license — admin activates and emails you the key.",
+      go: "Request license →",
+    },
+    {
       href: "/team/performance",
       label: "Team performance",
       icon: "📊",
