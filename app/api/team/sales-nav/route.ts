@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  void sendEmail({
+  const adminNotify = await sendEmail({
     to: getNotifyEmail(),
     subject: `Sales Navigator request: ${member.name}`,
     html: adminSalesNavRequestEmail({
@@ -82,7 +82,19 @@ export async function POST(request: NextRequest) {
     text: `${member.name} (${member.email}) requested Sales Navigator for LinkedIn email ${linkedinEmail}`,
   });
 
-  return NextResponse.json({ request: row as SalesNavLicenseRequest });
+  if (!adminNotify.ok) {
+    console.error("[sales-nav] admin notify failed:", adminNotify.skipped ? "RESEND not configured" : adminNotify.error);
+  }
+
+  return NextResponse.json({
+    request: row as SalesNavLicenseRequest,
+    adminNotified: adminNotify.ok,
+    adminNotifyError: adminNotify.ok
+      ? null
+      : adminNotify.skipped
+        ? "Admin alert email skipped — RESEND_API_KEY not set on server"
+        : adminNotify.error || "Admin alert email failed",
+  });
 }
 
 export async function PATCH(request: NextRequest) {
@@ -134,19 +146,25 @@ export async function PATCH(request: NextRequest) {
   };
 
   if (action === "activated") {
-    void sendEmail({
+    const notify = await sendEmail({
       to: getNotifyEmail(),
       subject: `Sales Navigator activated: ${existing.member_name}`,
       html: adminSalesNavActivatedEmail(payload),
       text: `${existing.member_name} activated Sales Navigator.`,
     });
+    if (!notify.ok) {
+      console.error("[sales-nav] activated notify failed:", notify.skipped ? "RESEND not configured" : notify.error);
+    }
   } else {
-    void sendEmail({
+    const notify = await sendEmail({
       to: getNotifyEmail(),
       subject: `Sales Navigator error: ${existing.member_name}`,
       html: adminSalesNavErrorEmail(payload),
       text: `${existing.member_name} reported Sales Navigator activation error.${errorNote ? ` Note: ${errorNote}` : ""}`,
     });
+    if (!notify.ok) {
+      console.error("[sales-nav] error notify failed:", notify.skipped ? "RESEND not configured" : notify.error);
+    }
   }
 
   return NextResponse.json({ request: updated as SalesNavLicenseRequest });

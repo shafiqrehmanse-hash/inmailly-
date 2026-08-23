@@ -33,13 +33,22 @@ export default function AdminSalesNavSection() {
   const [selectedId, setSelectedId] = useState("");
   const [activationKey, setActivationKey] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resendingAlert, setResendingAlert] = useState(false);
+  const [emailReady, setEmailReady] = useState<boolean | null>(null);
+  const [emailFrom, setEmailFrom] = useState("");
+  const [notifyEmail, setNotifyEmail] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     const q = filter === "all" ? "" : `&status=${filter}`;
     const res = await fetch(`/api/admin/sales-nav?key=${adminKey}${q}`);
     const data = await res.json();
-    if (res.ok) setRequests(data.requests || []);
+    if (res.ok) {
+      setRequests(data.requests || []);
+      setEmailReady(data.configured ?? null);
+      setEmailFrom(data.from || "");
+      setNotifyEmail(data.notifyEmail || "");
+    }
     setLoading(false);
   }, [adminKey, filter]);
 
@@ -67,12 +76,27 @@ export default function AdminSalesNavSection() {
     });
     const data = await res.json();
     setBusy(false);
-    if (data.error) showToast(data.error, "error");
-    else {
-      showToast(data.skipped ? "Saved (email not configured)" : "Activation emailed to member");
-      setActivationKey("");
-      load();
+    if (data.error) {
+      showToast(data.error, "error");
+      return;
     }
+    showToast(`Activation emailed to ${data.sentTo || selected.member_email}`);
+    setActivationKey("");
+    load();
+  }
+
+  async function resendAdminAlert() {
+    if (!selected) return;
+    setResendingAlert(true);
+    const res = await fetch(`/api/admin/sales-nav?key=${adminKey}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ requestId: selected.id }),
+    });
+    const data = await res.json();
+    setResendingAlert(false);
+    if (data.error) showToast(data.error, "error");
+    else showToast(`Admin alert sent to ${data.sentTo || notifyEmail}`);
   }
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
@@ -86,6 +110,26 @@ export default function AdminSalesNavSection() {
           Team members request licenses from their workspace. Paste the activation key or link and email it to them.
         </p>
       </div>
+
+      {emailReady === false && (
+        <div className="lux-card p-4 border-red-500/40 bg-red-500/10">
+          <p className="text-sm font-semibold text-red-300">Email not configured — activation emails cannot send</p>
+          <p className="text-xs text-lux-muted mt-2 leading-relaxed">
+            In Vercel → Project → Settings → Environment Variables, set{" "}
+            <code className="text-lux-text">RESEND_API_KEY</code> and{" "}
+            <code className="text-lux-text">EMAIL_FROM</code> (e.g. InMailly &lt;notifications@inmailly.com&gt;).
+            Verify your domain at resend.com/domains, then redeploy. Admin alerts go to{" "}
+            <strong className="text-lux-text">{notifyEmail || "NOTIFY_EMAIL"}</strong>.
+          </p>
+        </div>
+      )}
+
+      {emailReady === true && (
+        <p className="text-xs text-lux-muted">
+          Sending from <span className="text-lux-cyan">{emailFrom}</span> · member activation → their InMailly email ·
+          new requests alert → {notifyEmail}
+        </p>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="lux-card p-4 text-center">
@@ -153,6 +197,18 @@ export default function AdminSalesNavSection() {
                 <p className="text-xs text-lux-muted mt-1">
                   Requested {new Date(selected.requested_at).toLocaleString()}
                 </p>
+                {selected.status === "pending" && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      variant="lux-ghost"
+                      size="sm"
+                      disabled={resendingAlert || emailReady === false}
+                      onClick={resendAdminAlert}
+                    >
+                      {resendingAlert ? "Sending…" : `Resend admin alert → ${notifyEmail || "NOTIFY_EMAIL"}`}
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {(selected.status === "pending" || selected.status === "error") && (
@@ -168,9 +224,17 @@ export default function AdminSalesNavSection() {
                     value={activationKey}
                     onChange={(e) => setActivationKey(e.target.value)}
                   />
-                  <Button variant="lux" className="w-full sm:w-auto" disabled={busy} onClick={sendActivation}>
+                  <Button
+                    variant="lux"
+                    className="w-full sm:w-auto"
+                    disabled={busy || emailReady === false}
+                    onClick={sendActivation}
+                  >
                     {busy ? "Sending…" : "Email activation to member"}
                   </Button>
+                  {emailReady === false && (
+                    <p className="text-xs text-red-400">Fix Resend configuration above before sending.</p>
+                  )}
                 </div>
               )}
 
