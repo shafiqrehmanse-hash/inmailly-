@@ -11,6 +11,10 @@ import {
   adminBrandingSubmittedEmail,
   adminLeadNoteEmail,
   adminBlogPendingReviewEmail,
+  adminSalesNavActivatedEmail,
+  adminSalesNavErrorEmail,
+  adminSalesNavRequestEmail,
+  memberSalesNavActivationEmail,
   contentManagerWelcomeEmail,
   teamDealClosedEmail,
   teamMeetingBookedEmail,
@@ -312,6 +316,68 @@ export async function notifyAdminBrandingSubmitted(data: {
     subject: `Branding submitted: ${label} — ${data.projectName}`,
     html: adminBrandingSubmittedEmail(data),
     text: `${label} submitted branding for ${data.projectName}. Subject: ${data.inmailSubject}`,
+  });
+}
+
+/** Admin alert when a team member requests Sales Navigator (same pipeline as signup notifies). */
+export async function notifyAdminSalesNavRequest(data: {
+  memberName: string;
+  memberEmail: string;
+  linkedinEmail: string;
+}) {
+  return sendEmailSafe({
+    to: getNotifyEmail(),
+    replyTo: data.memberEmail,
+    subject: `Sales Navigator request: ${data.memberName}`,
+    html: adminSalesNavRequestEmail(data),
+    text: `${data.memberName} (${data.memberEmail}) requested Sales Navigator for LinkedIn email ${data.linkedinEmail}`,
+  });
+}
+
+/** Member activation email after admin pastes the Sales Nav key (same pipeline as verification emails). */
+export async function sendMemberSalesNavActivationEmail(data: {
+  memberName: string;
+  memberEmail: string;
+  activationKey: string;
+}) {
+  return sendEmailSafe({
+    to: data.memberEmail,
+    replyTo: getNotifyEmail(),
+    subject: "Your Sales Navigator license — activate now",
+    html: memberSalesNavActivationEmail({
+      memberName: data.memberName,
+      activationKey: data.activationKey,
+    }),
+    text: `Hi ${data.memberName}, your Sales Navigator license is ready. Activation details:\n\n${data.activationKey}\n\nOpen on Chrome desktop/laptop, then mark activated in InMailly: /team/sales-nav`,
+  });
+}
+
+export async function notifyAdminSalesNavActivated(data: {
+  memberName: string;
+  memberEmail: string;
+  linkedinEmail: string;
+}) {
+  return sendEmailSafe({
+    to: getNotifyEmail(),
+    replyTo: data.memberEmail,
+    subject: `Sales Navigator activated: ${data.memberName}`,
+    html: adminSalesNavActivatedEmail(data),
+    text: `${data.memberName} activated Sales Navigator.`,
+  });
+}
+
+export async function notifyAdminSalesNavError(data: {
+  memberName: string;
+  memberEmail: string;
+  linkedinEmail: string;
+  errorNote?: string | null;
+}) {
+  return sendEmailSafe({
+    to: getNotifyEmail(),
+    replyTo: data.memberEmail,
+    subject: `Sales Navigator error: ${data.memberName}`,
+    html: adminSalesNavErrorEmail(data),
+    text: `${data.memberName} reported Sales Navigator activation error.${data.errorNote ? ` Note: ${data.errorNote}` : ""}`,
   });
 }
 

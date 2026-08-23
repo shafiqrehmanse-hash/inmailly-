@@ -34,8 +34,6 @@ export default function AdminSalesNavSection() {
   const [activationKey, setActivationKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [resendingAlert, setResendingAlert] = useState(false);
-  const [emailReady, setEmailReady] = useState<boolean | null>(null);
-  const [emailFrom, setEmailFrom] = useState("");
   const [notifyEmail, setNotifyEmail] = useState("");
 
   const load = useCallback(async () => {
@@ -45,8 +43,6 @@ export default function AdminSalesNavSection() {
     const data = await res.json();
     if (res.ok) {
       setRequests(data.requests || []);
-      setEmailReady(data.configured ?? null);
-      setEmailFrom(data.from || "");
       setNotifyEmail(data.notifyEmail || "");
     }
     setLoading(false);
@@ -110,26 +106,6 @@ export default function AdminSalesNavSection() {
           Team members request licenses from their workspace. Paste the activation key or link and email it to them.
         </p>
       </div>
-
-      {emailReady === false && (
-        <div className="lux-card p-4 border-red-500/40 bg-red-500/10">
-          <p className="text-sm font-semibold text-red-300">Email not configured — activation emails cannot send</p>
-          <p className="text-xs text-lux-muted mt-2 leading-relaxed">
-            In Vercel → Project → Settings → Environment Variables, set{" "}
-            <code className="text-lux-text">RESEND_API_KEY</code> and{" "}
-            <code className="text-lux-text">EMAIL_FROM</code> (e.g. InMailly &lt;notifications@inmailly.com&gt;).
-            Verify your domain at resend.com/domains, then redeploy. Admin alerts go to{" "}
-            <strong className="text-lux-text">{notifyEmail || "NOTIFY_EMAIL"}</strong>.
-          </p>
-        </div>
-      )}
-
-      {emailReady === true && (
-        <p className="text-xs text-lux-muted">
-          Sending from <span className="text-lux-cyan">{emailFrom}</span> · member activation → their InMailly email ·
-          new requests alert → {notifyEmail}
-        </p>
-      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="lux-card p-4 text-center">
@@ -202,10 +178,10 @@ export default function AdminSalesNavSection() {
                     <Button
                       variant="lux-ghost"
                       size="sm"
-                      disabled={resendingAlert || emailReady === false}
+                      disabled={resendingAlert}
                       onClick={resendAdminAlert}
                     >
-                      {resendingAlert ? "Sending…" : `Resend admin alert → ${notifyEmail || "NOTIFY_EMAIL"}`}
+                      {resendingAlert ? "Sending…" : `Resend admin alert${notifyEmail ? ` → ${notifyEmail}` : ""}`}
                     </Button>
                   </div>
                 )}
@@ -227,14 +203,11 @@ export default function AdminSalesNavSection() {
                   <Button
                     variant="lux"
                     className="w-full sm:w-auto"
-                    disabled={busy || emailReady === false}
+                    disabled={busy}
                     onClick={sendActivation}
                   >
                     {busy ? "Sending…" : "Email activation to member"}
                   </Button>
-                  {emailReady === false && (
-                    <p className="text-xs text-red-400">Fix Resend configuration above before sending.</p>
-                  )}
                 </div>
               )}
 

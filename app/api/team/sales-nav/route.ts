@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  adminSalesNavActivatedEmail,
-  adminSalesNavErrorEmail,
-  adminSalesNavRequestEmail,
-} from "@/lib/email-templates";
-import { sendEmail, getNotifyEmail } from "@/lib/email";
+  notifyAdminSalesNavActivated,
+  notifyAdminSalesNavError,
+  notifyAdminSalesNavRequest,
+} from "@/lib/email";
 import { getCurrentMember } from "@/lib/team";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SalesNavLicenseRequest } from "@/lib/types";
@@ -71,29 +70,19 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const adminNotify = await sendEmail({
-    to: getNotifyEmail(),
-    subject: `Sales Navigator request: ${member.name}`,
-    html: adminSalesNavRequestEmail({
-      memberName: member.name,
-      memberEmail: member.email,
-      linkedinEmail,
-    }),
-    text: `${member.name} (${member.email}) requested Sales Navigator for LinkedIn email ${linkedinEmail}`,
+  const adminNotify = await notifyAdminSalesNavRequest({
+    memberName: member.name,
+    memberEmail: member.email,
+    linkedinEmail,
   });
 
-  if (!adminNotify.ok) {
-    console.error("[sales-nav] admin notify failed:", adminNotify.skipped ? "RESEND not configured" : adminNotify.error);
+  if (!adminNotify.ok && !adminNotify.skipped) {
+    console.error("[sales-nav] admin notify failed:", adminNotify.error);
   }
 
   return NextResponse.json({
     request: row as SalesNavLicenseRequest,
     adminNotified: adminNotify.ok,
-    adminNotifyError: adminNotify.ok
-      ? null
-      : adminNotify.skipped
-        ? "Admin alert email skipped — RESEND_API_KEY not set on server"
-        : adminNotify.error || "Admin alert email failed",
   });
 }
 
@@ -146,25 +135,9 @@ export async function PATCH(request: NextRequest) {
   };
 
   if (action === "activated") {
-    const notify = await sendEmail({
-      to: getNotifyEmail(),
-      subject: `Sales Navigator activated: ${existing.member_name}`,
-      html: adminSalesNavActivatedEmail(payload),
-      text: `${existing.member_name} activated Sales Navigator.`,
-    });
-    if (!notify.ok) {
-      console.error("[sales-nav] activated notify failed:", notify.skipped ? "RESEND not configured" : notify.error);
-    }
+    void notifyAdminSalesNavActivated(payload);
   } else {
-    const notify = await sendEmail({
-      to: getNotifyEmail(),
-      subject: `Sales Navigator error: ${existing.member_name}`,
-      html: adminSalesNavErrorEmail(payload),
-      text: `${existing.member_name} reported Sales Navigator activation error.${errorNote ? ` Note: ${errorNote}` : ""}`,
-    });
-    if (!notify.ok) {
-      console.error("[sales-nav] error notify failed:", notify.skipped ? "RESEND not configured" : notify.error);
-    }
+    void notifyAdminSalesNavError(payload);
   }
 
   return NextResponse.json({ request: updated as SalesNavLicenseRequest });
