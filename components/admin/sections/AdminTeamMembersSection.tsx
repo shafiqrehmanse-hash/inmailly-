@@ -183,7 +183,7 @@ export default function AdminTeamMembersSection() {
   const totalLinks = outreachMembers.reduce((s, m) => s + m.active_links, 0);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="w-full max-w-none space-y-8">
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">Team members</h1>
         <p className="text-sm text-lux-muted mt-1">Access, roles, invites, and outreach worker accounts.</p>
@@ -297,132 +297,155 @@ export default function AdminTeamMembersSection() {
       </section>
 
       <section>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <p className="admin-section-title">All members</p>
             <p className="text-xs text-lux-muted mt-1">
-              Use <strong className="text-lux-violet">Visibility</strong> to hide from leaderboard. Use <strong className="text-red-300">Delete</strong> (3rd column) to remove a member permanently.
+              Every member shown in full — role, stats, hide, delete, and actions. No sideways scrolling.
             </p>
           </div>
           <span className="text-xs text-lux-muted">{members.length} total</span>
         </div>
-        <div className="lux-card overflow-x-auto">
-          <table className="w-full text-sm min-w-[720px]">
-            <thead>
-              <tr className="text-lux-muted text-xs uppercase bg-lux-bg2 border-b border-white/[0.06]">
-                <th className="text-left px-4 py-3 font-semibold">Name</th>
-                <th className="text-left px-3 py-3 font-semibold whitespace-nowrap">Visibility</th>
-                <th className="text-left px-3 py-3 font-semibold whitespace-nowrap">Delete</th>
-                <th className="text-left px-4 py-3 font-semibold">Email</th>
-                <th className="text-left px-4 py-3 font-semibold hidden xl:table-cell">Phone</th>
-                <th className="text-left px-4 py-3 font-semibold">Role</th>
-                <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Team leader</th>
-                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Links</th>
-                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Leads</th>
-                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Deals</th>
-                <th className="text-left px-4 py-3 font-semibold">Active</th>
-                <th className="text-left px-4 py-3 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.length === 0 ? (
-                <tr>
-                  <td colSpan={12} className="px-4 py-12 text-center text-lux-muted">
-                    No team members yet.
-                  </td>
-                </tr>
-              ) : (
-                members.map((m) => (
-                  <tr key={m.id} className="border-b border-white/[0.06] last:border-0 hover:bg-lux-bg2/50">
-                    <td className="px-4 py-3 font-medium text-lux-text">
-                      <div className="flex items-center gap-2.5">
-                        <TeamAvatar name={m.name} photoUrl={m.photo_url} size="sm" />
-                        <div className="flex flex-wrap items-center gap-2 min-w-0">
-                          {m.name}
-                          {m.hidden_from_team && (
-                            <span className="text-[0.58rem] font-bold uppercase tracking-wider text-slate-300 bg-slate-500/15 border border-slate-400/25 px-2 py-0.5 rounded-md">
-                              Hidden from team
-                            </span>
-                          )}
-                          {m.role === "team_leader" && (
-                            <span className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                              Team leader · {members.filter((w) => w.leader_id === m.id).length} workers
-                            </span>
-                          )}
-                        </div>
+
+        {members.length === 0 ? (
+          <div className="lux-card px-4 py-12 text-center text-lux-muted">No team members yet.</div>
+        ) : (
+          <div className="space-y-3">
+            {members.map((m) => (
+              <article
+                key={m.id}
+                className="lux-card p-4 sm:p-5 border border-white/[0.06] hover:border-white/[0.1] transition-colors"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <TeamAvatar name={m.name} photoUrl={m.photo_url} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold text-lux-text">{m.name}</h3>
+                        {m.hidden_from_team && (
+                          <span className="text-[0.58rem] font-bold uppercase tracking-wider text-slate-300 bg-slate-500/15 border border-slate-400/25 px-2 py-0.5 rounded-md">
+                            Hidden
+                          </span>
+                        )}
+                        {m.role === "team_leader" && (
+                          <span className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                            Leader · {members.filter((w) => w.leader_id === m.id).length} workers
+                          </span>
+                        )}
+                        {!m.is_active && (
+                          <span className="text-[0.58rem] font-bold uppercase tracking-wider text-red-300 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded-md">
+                            Inactive
+                          </span>
+                        )}
                       </div>
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      <Button
-                        variant={m.hidden_from_team ? "lux-ghost" : "lux"}
-                        size="sm"
-                        className={
-                          m.hidden_from_team
-                            ? "text-lux-cyan border-lux-cyan/30 text-xs"
-                            : "text-xs bg-lux-violet/20 border-lux-violet/40 hover:bg-lux-violet/30"
-                        }
-                        onClick={() => toggleHiddenFromTeam(m.id, !m.hidden_from_team)}
-                      >
-                        {m.hidden_from_team ? "Show team" : "Hide team"}
-                      </Button>
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      <Button
-                        variant="lux-ghost"
-                        size="sm"
-                        className="text-red-400 hover:text-red-300 hover:border-red-400/40 text-xs"
-                        onClick={() => deleteMember(m)}
-                        title={`Permanently delete ${m.name}`}
-                      >
-                        Delete
-                      </Button>
-                    </td>
-                    <td className="px-4 py-3 text-lux-muted">{m.email}</td>
-                    <td className="px-4 py-3 text-lux-muted whitespace-nowrap text-xs hidden xl:table-cell">
+                      <p className="text-sm text-lux-muted truncate mt-0.5">{m.email}</p>
                       {m.phone ? (
-                        <a href={`https://wa.me/${m.phone.replace(/[^0-9]/g, "")}`} className="text-lux-cyan hover:underline" target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={`https://wa.me/${m.phone.replace(/[^0-9]/g, "")}`}
+                          className="text-xs text-lux-cyan hover:underline mt-1 inline-block"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           {m.phone}
                         </a>
                       ) : (
-                        "—"
+                        <p className="text-xs text-lux-muted mt-1">No phone</p>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <LuxSelect size="sm" className="min-w-[160px]" value={m.role} onChange={(role) => updateRole(m.id, role)} options={roleOptions} />
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      {canAssignLeader(m.role) ? (
-                        <LuxSelect
-                          size="sm"
-                          className="min-w-[140px]"
-                          value={m.leader_id || ""}
-                          onChange={(leaderId) => updateLeader(m.id, leaderId)}
-                          options={leaderOptions}
-                        />
-                      ) : (
-                        <span className="text-xs text-lux-muted">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">{m.active_links}</td>
-                    <td className="px-4 py-3 hidden md:table-cell">{m.leads_count}</td>
-                    <td className="px-4 py-3 text-emerald-400 hidden md:table-cell">{m.deals_closed || 0}</td>
-                    <td className="px-4 py-3">
-                      <input type="checkbox" className="rounded border-white/20 text-lux-cyan focus:ring-lux-cyan" checked={m.is_active} onChange={(e) => toggleActive(m.id, e.target.checked)} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        <Link href={`/admin/team/links?memberId=${m.id}`}>
-                          <Button variant="lux-ghost" size="sm">Links</Button>
-                        </Link>
-                        <Button variant="lux-ghost" size="sm" onClick={() => resetPassword(m.email)}>Reset pwd</Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 shrink-0 lg:w-auto w-full max-w-md">
+                    {[
+                      { label: "Links", value: m.active_links, color: "text-lux-cyan" },
+                      { label: "Leads", value: m.leads_count, color: "text-lux-violet" },
+                      { label: "Deals", value: m.deals_closed || 0, color: "text-emerald-400" },
+                      {
+                        label: "Active",
+                        value: m.is_active ? "Yes" : "No",
+                        color: m.is_active ? "text-emerald-400" : "text-red-400",
+                      },
+                    ].map((s) => (
+                      <div
+                        key={s.label}
+                        className="rounded-lg border border-white/[0.06] bg-black/20 px-2 py-2 text-center"
+                      >
+                        <div className={`text-lg font-bold tabular-nums ${s.color}`}>{s.value}</div>
+                        <div className="text-[0.58rem] uppercase tracking-wide text-lux-muted">{s.label}</div>
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/[0.06]">
+                  <div>
+                    <label className="text-[0.62rem] font-semibold uppercase tracking-wide text-lux-muted mb-1.5 block">
+                      Role
+                    </label>
+                    <LuxSelect size="sm" className="w-full" value={m.role} onChange={(role) => updateRole(m.id, role)} options={roleOptions} />
+                  </div>
+                  <div>
+                    <label className="text-[0.62rem] font-semibold uppercase tracking-wide text-lux-muted mb-1.5 block">
+                      Team leader
+                    </label>
+                    {canAssignLeader(m.role) ? (
+                      <LuxSelect
+                        size="sm"
+                        className="w-full"
+                        value={m.leader_id || ""}
+                        onChange={(leaderId) => updateLeader(m.id, leaderId)}
+                        options={leaderOptions}
+                      />
+                    ) : (
+                      <div className="lux-input opacity-60 text-xs py-2.5">—</div>
+                    )}
+                  </div>
+                  <div className="flex items-end">
+                    <label className="inline-flex items-center gap-2 cursor-pointer px-3 py-2.5 rounded-lg border border-white/[0.08] bg-black/20 w-full sm:w-auto">
+                      <input
+                        type="checkbox"
+                        className="rounded border-white/20 text-lux-cyan focus:ring-lux-cyan"
+                        checked={m.is_active}
+                        onChange={(e) => toggleActive(m.id, e.target.checked)}
+                      />
+                      <span className="text-sm text-lux-text">Account active</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-white/[0.06]">
+                  <Button
+                    variant={m.hidden_from_team ? "lux-ghost" : "lux"}
+                    size="sm"
+                    className={
+                      m.hidden_from_team
+                        ? "text-lux-cyan border-lux-cyan/30"
+                        : "bg-lux-violet/20 border-lux-violet/40 hover:bg-lux-violet/30"
+                    }
+                    onClick={() => toggleHiddenFromTeam(m.id, !m.hidden_from_team)}
+                  >
+                    {m.hidden_from_team ? "Show to team" : "Hide from team"}
+                  </Button>
+                  <Link href={`/admin/team/links?memberId=${m.id}`}>
+                    <Button variant="lux-ghost" size="sm">
+                      Work links
+                    </Button>
+                  </Link>
+                  <Button variant="lux-ghost" size="sm" onClick={() => resetPassword(m.email)}>
+                    Reset password
+                  </Button>
+                  <Button
+                    variant="lux-ghost"
+                    size="sm"
+                    className="text-red-400 hover:text-red-300 hover:border-red-400/40 ml-auto"
+                    onClick={() => deleteMember(m)}
+                  >
+                    Delete member
+                  </Button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
