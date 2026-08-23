@@ -139,8 +139,8 @@ export default function AdminTeamMembersSection() {
   async function deleteMember(member: MemberRow) {
     const warn =
       member.active_links > 0 || member.leads_count > 0
-        ? `${member.name} has ${member.active_links} active links and ${member.leads_count} leads. Delete permanently?`
-        : `Delete ${member.name} permanently? This cannot be undone.`;
+        ? `Delete ${member.name} permanently?\n\nThey have ${member.active_links} active links and ${member.leads_count} leads. Their login will be removed and this cannot be undone.`
+        : `Delete ${member.name} permanently?\n\nTheir account and login will be removed. This cannot be undone.`;
     if (!confirm(warn)) return;
 
     const res = await fetch(`/api/admin/members?key=${adminKey}`, {
@@ -301,7 +301,7 @@ export default function AdminTeamMembersSection() {
           <div>
             <p className="admin-section-title">All members</p>
             <p className="text-xs text-lux-muted mt-1">
-              Use the <strong className="text-lux-violet">Visibility</strong> column (2nd column) to hide someone from the team leaderboard.
+              Use <strong className="text-lux-violet">Visibility</strong> to hide from leaderboard. Use <strong className="text-red-300">Delete</strong> (3rd column) to remove a member permanently.
             </p>
           </div>
           <span className="text-xs text-lux-muted">{members.length} total</span>
@@ -312,6 +312,7 @@ export default function AdminTeamMembersSection() {
               <tr className="text-lux-muted text-xs uppercase bg-lux-bg2 border-b border-white/[0.06]">
                 <th className="text-left px-4 py-3 font-semibold">Name</th>
                 <th className="text-left px-3 py-3 font-semibold whitespace-nowrap">Visibility</th>
+                <th className="text-left px-3 py-3 font-semibold whitespace-nowrap">Delete</th>
                 <th className="text-left px-4 py-3 font-semibold">Email</th>
                 <th className="text-left px-4 py-3 font-semibold hidden xl:table-cell">Phone</th>
                 <th className="text-left px-4 py-3 font-semibold">Role</th>
@@ -326,7 +327,7 @@ export default function AdminTeamMembersSection() {
             <tbody>
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-12 text-center text-lux-muted">
+                  <td colSpan={12} className="px-4 py-12 text-center text-lux-muted">
                     No team members yet.
                   </td>
                 </tr>
@@ -363,6 +364,17 @@ export default function AdminTeamMembersSection() {
                         onClick={() => toggleHiddenFromTeam(m.id, !m.hidden_from_team)}
                       >
                         {m.hidden_from_team ? "Show team" : "Hide team"}
+                      </Button>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <Button
+                        variant="lux-ghost"
+                        size="sm"
+                        className="text-red-400 hover:text-red-300 hover:border-red-400/40 text-xs"
+                        onClick={() => deleteMember(m)}
+                        title={`Permanently delete ${m.name}`}
+                      >
+                        Delete
                       </Button>
                     </td>
                     <td className="px-4 py-3 text-lux-muted">{m.email}</td>
@@ -403,9 +415,6 @@ export default function AdminTeamMembersSection() {
                           <Button variant="lux-ghost" size="sm">Links</Button>
                         </Link>
                         <Button variant="lux-ghost" size="sm" onClick={() => resetPassword(m.email)}>Reset pwd</Button>
-                        <Button variant="lux-ghost" size="sm" onClick={() => deleteMember(m)} className="text-red-400 hover:text-red-300">
-                          Delete
-                        </Button>
                       </div>
                     </td>
                   </tr>

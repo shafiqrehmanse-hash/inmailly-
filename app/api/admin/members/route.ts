@@ -159,16 +159,26 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Member not found" }, { status: 404 });
   }
 
+  const { data: profile } = await admin
+    .from("team_members")
+    .select("id, role")
+    .eq("id", memberId)
+    .maybeSingle();
+
+  if (profile?.role === "team_leader") {
+    await admin.from("team_members").update({ leader_id: null }).eq("leader_id", memberId);
+  }
+
   if (member.user_id) {
     const { error: authError } = await admin.auth.admin.deleteUser(member.user_id);
     if (authError) {
       return NextResponse.json({ error: authError.message }, { status: 400 });
     }
-  } else {
-    const { error: rowError } = await admin.from("team_members").delete().eq("id", memberId);
-    if (rowError) {
-      return NextResponse.json({ error: rowError.message }, { status: 500 });
-    }
+  }
+
+  const { error: rowError } = await admin.from("team_members").delete().eq("id", memberId);
+  if (rowError) {
+    return NextResponse.json({ error: rowError.message }, { status: 500 });
   }
 
   return NextResponse.json({ success: true, deleted: member.email });
