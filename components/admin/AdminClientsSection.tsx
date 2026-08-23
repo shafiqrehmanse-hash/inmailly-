@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import AdminClientEmailPanel from "@/components/admin/AdminClientEmailPanel";
 import AdminClientBrandingPanel from "@/components/admin/AdminClientBrandingPanel";
+import AdminClientCampaignProfilesPanel from "@/components/admin/AdminClientCampaignProfilesPanel";
 import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Pagination from "@/components/ui/Pagination";
@@ -399,6 +400,12 @@ export default function AdminClientsSection({
                     <AdminClientBrandingPanel
                       projectId={c.latest_project?.id}
                       branding={c.latest_project}
+                      adminKey={adminKey}
+                      onToast={onToast}
+                    />
+                    <AdminClientCampaignProfilesPanel
+                      projectId={c.latest_project?.id}
+                      clientId={c.id}
                       adminKey={adminKey}
                       onToast={onToast}
                     />

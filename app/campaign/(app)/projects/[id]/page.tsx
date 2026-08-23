@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import CampaignProjectProfilesPanel from "@/components/campaign/CampaignProjectProfilesPanel";
 import ProjectProofUploader from "@/components/campaign/ProjectProofUploader";
 import { getSiteUrl } from "@/lib/site-url";
 import ProjectClientWorkspace from "@/components/team/ProjectClientWorkspace";
@@ -56,6 +57,8 @@ export default async function CampaignProjectPage({ params }: { params: { id: st
       )}
 
       <ProjectProofUploader projectId={project.id} />
+
+      <CampaignProjectProfilesPanel projectId={project.id} projectName={project.name} />
 
       <ProjectClientWorkspace project={project} memberId={member.id} />
 

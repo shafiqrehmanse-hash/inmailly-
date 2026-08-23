@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { randomToken } from "@/lib/utils";
 
 const PROJECT_SELECT =
-  "id, name, status, audience_brief, target_titles, portal_token, inmail_package_size, created_at, clients ( id, name, company_name )";
+  "id, name, status, audience_brief, target_titles, target_industries, target_regions, portal_token, inmail_package_size, created_at, clients ( id, name, company_name )";
 
 export type ClientProjectRow = {
   id: string;
@@ -10,6 +10,8 @@ export type ClientProjectRow = {
   status: string;
   audience_brief: string | null;
   target_titles: string | null;
+  target_industries: string | null;
+  target_regions: string | null;
   portal_token: string;
   inmail_package_size: number | null;
   created_at: string;

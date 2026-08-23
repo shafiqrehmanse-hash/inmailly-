@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { listCampaignProfilesForClient } from "@/lib/client-campaign-profiles";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: NextRequest) {
@@ -83,6 +84,13 @@ export async function GET(request: NextRequest) {
     .select("*", { count: "exact", head: true })
     .eq("project_id", project.id);
 
+  let profiles: Awaited<ReturnType<typeof listCampaignProfilesForClient>> = [];
+  try {
+    profiles = await listCampaignProfilesForClient(admin, project.id);
+  } catch {
+    profiles = [];
+  }
+
   return NextResponse.json({
     project,
     stats: {
@@ -94,5 +102,6 @@ export async function GET(request: NextRequest) {
     },
     responses: responses || [],
     proofs: proofs.filter((p) => p.image_url),
+    profiles,
   });
 }

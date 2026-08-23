@@ -81,7 +81,7 @@ export default function ClientProjectPortal({ token }: { token: string }) {
             {live.stats.total} response{live.stats.total !== 1 ? "s" : ""}
           </p>
         </div>
-        <ClientDashboard mode="full" live={live} />
+        <ClientDashboard mode="full" live={live} portalToken={token} />
         {live.packageProgress && (
           <div className="mt-8">
             <ClientPackageProgress progress={live.packageProgress} />

@@ -21,9 +21,11 @@ import {
   HiInbox,
   HiPaperAirplane,
   HiSquares2X2,
+  HiUserCircle,
 } from "react-icons/hi2";
+import ClientCampaignProfilesSection from "@/components/client/ClientCampaignProfilesSection";
 
-type Tab = "overview" | "responses" | "sends" | "campaigns" | "analytics";
+type Tab = "overview" | "responses" | "sends" | "campaigns" | "profiles" | "analytics";
 
 function TeamVisibleCount({
   visible,
@@ -52,6 +54,7 @@ const TABS: { id: Tab; label: string; icon: typeof HiSquares2X2 }[] = [
   { id: "overview", label: "Overview", icon: HiSquares2X2 },
   { id: "responses", label: "Responses", icon: HiInbox },
   { id: "sends", label: "Send proofs", icon: HiPaperAirplane },
+  { id: "profiles", label: "Sender profiles", icon: HiUserCircle },
   { id: "campaigns", label: "Campaigns", icon: HiEnvelope },
   { id: "analytics", label: "Analytics", icon: HiChartBar },
 ];
@@ -62,6 +65,7 @@ export default function ClientDashboard({
   live,
   usingDemoFill = false,
   onFollowupSaved,
+  portalToken,
 }: {
   mode?: "hero" | "full";
   className?: string;
@@ -69,6 +73,8 @@ export default function ClientDashboard({
   /** Sample campaign metrics until real responses/proofs exist (client login only). */
   usingDemoFill?: boolean;
   onFollowupSaved?: () => void;
+  /** Token portal — enables Sender profiles tab to load via portal API */
+  portalToken?: string;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [activityIdx, setActivityIdx] = useState(0);
@@ -295,6 +301,13 @@ export default function ClientDashboard({
                       { l: "Meetings", v: DEMO_CAMPAIGN.meetings },
                     ]
               }
+            />
+          )}
+          {!isHero && tab === "profiles" && (
+            <ClientCampaignProfilesSection
+              showHeader
+              portalToken={portalToken}
+              initialProjectName={isLive ? live!.projectName : undefined}
             />
           )}
           {!isHero && tab === "analytics" && (
