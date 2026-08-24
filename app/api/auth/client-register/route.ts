@@ -94,11 +94,15 @@ async function sendVerificationEmail(
     verifyUrl: link.verifyUrl,
   });
 
-  if (!result.ok && !result.skipped) {
-    return { error: result.error || "Could not send verification email" };
+  if (!result.ok) {
+    return {
+      error: result.skipped
+        ? "Verification email could not send — RESEND_API_KEY is not configured on the server."
+        : result.error || "Could not send verification email",
+    };
   }
 
-  return { ok: true as const, emailConfigured: !result.skipped };
+  return { ok: true as const, emailConfigured: true };
 }
 
 export async function POST(request: Request) {

@@ -142,6 +142,53 @@ export default function AdminClientEmailPanel({
 
           <div className="flex flex-wrap gap-2">
             <Button
+              variant="lux-cyan"
+              size="sm"
+              disabled={!hasEmail || sending !== null}
+              onClick={async () => {
+                if (!confirm(`Mark ${client.email} as verified? They can log in immediately without clicking the email link.`)) return;
+                setSending("confirm_verify");
+                const res = await fetch(`/api/admin/clients/verify-email?key=${adminKey}`, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({ client_id: client.id, action: "confirm" }),
+                });
+                const data = await res.json();
+                setSending(null);
+                if (!res.ok) onToast(data.error || "Could not verify", "error");
+                else onToast(data.message || `Verified — ${client.email} can log in now`);
+              }}
+            >
+              {sending === "confirm_verify" ? "Verifying…" : "Mark email verified (instant login) →"}
+            </Button>
+            <Button
+              variant="lux-ghost"
+              size="sm"
+              disabled={!hasEmail || sending !== null}
+              onClick={async () => {
+                setSending("resend_verify");
+                const res = await fetch(`/api/admin/clients/verify-email?key=${adminKey}`, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({ client_id: client.id, action: "resend" }),
+                });
+                const data = await res.json();
+                setSending(null);
+                if (!res.ok) onToast(data.error || "Could not resend", "error");
+                else onToast(`Verification email sent to ${data.sentTo || client.email}`);
+              }}
+            >
+              {sending === "resend_verify" ? "Sending…" : "Resend verification email →"}
+            </Button>
+          </div>
+          <p className="text-[0.65rem] text-lux-muted leading-relaxed">
+            Paid client stuck without the verify email? Use <strong className="text-lux-text">Mark email verified</strong>{" "}
+            so they can log in at <code className="text-lux-cyan/80">/client/login</code> right away, or{" "}
+            <strong className="text-lux-text">Resend verification</strong> (same Resend system as signup).
+          </p>
+
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-white/[0.06]">
+            <Button
               variant="lux-ghost"
               size="sm"
               className="border-amber-500/30 text-amber-300 hover:text-amber-200"

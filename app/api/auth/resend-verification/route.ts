@@ -3,6 +3,12 @@ import { sendClientVerificationEmail, sendTeamVerificationEmail } from "@/lib/em
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateVerificationLink } from "@/lib/verification-email";
 
+function emailSendError(result: { ok: false; skipped?: boolean; error?: string }) {
+  return result.skipped
+    ? "Email not configured — contact support or try again later."
+    : result.error || "Could not send verification email";
+}
+
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
@@ -48,21 +54,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: link.error }, { status: 400 });
     }
 
-    if (account.type === "client") {
-      await sendClientVerificationEmail({
-        name: account.name,
-        email: normalizedEmail,
-        verifyUrl: link.verifyUrl,
-      });
-    } else {
-      await sendTeamVerificationEmail({
-        name: account.name,
-        email: normalizedEmail,
-        verifyUrl: link.verifyUrl,
-      });
+    const send =
+      account.type === "client"
+        ? await sendClientVerificationEmail({
+            name: account.name,
+            email: normalizedEmail,
+            verifyUrl: link.verifyUrl,
+          })
+        : await sendTeamVerificationEmail({
+            name: account.name,
+            email: normalizedEmail,
+            verifyUrl: link.verifyUrl,
+          });
+
+    if (!send.ok) {
+      return NextResponse.json({ error: emailSendError(send) }, { status: 502 });
     }
 
-    return NextResponse.json({ ok: true, accountType: account.type });
+    return NextResponse.json({ ok: true, accountType: account.type, sentTo: normalizedEmail });
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

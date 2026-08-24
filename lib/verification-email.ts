@@ -21,6 +21,7 @@ export async function generateVerificationLink(
     if (!error && data.properties?.action_link) {
       return { verifyUrl: data.properties.action_link };
     }
+    // Fall through to magiclink if signup link fails (e.g. user already exists)
   }
 
   const { data, error } = await admin.auth.admin.generateLink({

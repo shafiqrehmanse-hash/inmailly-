@@ -15,6 +15,8 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
   const [sentTo, setSentTo] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resendInfo, setResendInfo] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +40,15 @@ function RegisterForm() {
     setLoading(false);
 
     if (!res.ok) {
+      if (data.partial) {
+        setSentTo(email.trim().toLowerCase());
+        setCheckEmail(true);
+        setError(
+          data.error ||
+            "Account was created but the verification email could not send. Use Resend below or contact support."
+        );
+        return;
+      }
       setError(data.error || "Registration failed");
       return;
     }
@@ -49,9 +60,35 @@ function RegisterForm() {
     }
   }
 
+  async function resendVerification() {
+    if (!sentTo) return;
+    setResending(true);
+    setResendInfo("");
+    setError("");
+    const res = await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: sentTo }),
+    });
+    const data = await res.json();
+    setResending(false);
+    if (!res.ok) setError(data.error || "Could not resend verification email");
+    else setResendInfo("Verification email sent — check inbox and spam.");
+  }
+
   if (checkEmail) {
     return (
       <TeamAuthLayout title="Check your email" subtitle="One more step to unlock your dashboard">
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm mb-5">
+            {error}
+          </div>
+        )}
+        {resendInfo && (
+          <div className="bg-lux-cyan/10 border border-lux-cyan/30 text-lux-cyan rounded-xl px-4 py-3 text-sm mb-5">
+            {resendInfo}
+          </div>
+        )}
         <div className="bg-lux-cyan/10 border border-lux-cyan/30 rounded-xl px-5 py-5 mb-5 space-y-3">
           <p className="text-sm text-lux-cyan font-semibold">Verification email sent</p>
           <p className="text-sm text-white/70 leading-relaxed">
@@ -61,6 +98,14 @@ function RegisterForm() {
           </p>
           <p className="text-xs text-white/40">Check spam if you don&apos;t see it within a minute.</p>
         </div>
+        <button
+          type="button"
+          disabled={resending}
+          onClick={resendVerification}
+          className="w-full mb-3 py-3 border border-lux-cyan/30 text-lux-cyan rounded-xl text-sm font-semibold hover:bg-lux-cyan/10 transition-colors disabled:opacity-50"
+        >
+          {resending ? "Sending…" : "Resend verification email"}
+        </button>
         <Link
           href="/client/login"
           className="block w-full text-center py-3.5 border border-white/15 text-white/80 rounded-xl text-sm font-semibold hover:border-lux-cyan/40 hover:text-lux-cyan transition-colors"
