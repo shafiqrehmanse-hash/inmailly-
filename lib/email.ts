@@ -27,7 +27,7 @@ import {
   teamVerifyEmail,
   teamWelcomeVerifiedEmail,
 } from "@/lib/email-templates";
-import { getEmailFrom, getNotifyEmail, isEmailConfigured } from "@/lib/email-config";
+import { getNotifyEmail } from "@/lib/email-config";
 import { formatResendDomainError, resolveSendingFrom } from "@/lib/resend-health";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSiteUrl } from "@/lib/site-url";
