@@ -155,7 +155,7 @@ async function cropToJpegDataUrl(input: Buffer, region: CropRegion, size: { w: n
     .extract(square)
     .resize(size.w, size.h, { fit: "cover", position: "attention" })
     .sharpen({ sigma: 0.4 })
-    .jpeg({ quality: 88, mozjpeg: true })
+    .jpeg({ quality: 82, mozjpeg: true })
     .toBuffer();
   return bufferToJpegDataUrl(buf);
 }
@@ -237,7 +237,7 @@ async function buildCardPreview(
       { input: avatar, top: coverH - 32, left: 16 },
       { input: Buffer.from(textSvg), top: coverH - 10, left: 0 },
     ])
-    .jpeg({ quality: 88, mozjpeg: true })
+    .jpeg({ quality: 82, mozjpeg: true })
     .toBuffer();
 
   return bufferToJpegDataUrl(card);
@@ -373,10 +373,10 @@ export async function extractLinkedInProfileFromScreenshot(
     height: Math.min(profile.height, panelH),
   });
 
-  const cover_photo_data = await cropToJpegDataUrl(panelBuffer, coverRegionOnPanel, { w: 480, h: 120 });
+  const cover_photo_data = await cropToJpegDataUrl(panelBuffer, coverRegionOnPanel, { w: 400, h: 100 });
   const profile_photo_data = await cropToJpegDataUrl(panelBuffer, squareRegion(profileRegionOnPanel), {
-    w: 128,
-    h: 128,
+    w: 96,
+    h: 96,
   });
   const card_preview_data = await buildCardPreview(
     cover_photo_data,

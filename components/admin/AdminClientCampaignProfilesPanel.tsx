@@ -65,6 +65,7 @@ export default function AdminClientCampaignProfilesPanel({
   adminKey?: string;
   onToast?: (msg: string, type?: "success" | "error") => void;
 }) {
+  const [open, setOpen] = useState(false);
   const [profiles, setProfiles] = useState<CampaignProfileCardData[]>([]);
   const [loading, setLoading] = useState(false);
   const [extracting, setExtracting] = useState(false);
@@ -88,8 +89,8 @@ export default function AdminClientCampaignProfilesPanel({
   }, [adminKey, projectId]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (open) load();
+  }, [open, load]);
 
   async function acceptImage(file: File | null) {
     if (!file?.type.startsWith("image/")) {
@@ -175,6 +176,16 @@ export default function AdminClientCampaignProfilesPanel({
   if (!projectId || !clientId) return null;
 
   return (
+    <div className="mt-3 border-t border-white/[0.06] pt-3">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="text-xs font-semibold text-violet-300 hover:underline"
+      >
+        {open ? "Hide sender profiles ▲" : "Sender profiles (paste LinkedIn screenshot) ▼"}
+      </button>
+
+      {open && (
     <div className="mt-3 border border-violet-500/25 bg-violet-500/5 px-3 py-3 rounded-lg space-y-4">
       <div>
         <p className="text-[0.65rem] uppercase tracking-wider text-violet-300 font-bold">
@@ -308,6 +319,8 @@ export default function AdminClientCampaignProfilesPanel({
         </div>
       ) : (
         <p className="text-xs text-lux-muted">No sender profiles yet for this client.</p>
+      )}
+    </div>
       )}
     </div>
   );
