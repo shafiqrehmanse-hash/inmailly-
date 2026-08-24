@@ -25,24 +25,6 @@ export default function ClientCampaignProfileCard({
   const headline = profile.headline || profile.title || "";
   const title = profile.title && profile.title !== profile.headline ? profile.title : null;
 
-  if (profile.card_preview_data && compact) {
-    return (
-      <div
-        className={cn(
-          "overflow-hidden rounded-xl border border-white/[0.08] bg-lux-card/80 shadow-lg",
-          className
-        )}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={profile.card_preview_data}
-          alt={`${profile.display_name} campaign profile`}
-          className="w-full h-auto block"
-        />
-      </div>
-    );
-  }
-
   return (
     <div
       className={cn(

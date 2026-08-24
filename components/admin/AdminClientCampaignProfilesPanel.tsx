@@ -19,11 +19,10 @@ async function fileToDataUrl(file: File): Promise<string> {
 }
 
 async function normalizeScreenshot(dataUrl: string): Promise<string> {
-  if (dataUrl.length <= MAX_DATA_URL_CHARS) return dataUrl;
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
-      const maxW = 1600;
+      const maxW = 1400;
       const scale = Math.min(1, maxW / img.width);
       const w = Math.max(1, Math.round(img.width * scale));
       const h = Math.max(1, Math.round(img.height * scale));
@@ -36,7 +35,7 @@ async function normalizeScreenshot(dataUrl: string): Promise<string> {
         return;
       }
       ctx.drawImage(img, 0, 0, w, h);
-      let quality = 0.85;
+      let quality = 0.88;
       let out = canvas.toDataURL("image/jpeg", quality);
       while (out.length > MAX_DATA_URL_CHARS && quality > 0.45) {
         quality -= 0.1;
@@ -183,7 +182,8 @@ export default function AdminClientCampaignProfilesPanel({
         </p>
         <p className="text-xs text-lux-muted mt-1 leading-relaxed">
           Paste a LinkedIn profile screenshot — we extract name, headline, title, profile photo, and cover.
-          Client sees compressed cards in their portal under Sender profiles.
+          Client sees compressed cards in their portal under Sender profiles.{" "}
+          <span className="text-lux-cyan/90">Tip: include the cover banner + circular avatar + name for best crops.</span>
         </p>
       </div>
 
