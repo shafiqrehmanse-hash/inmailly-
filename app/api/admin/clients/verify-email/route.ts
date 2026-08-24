@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { formatResendDomainError } from "@/lib/resend-health";
 import { sendClientVerificationEmail } from "@/lib/email";
 import { handlePostEmailVerification } from "@/lib/post-verification";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
@@ -10,9 +11,10 @@ function checkKey(request: NextRequest) {
 }
 
 function emailSendError(result: { ok: false; skipped?: boolean; error?: string }) {
-  return result.skipped
-    ? "Email not configured — add RESEND_API_KEY and EMAIL_FROM in Vercel, then redeploy."
-    : result.error || "Could not send email";
+  if (result.skipped) {
+    return "Email not configured — add RESEND_API_KEY and EMAIL_FROM in Vercel, then redeploy.";
+  }
+  return formatResendDomainError(result.error || "Could not send email");
 }
 
 /** Resend verification email or manually confirm a stuck client (paid signup). */

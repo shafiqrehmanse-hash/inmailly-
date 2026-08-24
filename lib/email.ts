@@ -27,8 +27,12 @@ import {
   teamVerifyEmail,
   teamWelcomeVerifiedEmail,
 } from "@/lib/email-templates";
+import { getEmailFrom, getNotifyEmail, isEmailConfigured } from "@/lib/email-config";
+import { formatResendDomainError, resolveSendingFrom } from "@/lib/resend-health";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSiteUrl } from "@/lib/site-url";
+
+export { getEmailFrom, getNotifyEmail, isEmailConfigured } from "@/lib/email-config";
 
 type SendEmailInput = {
   to: string | string[];
@@ -48,18 +52,6 @@ function getResend() {
   return resendClient;
 }
 
-export function getEmailFrom() {
-  return process.env.EMAIL_FROM || "InMailly <notifications@inmailly.com>";
-}
-
-export function getNotifyEmail() {
-  return process.env.NOTIFY_EMAIL || "hello@inmailly.com";
-}
-
-export function isEmailConfigured() {
-  return Boolean(process.env.RESEND_API_KEY);
-}
-
 export async function sendEmail(input: SendEmailInput) {
   const resend = getResend();
   if (!resend) {
@@ -67,8 +59,9 @@ export async function sendEmail(input: SendEmailInput) {
     return { ok: false as const, skipped: true };
   }
 
+  const from = await resolveSendingFrom();
   const { data, error } = await resend.emails.send({
-    from: getEmailFrom(),
+    from,
     to: input.to,
     subject: input.subject,
     html: input.html,
@@ -84,8 +77,8 @@ export async function sendEmail(input: SendEmailInput) {
   });
 
   if (error) {
-    console.error("[email] send failed:", error);
-    return { ok: false as const, error: error.message };
+    console.error("[email] send failed:", error, { from });
+    return { ok: false as const, error: formatResendDomainError(error.message) };
   }
 
   return { ok: true as const, id: data?.id };

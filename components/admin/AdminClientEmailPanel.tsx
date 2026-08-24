@@ -28,6 +28,15 @@ export default function AdminClientEmailPanel({
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
   const [open, setOpen] = useState(defaultOpen);
   const [emailReady, setEmailReady] = useState<boolean | null>(null);
+  const [resendHealth, setResendHealth] = useState<{
+    domainVerified: boolean;
+    fromDomain: string | null;
+    verifiedDomains: string[];
+    pendingDomains: { name: string; status: string }[];
+    resolvedFrom: string;
+    usingFallbackFrom: boolean;
+    fixSteps: string[];
+  } | null>(null);
   const [notifyEmail, setNotifyEmail] = useState("");
   const [sending, setSending] = useState<string | null>(null);
   const [customSubject, setCustomSubject] = useState("");
@@ -39,6 +48,7 @@ export default function AdminClientEmailPanel({
     if (res.ok) {
       setEmailReady(data.configured);
       setNotifyEmail(data.notifyEmail || "");
+      if (data.resend) setResendHealth(data.resend);
     }
   }, [adminKey]);
 
@@ -117,6 +127,38 @@ export default function AdminClientEmailPanel({
               <code className="text-amber-200">RESEND_API_KEY</code> and{" "}
               <code className="text-amber-200">EMAIL_FROM</code> in Vercel, then redeploy. Signup alerts also
               require this — that&apos;s likely why you missed the notification.
+            </div>
+          )}
+
+          {emailReady && resendHealth && !resendHealth.domainVerified && (
+            <div className="text-xs text-red-300 border border-red-500/30 bg-red-500/10 px-3 py-2 leading-relaxed space-y-2">
+              <p>
+                <strong>Resend domain not verified</strong> — verification, request branding, and all client emails
+                will fail until <code className="text-red-200">{resendHealth.fromDomain || "inmailly.com"}</code> is
+                verified.
+              </p>
+              <ol className="list-decimal list-inside space-y-1 text-red-200/90">
+                {resendHealth.fixSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+              {resendHealth.pendingDomains.length > 0 && (
+                <p className="text-red-200/80">
+                  Pending in Resend:{" "}
+                  {resendHealth.pendingDomains.map((d) => `${d.name} (${d.status})`).join(", ")}
+                </p>
+              )}
+              <p className="text-red-200/70">
+                Until fixed, use <strong>Mark email verified</strong> so paid clients can log in without the email link.
+              </p>
+            </div>
+          )}
+
+          {emailReady && resendHealth?.usingFallbackFrom && (
+            <div className="text-xs text-amber-200 border border-amber-500/25 bg-amber-500/5 px-3 py-2 leading-relaxed">
+              Sending from fallback address <code className="text-amber-100">{resendHealth.resolvedFrom}</code> because{" "}
+              <code className="text-amber-100">{resendHealth.fromDomain}</code> is not verified yet. Update{" "}
+              <code className="text-amber-100">EMAIL_FROM</code> in Vercel after you verify inmailly.com.
             </div>
           )}
 

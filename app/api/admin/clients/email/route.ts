@@ -8,6 +8,7 @@ import {
   notifyClientCampaignStarted,
   notifyClientCustom,
 } from "@/lib/email";
+import { getResendEmailHealth } from "@/lib/resend-health";
 import { createBrandingRequest } from "@/lib/client-branding";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
 
@@ -20,10 +21,20 @@ export async function GET(request: NextRequest) {
   if (!checkKey(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const health = await getResendEmailHealth({ refresh: true });
   return NextResponse.json({
     configured: isEmailConfigured(),
     notifyEmail: getNotifyEmail(),
-    from: process.env.EMAIL_FROM || "InMailly <notifications@inmailly.com>",
+    from: health.configuredFrom,
+    resend: {
+      domainVerified: health.domainVerified,
+      fromDomain: health.fromDomain,
+      verifiedDomains: health.verifiedDomains,
+      pendingDomains: health.pendingDomains,
+      resolvedFrom: health.resolvedFrom,
+      usingFallbackFrom: health.usingFallbackFrom,
+      fixSteps: health.fixSteps,
+    },
   });
 }
 
@@ -84,8 +95,6 @@ export async function POST(request: NextRequest) {
 
     const packageSize = projectRow?.inmail_package_size ?? null;
 
-    await createBrandingRequest(admin, client_id, project.id, packageSize);
-
     const result = await notifyClientBrandingRequest({
       email: clientInfo.email,
       clientName,
@@ -98,6 +107,9 @@ export async function POST(request: NextRequest) {
         { status: 502 }
       );
     }
+
+    await createBrandingRequest(admin, client_id, project.id, packageSize);
+
     return NextResponse.json({ success: true, sentTo: clientInfo.email, brandingRequested: true });
   }
 
