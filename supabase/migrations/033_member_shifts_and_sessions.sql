@@ -37,11 +37,13 @@ create index if not exists member_work_sessions_open_idx
 alter table member_campaign_shifts enable row level security;
 alter table member_work_sessions enable row level security;
 
+drop policy if exists "campaign_shifts_own_read" on member_campaign_shifts;
 create policy "campaign_shifts_own_read" on member_campaign_shifts
   for select using (
     member_id = (select id from team_members where user_id = auth.uid())
   );
 
+drop policy if exists "work_sessions_own_read" on member_work_sessions;
 create policy "work_sessions_own_read" on member_work_sessions
   for select using (
     member_id = (select id from team_members where user_id = auth.uid())

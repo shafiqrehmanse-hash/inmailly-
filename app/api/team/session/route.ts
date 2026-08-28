@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { heartbeatWorkSession, todaySessionMinutes } from "@/lib/member-sessions";
 import { getCurrentMember } from "@/lib/team";
 
@@ -19,7 +19,7 @@ export async function GET() {
   }
 }
 
-export async function POST(_request: NextRequest) {
+export async function POST() {
   const member = await getCurrentMember();
   if (!member?.is_active) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
