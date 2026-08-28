@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { enrichThreads, touchMemberPresence } from "@/lib/live-chat-server";
-import { isLeaderResponse, requireTeamLeader } from "@/lib/team-leader-auth";
+import { requireTeamLeader } from "@/lib/team-leader-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 async function requireChatAgent() {
-  const leader = await requireTeamLeader();
-  if (isLeaderResponse(leader)) return leader;
-
-  const admin = createAdminClient();
-  const { data: row } = await admin
-    .from("team_members")
-    .select("live_chat_agent")
-    .eq("id", leader.id)
-    .maybeSingle();
-
-  if (!row?.live_chat_agent) {
-    return NextResponse.json({ error: "Live chat access not granted by admin" }, { status: 403 });
-  }
-  return leader;
+  return requireTeamLeader();
 }
 
 export async function GET() {

@@ -121,8 +121,12 @@ export default function AdminOverviewPage() {
               {[
                 { href: "/admin/clients", label: "Client panel", desc: "CRM, email, onboarding" },
                 { href: "/admin/projects", label: "Projects panel", desc: "Campaigns & InMail packages" },
-                { href: "/admin/team/links", label: "Team & links", desc: "Outreach pool & workers" },
-                { href: "/admin/team/members", label: "Team members", desc: "Access & invites" },
+                { href: "/admin/team/sales-nav", label: "Sales Navigator", desc: "License requests & keys" },
+                { href: "/admin/team/hours", label: "Time & daily campaign", desc: "Login minutes and send counts" },
+                { href: "/admin/team/links", label: "Work links", desc: "Outreach pool & workers" },
+                { href: "/admin/team/live-chat", label: "Live chat", desc: "Team support inbox" },
+                { href: "/admin/team/members", label: "Team members", desc: "Access, hide & invites" },
+                { href: "/admin/website", label: "Website", desc: "Public site content" },
               ].map((q) => (
                 <Link
                   key={q.href}

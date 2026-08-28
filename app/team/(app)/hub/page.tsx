@@ -9,6 +9,7 @@ import TeamContractHubCard from "@/components/team/TeamContractHubCard";
 import TeamInfoDocHubCard from "@/components/team/TeamInfoDocHubCard";
 import TeamWeeklyGoalBar from "@/components/team/TeamWeeklyGoalBar";
 import WorkerTasksCard from "@/components/team/WorkerTasksCard";
+import CampaignShiftCard from "@/components/team/CampaignShiftCard";
 import { isTeamLeader } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -20,11 +21,11 @@ export default async function HubPage() {
 
   const admin = createAdminClient();
   // Workers only see their assigned team leader — not every leader in the company
-  let visibleLeaders: { id: string; name: string; email: string }[] = [];
+  let visibleLeaders: { id: string; name: string; email: string; phone: string | null }[] = [];
   if (!isTeamLeader(member.role) && member.leader_id) {
     const { data: myLeader } = await admin
       .from("team_members")
-      .select("id, name, email")
+      .select("id, name, email, phone")
       .eq("id", member.leader_id)
       .eq("role", "team_leader")
       .eq("is_active", true)
@@ -162,6 +163,8 @@ export default async function HubPage() {
       <TeamInfoDocHubCard />
 
       <TeamWeeklyGoalBar />
+
+      <CampaignShiftCard />
 
       {isTeamLeader(member.role) && <LeaderTeamSnapshot />}
 

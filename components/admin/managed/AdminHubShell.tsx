@@ -11,6 +11,7 @@ import { useAdminKey } from "@/lib/admin-context";
 const HUB_NAV = [
   { href: "/admin", label: "Overview", icon: "◫", exact: true },
   { href: "/admin/team", label: "Team", icon: "👥" },
+  { href: "/admin/team/sales-nav", label: "Sales Nav", icon: "🧭", exact: true },
   { href: "/admin/clients", label: "Clients", icon: "◇", criticalKey: "clients" as const },
   { href: "/admin/projects", label: "Projects", icon: "◎" },
   { href: "/admin/website", label: "Website", icon: "🌐" },
@@ -42,6 +43,7 @@ export default function AdminHubShell({
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
+    if (href === "/admin/team" && pathname.startsWith("/admin/team/sales-nav")) return false;
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 

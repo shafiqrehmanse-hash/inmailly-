@@ -81,6 +81,7 @@ export default function TeamOverviewPage() {
           { href: "/admin/team/responses", label: "Responses", desc: "Reply on behalf of team" },
           { href: "/admin/team/live-chat", label: "Live chat", desc: "Assign leaders & monitor chats" },
           { href: "/admin/team/members", label: "Team members", desc: "Roles, invites & hide from leaderboard" },
+          { href: "/admin/team/hours", label: "Time & daily campaign", desc: "Login minutes and send counts" },
           { href: "/admin/team/sales-nav", label: "Sales Navigator", desc: "License requests & activation keys" },
           { href: "/admin/team/offer-letter", label: "Offer letters", desc: "PDF offers — salary & commission" },
           { href: "/admin/team/info-doc", label: "Info Docs", desc: "Employee ID, references & employment" },

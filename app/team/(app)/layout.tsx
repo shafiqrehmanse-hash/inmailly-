@@ -5,6 +5,7 @@ import Sidebar from "@/components/team/Sidebar";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import LiveChatWidget from "@/components/team/LiveChatWidget";
 import ProfilePhotoPrompt from "@/components/team/ProfilePhotoPrompt";
+import WorkSessionHeartbeat from "@/components/team/WorkSessionHeartbeat";
 import { canOpenLiveChat, isCampaignManager, isContentManager, isTeamLeader } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -68,6 +69,7 @@ export default async function TeamAppLayout({
       />
       <div className="lg:ml-[240px] min-h-screen flex flex-col relative">
         <main className="flex-1 p-5 sm:p-6 pt-14 lg:pt-6 max-w-[1200px] mx-auto w-full">
+          <WorkSessionHeartbeat />
           <TeamPendingActionsBanner member={member} />
           <TeamVictoryBanner />
           {children}

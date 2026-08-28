@@ -10,6 +10,7 @@ import LeaderInviteFunnel from "@/components/team/leader/LeaderInviteFunnel";
 import LeaderResponsesFeed from "@/components/team/leader/LeaderResponsesFeed";
 import LeaderLiveChatInbox from "@/components/team/LeaderLiveChatInbox";
 import LeaderTeamPulse from "@/components/team/leader/LeaderTeamPulse";
+import LeaderTeamContacts from "@/components/team/leader/LeaderTeamContacts";
 import LeaderWeeklyGoal from "@/components/team/leader/LeaderWeeklyGoal";
 import type { TeamTask } from "@/lib/types";
 
@@ -22,11 +23,12 @@ type InviteCode = {
   created_at: string;
 };
 
-type TabId = "tasks" | "team" | "assign" | "invites" | "email" | "focus" | "responses" | "livechat";
+type TabId = "tasks" | "team" | "contacts" | "assign" | "invites" | "email" | "focus" | "responses" | "livechat";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "tasks", label: "My tasks" },
   { id: "team", label: "Team pulse" },
+  { id: "contacts", label: "Contacts" },
   { id: "assign", label: "Assign tasks" },
   { id: "livechat", label: "Live chat" },
   { id: "invites", label: "Invites" },
@@ -162,6 +164,8 @@ export default function LeaderWorkspace({
       </div>
 
       {tab === "team" && <LeaderTeamPulse />}
+
+      {tab === "contacts" && <LeaderTeamContacts />}
 
       {tab === "assign" && <LeaderAssignTasks />}
 

@@ -858,3 +858,26 @@ export function adminSalesNavErrorEmail(data: {
     cta: { href: `${site}/admin/team/sales-nav`, label: "Open Sales Navigator admin →" },
   });
 }
+
+export function leaderLiveChatWaitingEmail(data: {
+  leaderName: string;
+  memberName: string;
+  preview: string;
+}) {
+  const site = getSiteUrl();
+  const preview = data.preview.trim().slice(0, 280) || "They started a live chat and are waiting for you.";
+  return emailLayout({
+    preheader: `${data.memberName} is waiting in live chat`,
+    eyebrow: "Live chat",
+    title: `${data.memberName} has a question waiting for you`,
+    bodyHtml: [
+      p(
+        `Hi ${esc(data.leaderName)}, one of your team members needs a quick reply. Please open live chat when you can — they are waiting.`
+      ),
+      detailRow("Team member", data.memberName),
+      p(`<em style="color:#d4d4d8;">“${esc(preview)}”</em>`),
+    ].join(""),
+    cta: { href: `${site}/team/leader`, label: "Open live chat inbox →" },
+    footerNote: "This email was sent because you are their assigned team leader.",
+  });
+}

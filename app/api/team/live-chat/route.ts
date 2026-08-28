@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { notifyLeaderLiveChatWaiting } from "@/lib/email";
 import { canOpenLiveChat } from "@/lib/roles";
 import {
   enrichThreads,
@@ -60,6 +61,13 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient();
   const thread = await getOrCreateOpenThread(member.id);
 
+  const { count: priorCount } = await admin
+    .from("live_chat_messages")
+    .select("id", { count: "exact", head: true })
+    .eq("thread_id", thread.id)
+    .eq("sender_type", "member");
+  const isFirstMemberMessage = (priorCount || 0) === 0;
+
   const now = new Date().toISOString();
   const { data: message, error } = await admin
     .from("live_chat_messages")
@@ -83,6 +91,15 @@ export async function POST(request: NextRequest) {
     .eq("id", thread.id);
 
   const assigned = await autoAssignThreadIfNeeded(thread.id);
+
+  if (isFirstMemberMessage && assigned[0]?.email) {
+    void notifyLeaderLiveChatWaiting({
+      leaderName: assigned[0].name,
+      leaderEmail: assigned[0].email,
+      memberName: member.name,
+      preview: body.trim(),
+    });
+  }
 
   return NextResponse.json({ message, assigned });
 }

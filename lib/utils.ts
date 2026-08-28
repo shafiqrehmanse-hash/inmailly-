@@ -36,6 +36,23 @@ export function findMemberIdByReferralCode(
   return members.find((m) => getReferralCode(m.id) === normalized)?.id ?? null;
 }
 
+export function phoneDigits(phone: string | null | undefined) {
+  return (phone || "").replace(/\D/g, "");
+}
+
+export function whatsappHref(phone: string | null | undefined) {
+  const digits = phoneDigits(phone);
+  return digits ? `https://wa.me/${digits}` : null;
+}
+
+export function formatDurationMinutes(totalMinutes: number) {
+  const mins = Math.max(0, Math.round(totalMinutes));
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
 export function truncateUrl(url: string, max = 48) {
   const display = url.replace(/^https?:\/\//, "");
   return display.length > max ? display.slice(0, max) + "…" : display;

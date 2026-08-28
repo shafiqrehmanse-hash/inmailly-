@@ -26,6 +26,7 @@ import {
   teamClientFollowupEmail,
   teamVerifyEmail,
   teamWelcomeVerifiedEmail,
+  leaderLiveChatWaitingEmail,
 } from "@/lib/email-templates";
 import { getNotifyEmail } from "@/lib/email-config";
 import { formatResendDomainError, resolveSendingFrom } from "@/lib/resend-health";
@@ -371,6 +372,21 @@ export async function notifyAdminSalesNavError(data: {
     subject: `Sales Navigator error: ${data.memberName}`,
     html: adminSalesNavErrorEmail(data),
     text: `${data.memberName} reported Sales Navigator activation error.${data.errorNote ? ` Note: ${data.errorNote}` : ""}`,
+  });
+}
+
+export async function notifyLeaderLiveChatWaiting(data: {
+  leaderName: string;
+  leaderEmail: string;
+  memberName: string;
+  preview: string;
+}) {
+  return sendEmailSafe({
+    to: data.leaderEmail,
+    replyTo: getNotifyEmail(),
+    subject: `${data.memberName} is waiting in live chat`,
+    html: leaderLiveChatWaitingEmail(data),
+    text: `Hi ${data.leaderName}, ${data.memberName} sent a live chat message and is waiting for you.\n\n"${data.preview}"\n\nOpen ${getSiteUrl()}/team/leader`,
   });
 }
 

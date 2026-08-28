@@ -425,6 +425,10 @@ export default function AdminTeamMembersSection() {
                   >
                     {m.hidden_from_team ? "Show to team" : "Hide from team"}
                   </Button>
+                  <p className="text-[0.65rem] text-lux-muted self-center max-w-sm">
+                    Hide only removes them from other workers&apos; leaderboard. They can still claim links and
+                    run outreach themselves.
+                  </p>
                   <Link href={`/admin/team/links?memberId=${m.id}`}>
                     <Button variant="lux-ghost" size="sm">
                       Work links

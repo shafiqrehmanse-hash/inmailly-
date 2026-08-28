@@ -93,42 +93,10 @@ export async function getOrCreateOpenThread(memberId: string) {
   return created;
 }
 
-/** Pick the active chat agent with the fewest open thread assignments (round-robin load balance). */
-async function pickChatAgent(
-  admin: ReturnType<typeof createAdminClient>
-): Promise<{ id: string; name: string } | null> {
-  const { data: agents } = await admin
-    .from("team_members")
-    .select("id, name")
-    .eq("role", "team_leader")
-    .eq("is_active", true)
-    .eq("live_chat_agent", true)
-    .order("name");
-
-  if (!agents?.length) return null;
-
-  const { data: openThreads } = await admin.from("live_chat_threads").select("id").eq("status", "open");
-  const openIds = new Set((openThreads || []).map((t) => t.id));
-  if (!openIds.size) return agents[0];
-
-  const { data: assignments } = await admin
-    .from("live_chat_thread_leaders")
-    .select("thread_id, leader_id")
-    .in("thread_id", Array.from(openIds));
-
-  const load: Record<string, number> = Object.fromEntries(agents.map((a) => [a.id, 0]));
-  for (const row of assignments || []) {
-    if (load[row.leader_id] !== undefined) load[row.leader_id]++;
-  }
-
-  return agents.reduce((best, a) => (load[a.id] < load[best.id] ? a : best));
-}
-
 /**
- * When a member messages and no leader is assigned yet, auto-route to their
- * assigned team leader (if chat agent), otherwise any granted chat agent.
+ * Route a member chat to their assigned team leader only (not other leaders).
  */
-export async function autoAssignThreadIfNeeded(threadId: string): Promise<{ id: string; name: string }[]> {
+export async function autoAssignThreadIfNeeded(threadId: string): Promise<{ id: string; name: string; email: string }[]> {
   const admin = createAdminClient();
 
   const { data: existing } = await admin
@@ -138,8 +106,8 @@ export async function autoAssignThreadIfNeeded(threadId: string): Promise<{ id: 
 
   if (existing?.length) {
     const ids = existing.map((r) => r.leader_id);
-    const { data: leaders } = await admin.from("team_members").select("id, name").in("id", ids);
-    return leaders || [];
+    const { data: leaders } = await admin.from("team_members").select("id, name, email").in("id", ids);
+    return (leaders || []) as { id: string; name: string; email: string }[];
   }
 
   const { data: thread } = await admin
@@ -148,36 +116,31 @@ export async function autoAssignThreadIfNeeded(threadId: string): Promise<{ id: 
     .eq("id", threadId)
     .maybeSingle();
 
-  let agent: { id: string; name: string } | null = null;
+  if (!thread?.member_id) return [];
 
-  if (thread?.member_id) {
-    const { data: worker } = await admin
-      .from("team_members")
-      .select("leader_id")
-      .eq("id", thread.member_id)
-      .maybeSingle();
+  const { data: worker } = await admin
+    .from("team_members")
+    .select("leader_id")
+    .eq("id", thread.member_id)
+    .maybeSingle();
 
-    if (worker?.leader_id) {
-      const { data: ownLeader } = await admin
-        .from("team_members")
-        .select("id, name")
-        .eq("id", worker.leader_id)
-        .eq("role", "team_leader")
-        .eq("is_active", true)
-        .eq("live_chat_agent", true)
-        .maybeSingle();
-      if (ownLeader) agent = ownLeader;
-    }
-  }
+  if (!worker?.leader_id) return [];
 
-  if (!agent) agent = await pickChatAgent(admin);
-  if (!agent) return [];
+  const { data: ownLeader } = await admin
+    .from("team_members")
+    .select("id, name, email")
+    .eq("id", worker.leader_id)
+    .eq("role", "team_leader")
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!ownLeader) return [];
 
   const { error } = await admin.from("live_chat_thread_leaders").insert({
     thread_id: threadId,
-    leader_id: agent.id,
+    leader_id: ownLeader.id,
   });
 
   if (error) return [];
-  return [agent];
+  return [ownLeader];
 }

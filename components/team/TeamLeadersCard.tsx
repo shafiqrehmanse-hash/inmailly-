@@ -1,4 +1,4 @@
-type Leader = { id: string; name: string; email: string };
+type Leader = { id: string; name: string; email: string; phone?: string | null };
 
 export default function TeamLeadersCard({ leaders }: { leaders: Leader[] }) {
   if (!leaders.length) return null;
@@ -24,13 +24,28 @@ export default function TeamLeadersCard({ leaders }: { leaders: Leader[] }) {
               <p className="text-[0.68rem] text-amber-200/70 uppercase tracking-wider font-bold mt-0.5">
                 Team leader
               </p>
+              {leader.phone && (
+                <p className="text-xs text-lux-muted mt-1">{leader.phone}</p>
+              )}
             </div>
-            <a
-              href={`mailto:${leader.email}`}
-              className="text-xs font-semibold text-lux-cyan hover:text-lux-text transition-colors"
-            >
-              Email →
-            </a>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={`mailto:${leader.email}`}
+                className="text-xs font-semibold text-lux-cyan hover:text-lux-text transition-colors"
+              >
+                Email →
+              </a>
+              {leader.phone && (
+                <a
+                  href={`https://wa.me/${leader.phone.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-semibold text-emerald-300 hover:text-emerald-200 transition-colors"
+                >
+                  WhatsApp →
+                </a>
+              )}
+            </div>
           </li>
         ))}
       </ul>
