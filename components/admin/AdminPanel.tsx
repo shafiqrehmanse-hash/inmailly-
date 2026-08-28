@@ -178,12 +178,14 @@ export default function AdminPanel({ adminKey }: { adminKey: string }) {
   ];
 
   async function resetPassword(email: string) {
-    await fetch(`/api/admin/members/reset-password?key=${adminKey}`, {
+    const res = await fetch(`/api/admin/members/reset-password?key=${adminKey}`, {
       method: "POST",
       headers,
       body: JSON.stringify({ email }),
     });
-    showToast("Password reset email sent");
+    const data = await res.json();
+    if (data.error) showToast(data.error, "error");
+    else showToast("Password reset email sent — they should check inbox and spam");
   }
 
   async function generateInvite() {

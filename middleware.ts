@@ -41,19 +41,25 @@ export async function middleware(request: NextRequest) {
   const isTeamAuth =
     pathname === "/team/login" ||
     pathname === "/team/register" ||
+    pathname === "/team/forgot-password" ||
     pathname === "/login" ||
     pathname === "/register";
+  const isTeamPasswordReset = pathname === "/team/reset-password";
 
   const isCampaignAuth = pathname === "/campaign/login";
   const isContentAuth = pathname === "/content/login";
   const isClientAuth = pathname === "/client/login" || pathname === "/client/register";
 
-  if (pathname.startsWith("/team") && !isTeamAuth && !user) {
+  if (pathname.startsWith("/team") && !isTeamAuth && !isTeamPasswordReset && !user) {
     return NextResponse.redirect(new URL("/team/login", request.url));
   }
 
-  if (pathname.startsWith("/team") && !isTeamAuth && user && !verified) {
+  if (pathname.startsWith("/team") && !isTeamAuth && !isTeamPasswordReset && user && !verified) {
     return NextResponse.redirect(new URL("/team/login?verify=required", request.url));
+  }
+
+  if (isTeamPasswordReset && !user) {
+    return NextResponse.redirect(new URL("/team/forgot-password", request.url));
   }
 
   if (pathname.startsWith("/content") && !isContentAuth && !user) {

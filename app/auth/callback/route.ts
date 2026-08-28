@@ -66,17 +66,22 @@ export async function GET(request: NextRequest) {
   }
 
   if (verified) {
+    const isPasswordReset = nextParam?.startsWith("/team/reset-password");
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
-      try {
-        await handlePostEmailVerification(user);
-      } catch (e) {
-        console.error("[auth/callback] post-verification notify failed:", e);
+      if (!isPasswordReset) {
+        try {
+          await handlePostEmailVerification(user);
+        } catch (e) {
+          console.error("[auth/callback] post-verification notify failed:", e);
+        }
       }
 
-      const destination = await resolvePostVerifyRedirect(user.id, nextParam);
+      const destination = isPasswordReset
+        ? "/team/reset-password"
+        : await resolvePostVerifyRedirect(user.id, nextParam);
       const redirect = NextResponse.redirect(new URL(destination, origin));
       response.cookies.getAll().forEach((cookie) => {
         redirect.cookies.set(cookie);

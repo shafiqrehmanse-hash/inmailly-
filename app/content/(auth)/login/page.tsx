@@ -143,6 +143,12 @@ function LoginForm() {
         <div>
           <label className="text-[0.72rem] font-bold uppercase tracking-wide text-white/40">Password</label>
           <PasswordInput className="mt-1.5" value={password} onChange={setPassword} required />
+          <a
+            href={`/team/forgot-password${email.trim() ? `?email=${encodeURIComponent(email.trim())}` : ""}`}
+            className="inline-block mt-2 text-xs text-lux-cyan hover:underline"
+          >
+            Forgot password?
+          </a>
         </div>
         <button
           type="submit"

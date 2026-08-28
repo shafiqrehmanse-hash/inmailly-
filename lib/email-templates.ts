@@ -312,6 +312,22 @@ export function teamVerifyEmail(data: { firstName: string; verifyUrl: string }) 
   });
 }
 
+export function teamPasswordResetEmail(data: { firstName: string; resetUrl: string }) {
+  const site = getSiteUrl();
+  return emailLayout({
+    preheader: "Reset your InMailly team password",
+    eyebrow: "Team account",
+    title: `Reset your password, ${data.firstName}`,
+    bodyHtml: [
+      p("Someone requested a new password for your InMailly team workspace. Use the button below to choose a new one."),
+      p("If you didn’t ask for this, you can ignore this email — your current password stays the same."),
+    ].join(""),
+    cta: { href: data.resetUrl, label: "Set a new password →" },
+    secondaryCta: { href: `${site}/team/login`, label: "Back to team login →" },
+    footerNote: "This link expires in about an hour. Request another reset from the login page if it expires.",
+  });
+}
+
 export function teamWelcomeVerifiedEmail(data: { firstName: string }) {
   const site = getSiteUrl();
   const name = esc(data.firstName);

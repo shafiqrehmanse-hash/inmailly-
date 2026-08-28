@@ -24,6 +24,7 @@ import {
   clientVerifyEmail,
   clientWelcomeVerifiedEmail,
   teamClientFollowupEmail,
+  teamPasswordResetEmail,
   teamVerifyEmail,
   teamWelcomeVerifiedEmail,
   leaderLiveChatWaitingEmail,
@@ -171,6 +172,20 @@ export async function notifyAdminTeamVerified(data: {
     subject: `Team member verified: ${data.name}`,
     html: adminTeamVerifiedEmail(data),
     text: `Team member verified: ${data.name} (${data.email})${data.phone ? ` · ${data.phone}` : ""}`,
+  });
+}
+
+export async function sendTeamPasswordResetEmail(data: {
+  name: string;
+  email: string;
+  resetUrl: string;
+}) {
+  const first = data.name.trim().split(" ")[0] || "there";
+  return sendEmailSafe({
+    to: data.email,
+    subject: "Reset your InMailly team password",
+    html: teamPasswordResetEmail({ firstName: first, resetUrl: data.resetUrl }),
+    text: `Hi ${first}, reset your InMailly team password: ${data.resetUrl}`,
   });
 }
 
