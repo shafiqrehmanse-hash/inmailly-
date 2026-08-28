@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import AdminStatCard from "@/components/admin/AdminStatCard";
+import Button from "@/components/ui/Button";
+import LuxSelect from "@/components/ui/LuxSelect";
 import TeamAvatar from "@/components/team/TeamAvatar";
-import { useAdminKey } from "@/lib/admin-context";
+import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 import type { LeaderDashboard, LeaderWorkerRow } from "@/lib/team-leader-admin";
 import { formatDate, formatRelative } from "@/lib/utils";
 
@@ -30,6 +32,11 @@ export default function AdminTeamLeadersSection() {
   const [unassigned, setUnassigned] = useState(0);
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
+  const showToast = useAdminToast();
+  const [attachLeaderId, setAttachLeaderId] = useState("");
+  const [attachCode, setAttachCode] = useState("TAS50-4FT5");
+  const [attachLabel, setAttachLabel] = useState("TAS50");
+  const [attachBusy, setAttachBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -39,6 +46,8 @@ export default function AdminTeamLeadersSection() {
     setLeaders(list);
     setUnassigned(data.unassignedWorkers || 0);
     setOpenId((prev) => prev || list[0]?.id || null);
+    const tasbiha = list.find((l) => /tasbiha/i.test(l.name));
+    setAttachLeaderId((prev) => prev || tasbiha?.id || list[0]?.id || "");
     setLoading(false);
   }, [adminKey]);
 
@@ -50,6 +59,34 @@ export default function AdminTeamLeadersSection() {
   const companyDeals = leaders.reduce((n, l) => n + l.totals.deals, 0);
   const companyWorkers = leaders.reduce((n, l) => n + l.totals.workers, 0);
   const companySalesNav = leaders.reduce((n, l) => n + l.totals.salesNavActivated, 0);
+
+  async function attachInviteKey() {
+    if (!attachLeaderId || !attachCode.trim()) {
+      showToast("Choose a leader and enter the invite key", "error");
+      return;
+    }
+    setAttachBusy(true);
+    const res = await fetch(`/api/admin/invite-codes?key=${adminKey}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+      body: JSON.stringify({
+        leaderId: attachLeaderId,
+        code: attachCode,
+        label: attachLabel,
+        assignWorkers: true,
+      }),
+    });
+    const data = await res.json();
+    setAttachBusy(false);
+    if (data.error) {
+      showToast(data.error, "error");
+      return;
+    }
+    showToast(
+      `Attached ${attachCode.trim().toUpperCase()} to ${data.leaderName} — ${data.signups || 0} signups, ${data.assignedToLeader || 0} added to her team`
+    );
+    load();
+  }
 
   return (
     <div className="w-full max-w-none space-y-8">
@@ -71,6 +108,52 @@ export default function AdminTeamLeadersSection() {
         <AdminStatCard value={companyDeals} label="Deals (their teams)" sub={`${companyLeads} leads`} />
         <AdminStatCard value={companySalesNav} label="Sales Nav activated" />
       </div>
+
+      <section className="lux-card p-5 space-y-3">
+        <h2 className="font-bricolage font-bold text-lux-text">Attach invite key to a leader</h2>
+        <p className="text-xs text-lux-muted -mt-1">
+          Use this for keys that already exist (e.g. TAS50-4FT5). Signups with that key count under the leader. Anyone
+          who used it and has no leader yet is assigned to their team.
+        </p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:items-end">
+          <div>
+            <label className="text-[0.62rem] font-semibold uppercase tracking-wide text-lux-muted mb-1.5 block">
+              Team leader
+            </label>
+            <LuxSelect
+              value={attachLeaderId}
+              onChange={setAttachLeaderId}
+              placeholder="Choose leader…"
+              options={leaders.map((l) => ({ value: l.id, label: l.name }))}
+            />
+          </div>
+          <div>
+            <label className="text-[0.62rem] font-semibold uppercase tracking-wide text-lux-muted mb-1.5 block">
+              Invite key
+            </label>
+            <input
+              className="lux-input font-mono"
+              value={attachCode}
+              onChange={(e) => setAttachCode(e.target.value)}
+              placeholder="TAS50-4FT5"
+            />
+          </div>
+          <div>
+            <label className="text-[0.62rem] font-semibold uppercase tracking-wide text-lux-muted mb-1.5 block">
+              Label
+            </label>
+            <input
+              className="lux-input"
+              value={attachLabel}
+              onChange={(e) => setAttachLabel(e.target.value)}
+              placeholder="TAS50"
+            />
+          </div>
+          <Button variant="lux" onClick={attachInviteKey} disabled={attachBusy || !attachLeaderId}>
+            {attachBusy ? "Saving…" : "Attach to leader"}
+          </Button>
+        </div>
+      </section>
 
       {unassigned > 0 && (
         <div className="lux-card-elite p-4 text-sm text-lux-muted border-amber-500/20">
