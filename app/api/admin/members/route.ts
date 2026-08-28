@@ -11,7 +11,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const admin = createAdminClient();
-  const { data: members } = await admin.from("team_members").select("*").order("joined_at", { ascending: false });
+  const [{ data: members }, { data: inviteCodes }] = await Promise.all([
+    admin.from("team_members").select("*").order("joined_at", { ascending: false }),
+    admin.from("invite_codes").select("code, label"),
+  ]);
+  const inviteLabelByCode = new Map(
+    (inviteCodes || []).map((c) => [String(c.code || "").toUpperCase(), c.label as string | null])
+  );
   const memberIds = (members || []).map((m) => m.id);
 
   const countsByMember = new Map<string, { active_links: number; leads_count: number; deals_closed: number }>();
@@ -39,7 +45,12 @@ export async function GET(request: NextRequest) {
 
   const enriched = (members || []).map((m) => {
     const stats = countsByMember.get(m.id) || { active_links: 0, leads_count: 0, deals_closed: 0 };
-    return { ...m, ...stats };
+    const code = typeof m.invite_code === "string" ? m.invite_code.trim().toUpperCase() : "";
+    return {
+      ...m,
+      ...stats,
+      invite_label: code ? inviteLabelByCode.get(code) || null : null,
+    };
   });
   return NextResponse.json({ members: enriched });
 }

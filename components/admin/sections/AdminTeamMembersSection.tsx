@@ -9,7 +9,12 @@ import TeamAvatar from "@/components/team/TeamAvatar";
 import type { TeamMember } from "@/lib/types";
 import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 
-type MemberRow = TeamMember & { active_links: number; leads_count: number; deals_closed?: number };
+type MemberRow = TeamMember & {
+  active_links: number;
+  leads_count: number;
+  deals_closed?: number;
+  invite_label?: string | null;
+};
 
 const roleOptions = [
   { value: "member", label: "Outreach worker" },
@@ -351,6 +356,15 @@ export default function AdminTeamMembersSection() {
                       ) : (
                         <p className="text-xs text-lux-muted mt-1">No phone</p>
                       )}
+                      <p className="text-xs text-lux-muted mt-1.5">
+                        Invite key:{" "}
+                        <span className="font-mono font-semibold text-amber-200/90">
+                          {m.invite_code || "—"}
+                        </span>
+                        {m.invite_label ? (
+                          <span className="text-lux-muted"> · {m.invite_label}</span>
+                        ) : null}
+                      </p>
                     </div>
                   </div>
 

@@ -3,6 +3,7 @@ import StatCard from "@/components/team/StatCard";
 import HubFocusBanner from "@/components/team/HubFocusBanner";
 import LeaderTeamSnapshot from "@/components/team/LeaderTeamSnapshot";
 import TeamLeadersCard from "@/components/team/TeamLeadersCard";
+import TeamReferralPeopleCard from "@/components/team/TeamReferralPeopleCard";
 import TeamPerformancePodium from "@/components/team/TeamPerformancePodium";
 import TeamProgressChart from "@/components/team/TeamProgressChart";
 import TeamContractHubCard from "@/components/team/TeamContractHubCard";
@@ -38,7 +39,7 @@ export default async function HubPage() {
   fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
   const cutoff = fourteenDaysAgo.toISOString();
 
-  const [pool, myActive, iUsed, myLeads, refCount, leadDatesRes, linkDatesRes] =
+  const [pool, myActive, iUsed, myLeads, refCount, leadDatesRes, linkDatesRes, myReferrals] =
     await Promise.all([
     supabase
       .from("outreach_links")
@@ -76,7 +77,44 @@ export default async function HubPage() {
       .eq("status", "used")
       .not("used_at", "is", null)
       .gte("used_at", cutoff),
+    admin
+      .from("referrals")
+      .select("id, referred_email, referred_name, status, created_at")
+      .eq("referrer_id", member.id)
+      .order("created_at", { ascending: false }),
   ]);
+
+  const referralRows = myReferrals.data || [];
+  const referredEmails = [
+    ...new Set(
+      referralRows
+        .map((r) => (r.referred_email as string | null)?.toLowerCase().trim())
+        .filter((e): e is string => Boolean(e))
+    ),
+  ];
+  const { data: referredMembers } =
+    referredEmails.length > 0
+      ? await admin
+          .from("team_members")
+          .select("email, is_active, phone")
+          .in("email", referredEmails)
+      : { data: [] as { email: string; is_active: boolean; phone: string | null }[] };
+  const referredByEmail = new Map(
+    (referredMembers || []).map((m) => [m.email.toLowerCase(), m])
+  );
+  const referralPeople = referralRows.map((r) => {
+    const email = String(r.referred_email || "").toLowerCase();
+    const joined = referredByEmail.get(email);
+    return {
+      id: r.id as string,
+      name: (r.referred_name as string) || email || "Unknown",
+      email: String(r.referred_email || ""),
+      status: String(r.status || "pending"),
+      created_at: r.created_at as string,
+      is_active: joined?.is_active ?? null,
+      phone: joined?.phone ?? null,
+    };
+  });
 
   const avail = pool.count || 0;
   const leads = myLeads.count || 0;
@@ -171,6 +209,8 @@ export default async function HubPage() {
       {!isTeamLeader(member.role) && <WorkerTasksCard />}
 
       <TeamLeadersCard leaders={visibleLeaders} />
+
+      <TeamReferralPeopleCard people={referralPeople} />
 
       <div className="grid sm:grid-cols-2 gap-3.5">
         {quickNav.map((item) => (
