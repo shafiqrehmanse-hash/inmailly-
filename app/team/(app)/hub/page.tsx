@@ -85,13 +85,13 @@ export default async function HubPage() {
   ]);
 
   const referralRows = myReferrals.data || [];
-  const referredEmails = [
-    ...new Set(
+  const referredEmails = Array.from(
+    new Set(
       referralRows
         .map((r) => (r.referred_email as string | null)?.toLowerCase().trim())
         .filter((e): e is string => Boolean(e))
-    ),
-  ];
+    )
+  );
   const { data: referredMembers } =
     referredEmails.length > 0
       ? await admin

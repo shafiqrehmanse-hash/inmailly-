@@ -126,6 +126,7 @@ export default function AdminOverviewPage() {
                 { href: "/admin/team/links", label: "Work links", desc: "Outreach pool & workers" },
                 { href: "/admin/team/live-chat", label: "Live chat", desc: "Team support inbox" },
                 { href: "/admin/team/members", label: "Team members", desc: "Access, hide & invites" },
+                { href: "/admin/team/leaders", label: "Team leaders", desc: "Each leader’s people & performance" },
                 { href: "/admin/website", label: "Website", desc: "Public site content" },
               ].map((q) => (
                 <Link

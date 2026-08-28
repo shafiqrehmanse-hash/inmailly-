@@ -9,6 +9,7 @@ export const TEAM_ADMIN_NAV: ManagedNavGroup[] = [
       { href: "/admin/team/leads", label: "Outreach leads", icon: "📋" },
       { href: "/admin/team/responses", label: "Responses", icon: "💬" },
       { href: "/admin/team/members", label: "Team members", icon: "👥" },
+      { href: "/admin/team/leaders", label: "Team leaders", icon: "★" },
       { href: "/admin/team/sales-nav", label: "Sales Navigator", icon: "🧭" },
       { href: "/admin/team/hours", label: "Time & daily campaign", icon: "⏱" },
     ],

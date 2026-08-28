@@ -191,7 +191,13 @@ export default function AdminTeamMembersSection() {
     <div className="w-full max-w-none space-y-8">
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">Team members</h1>
-        <p className="text-sm text-lux-muted mt-1">Access, roles, invites, and outreach worker accounts.</p>
+        <p className="text-sm text-lux-muted mt-1">
+          Access, roles, invites, and outreach worker accounts. After you make someone a team leader, open{" "}
+          <Link href="/admin/team/leaders" className="text-lux-cyan font-semibold hover:underline">
+            Team leaders
+          </Link>{" "}
+          for their people, signups, Sales Navigator, and deals.
+        </p>
       </div>
 
       <section className="lux-card-elite p-5 border-2 border-lux-violet/40 bg-gradient-to-br from-lux-violet/[0.12] via-lux-bg2/50 to-lux-blue/[0.06] shadow-[0_0_40px_rgba(139,92,246,0.12)]">
@@ -333,9 +339,12 @@ export default function AdminTeamMembersSection() {
                           </span>
                         )}
                         {m.role === "team_leader" && (
-                          <span className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                          <Link
+                            href="/admin/team/leaders"
+                            className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md hover:bg-amber-500/25"
+                          >
                             Leader · {members.filter((w) => w.leader_id === m.id).length} workers
-                          </span>
+                          </Link>
                         )}
                         {!m.is_active && (
                           <span className="text-[0.58rem] font-bold uppercase tracking-wider text-red-300 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded-md">
