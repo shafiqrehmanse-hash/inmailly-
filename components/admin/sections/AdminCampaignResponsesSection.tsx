@@ -25,6 +25,8 @@ export default function AdminCampaignResponsesSection() {
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [projectFilter, setProjectFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [total, setTotal] = useState(0);
@@ -53,12 +55,18 @@ export default function AdminCampaignResponsesSection() {
       status: statusFilter,
     });
     if (projectFilter !== "all") params.set("projectId", projectFilter);
+    if (search.trim()) params.set("q", search.trim());
     const res = await fetch(`/api/admin/leads?${params}`);
     const data = await res.json();
     setLeads(data.leads || []);
     setTotal(data.pagination?.total ?? 0);
     setTotalPages(data.pagination?.totalPages ?? 1);
-  }, [adminKey, projectFilter, statusFilter, page, pageSize]);
+  }, [adminKey, projectFilter, statusFilter, page, pageSize, search]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   useEffect(() => {
     loadProjects();
@@ -70,7 +78,7 @@ export default function AdminCampaignResponsesSection() {
 
   useEffect(() => {
     setPage(1);
-  }, [projectFilter, statusFilter, pageSize]);
+  }, [projectFilter, statusFilter, pageSize, search]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-4">
@@ -82,6 +90,12 @@ export default function AdminCampaignResponsesSection() {
       </div>
 
       <div className="flex gap-3 flex-wrap items-center">
+        <input
+          className="lux-input w-full sm:w-80 text-sm"
+          placeholder="Search name, link, company, or manager…"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
         <LuxSelect
           className="w-52"
           size="sm"
@@ -122,6 +136,16 @@ export default function AdminCampaignResponsesSection() {
                     {lead.projects?.name ? ` · ${lead.projects.name}` : ""}
                   </div>
                   <div className="text-xs text-lux-cyan mt-0.5">Manager: {lead.team_members?.name || "—"}</div>
+                  {lead.profile_url && (
+                    <a
+                      href={lead.profile_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[0.65rem] text-lux-cyan hover:underline mt-1 inline-block break-all"
+                    >
+                      {lead.profile_url.replace(/^https?:\/\//, "").slice(0, 56)}
+                    </a>
+                  )}
                 </div>
                 <Badge variant={lead.status}>{lead.status}</Badge>
               </div>

@@ -7,6 +7,72 @@ function checkKey(request: NextRequest) {
   return verifyAdminKey(key);
 }
 
+function searchPattern(raw: string | null) {
+  if (!raw) return null;
+  const cleaned = raw
+    .trim()
+    .replace(/[%*,()]/g, " ")
+    .replace(/\s+/g, " ")
+    .slice(0, 120);
+  if (cleaned.length < 2) return null;
+  return `%${cleaned}%`;
+}
+
+async function enrichLeadsWithSource(
+  admin: ReturnType<typeof createAdminClient>,
+  rows: Record<string, unknown>[]
+) {
+  const sourceIds = Array.from(
+    new Set(
+      rows
+        .map((r) => r.source_link_id as string | null)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  if (!sourceIds.length) {
+    return rows.map((r) => ({ ...r, source: null }));
+  }
+
+  const { data: links } = await admin
+    .from("outreach_links")
+    .select("id, url, smart_label, batch_name, member_id, used_by_member_id, added_by, first_name, last_name")
+    .in("id", sourceIds);
+
+  const linkById = new Map((links || []).map((l) => [l.id, l]));
+  const extraIds = new Set<string>();
+  for (const l of links || []) {
+    if (l.member_id) extraIds.add(l.member_id);
+    if (l.used_by_member_id) extraIds.add(l.used_by_member_id);
+  }
+
+  const nameById = new Map<string, string>();
+  if (extraIds.size) {
+    const { data: extra } = await admin
+      .from("team_members")
+      .select("id, name")
+      .in("id", Array.from(extraIds));
+    for (const m of extra || []) nameById.set(m.id, m.name);
+  }
+
+  return rows.map((r) => {
+    const link = r.source_link_id ? linkById.get(r.source_link_id as string) : null;
+    if (!link) return { ...r, source: null };
+    const profileName = [link.first_name, link.last_name].filter(Boolean).join(" ").trim();
+    return {
+      ...r,
+      source: {
+        url: link.url || null,
+        label: link.smart_label || null,
+        batch: link.batch_name || null,
+        assignedTo: link.member_id ? nameById.get(link.member_id) || null : null,
+        usedBy: link.used_by_member_id ? nameById.get(link.used_by_member_id) || null : null,
+        addedBy: link.added_by || null,
+        profileName: profileName || null,
+      },
+    };
+  });
+}
+
 export async function GET(request: NextRequest) {
   if (!checkKey(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,6 +82,7 @@ export async function GET(request: NextRequest) {
   const scope = request.nextUrl.searchParams.get("scope") || "outreach";
   const closedOnly = request.nextUrl.searchParams.get("closedOnly") === "1";
   const projectId = request.nextUrl.searchParams.get("projectId");
+  const q = searchPattern(request.nextUrl.searchParams.get("q"));
   const page = Math.max(1, parseInt(request.nextUrl.searchParams.get("page") || "1", 10) || 1);
   const limit = Math.min(50, Math.max(1, parseInt(request.nextUrl.searchParams.get("limit") || "10", 10) || 10));
   const from = (page - 1) * limit;
@@ -40,12 +107,38 @@ export async function GET(request: NextRequest) {
   if (status && status !== "all") query = query.eq("status", status);
   if (closedOnly) query = query.eq("deal_closed", true);
 
+  if (q) {
+    const [{ data: matchingLinks }, { data: matchingMembers }] = await Promise.all([
+      admin
+        .from("outreach_links")
+        .select("id")
+        .or(
+          `url.ilike."${q}",smart_label.ilike."${q}",first_name.ilike."${q}",last_name.ilike."${q}",batch_name.ilike."${q}"`
+        )
+        .limit(200),
+      admin.from("team_members").select("id").or(`name.ilike."${q}",email.ilike."${q}"`).limit(100),
+    ]);
+    const linkIds = (matchingLinks || []).map((l) => l.id);
+    const memberIds = (matchingMembers || []).map((m) => m.id);
+    const parts = [
+      `name.ilike."${q}"`,
+      `email.ilike."${q}"`,
+      `company.ilike."${q}"`,
+      `profile_url.ilike."${q}"`,
+      `notes.ilike."${q}"`,
+    ];
+    if (linkIds.length) parts.push(`source_link_id.in.(${linkIds.join(",")})`);
+    if (memberIds.length) parts.push(`member_id.in.(${memberIds.join(",")})`);
+    query = query.or(parts.join(","));
+  }
+
   const { data, count, error } = await query.range(from, to);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const total = count || 0;
+  const leads = await enrichLeadsWithSource(admin, (data || []) as Record<string, unknown>[]);
   return NextResponse.json({
-    leads: data || [],
+    leads,
     pagination: {
       page,
       limit,

@@ -40,6 +40,7 @@ function LeadsWorkspaceInner() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [msgCounts, setMsgCounts] = useState<Record<string, number>>({});
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [stats, setStats] = useState({ total: 0, today: 0, interested: 0, replied: 0, closed: 0 });
   const [form, setForm] = useState({
     first_name: "",
@@ -113,9 +114,17 @@ function LeadsWorkspaceInner() {
   }, [searchParams]);
 
   const filtered = useMemo(() => {
-    if (filter === "all") return leads;
-    return leads.filter((l) => l.status === filter);
-  }, [leads, filter]);
+    const q = search.trim().toLowerCase();
+    return leads.filter((l) => {
+      if (filter !== "all" && l.status !== filter) return false;
+      if (!q) return true;
+      const hay = [l.name, l.email, l.company, l.profile_url, l.notes, l.phone]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [leads, filter, search]);
 
   async function addLead(e: React.FormEvent) {
     e.preventDefault();
@@ -310,11 +319,21 @@ function LeadsWorkspaceInner() {
               </button>
             ))}
           </div>
+          <input
+            className="lux-input w-full text-sm mb-4"
+            placeholder="Search by name or LinkedIn link…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
 
           {filtered.length === 0 ? (
             <div className="text-center py-12 text-lux-muted">
               <div className="text-4xl mb-3">📋</div>
-              <p>No leads yet. Add your first lead from the form!</p>
+              <p>
+                {search.trim() || filter !== "all"
+                  ? "No leads match that search."
+                  : "No leads yet. Add your first lead from the form!"}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto -mx-2">

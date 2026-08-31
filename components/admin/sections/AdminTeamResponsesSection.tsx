@@ -19,6 +19,8 @@ export default function AdminTeamResponsesSection() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [memberFilter, setMemberFilter] = useState("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
   const [selectedLead, setSelectedLead] = useState<LeadRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -37,6 +39,7 @@ export default function AdminTeamResponsesSection() {
       limit: "50",
       memberId: memberFilter,
     });
+    if (search.trim()) params.set("q", search.trim());
     const res = await fetch(`/api/admin/leads?${params}`);
     const data = await res.json();
     const allRows = (data.leads || []) as LeadRow[];
@@ -71,7 +74,12 @@ export default function AdminTeamResponsesSection() {
         lastMessage: latest.get(lead.id),
       }))
     );
-  }, [adminKey, memberFilter]);
+  }, [adminKey, memberFilter, search]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   useEffect(() => {
     loadMembers();
@@ -91,13 +99,21 @@ export default function AdminTeamResponsesSection() {
         </p>
       </div>
 
-      <LuxSelect
-        className="w-44"
-        size="sm"
-        value={memberFilter}
-        onChange={setMemberFilter}
-        options={[{ value: "all", label: "All members" }, ...members.map((m) => ({ value: m.id, label: m.name }))]}
-      />
+      <div className="flex gap-3 flex-wrap items-center">
+        <input
+          className="lux-input w-full sm:w-80 text-sm"
+          placeholder="Search name or link…"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
+        <LuxSelect
+          className="w-44"
+          size="sm"
+          value={memberFilter}
+          onChange={setMemberFilter}
+          options={[{ value: "all", label: "All members" }, ...members.map((m) => ({ value: m.id, label: m.name }))]}
+        />
+      </div>
 
       <div className="space-y-3">
         {leads.length === 0 ? (

@@ -12,7 +12,20 @@ import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { formatDate } from "@/lib/utils";
 
-type LeadRow = Lead & { team_members?: { name: string; email: string } };
+type LeadSource = {
+  url: string | null;
+  label: string | null;
+  batch: string | null;
+  assignedTo: string | null;
+  usedBy: string | null;
+  addedBy: string | null;
+  profileName: string | null;
+};
+
+type LeadRow = Lead & {
+  team_members?: { name: string; email: string };
+  source?: LeadSource | null;
+};
 
 function statusLabel(s: string) {
   if (s === "all") return "All statuses";
@@ -30,6 +43,8 @@ export default function AdminLeadsSection() {
   const [memberFilter, setMemberFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [closedOnly, setClosedOnly] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [total, setTotal] = useState(0);
@@ -53,12 +68,18 @@ export default function AdminLeadsSection() {
       status: statusFilter,
     });
     if (closedOnly) params.set("closedOnly", "1");
+    if (search.trim()) params.set("q", search.trim());
     const res = await fetch(`/api/admin/leads?${params}`);
     const data = await res.json();
     setLeads(data.leads || []);
     setTotal(data.pagination?.total ?? 0);
     setTotalPages(data.pagination?.totalPages ?? 1);
-  }, [adminKey, memberFilter, statusFilter, closedOnly, page, pageSize]);
+  }, [adminKey, memberFilter, statusFilter, closedOnly, page, pageSize, search]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   useEffect(() => {
     loadMembers();
@@ -70,7 +91,7 @@ export default function AdminLeadsSection() {
 
   useEffect(() => {
     setPage(1);
-  }, [memberFilter, statusFilter, closedOnly, pageSize]);
+  }, [memberFilter, statusFilter, closedOnly, pageSize, search]);
 
   async function closeDeal(lead: LeadRow) {
     const res = await fetch(`/api/admin/leads?key=${adminKey}`, {
@@ -107,11 +128,18 @@ export default function AdminLeadsSection() {
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">Outreach leads</h1>
         <p className="text-sm text-lux-muted mt-1">
-          Your team&apos;s marketing leads only — client campaign responses live under Projects → Campaign responses.
+          Search by lead name, LinkedIn URL, work-link URL, or worker name. Your team&apos;s marketing leads only —
+          client campaign responses live under Projects → Campaign responses.
         </p>
       </div>
 
       <div className="flex gap-3 flex-wrap items-center">
+        <input
+          className="lux-input w-full sm:w-80 text-sm"
+          placeholder="Search name or link…"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
         <LuxSelect
           className="w-44"
           size="sm"
@@ -147,6 +175,7 @@ export default function AdminLeadsSection() {
             <tr className="text-lux-muted text-xs uppercase bg-lux-bg2 border-b border-white/[0.06]">
               <th className="text-left px-4 py-3">Member</th>
               <th className="text-left px-4 py-3">Lead</th>
+              <th className="text-left px-4 py-3">Source / assigned</th>
               <th className="text-left px-4 py-3">Profile</th>
               <th className="text-left px-4 py-3">Status</th>
               <th className="text-left px-4 py-3 min-w-[220px]">Note / what they said</th>
@@ -157,7 +186,7 @@ export default function AdminLeadsSection() {
           <tbody>
             {leads.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-lux-muted">No outreach leads match.</td>
+                <td colSpan={8} className="px-4 py-10 text-center text-lux-muted">No outreach leads match.</td>
               </tr>
             ) : (
               leads.map((lead) => (
@@ -177,6 +206,41 @@ export default function AdminLeadsSection() {
                     {lead.email && (
                       <div className="text-[0.65rem] text-lux-muted font-normal mt-0.5">{lead.email}</div>
                     )}
+                    {lead.company && (
+                      <div className="text-[0.65rem] text-lux-muted font-normal">{lead.company}</div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-lux-muted max-w-[260px]">
+                    <p className="text-lux-text font-medium">
+                      Logged by {lead.team_members?.name || "—"}
+                    </p>
+                    {lead.source?.assignedTo && (
+                      <p className="mt-0.5">Link assigned to {lead.source.assignedTo}</p>
+                    )}
+                    {lead.source?.usedBy && lead.source.usedBy !== lead.source.assignedTo && (
+                      <p>Marked used by {lead.source.usedBy}</p>
+                    )}
+                    {(lead.source?.label || lead.source?.batch) && (
+                      <p className="mt-0.5">
+                        {lead.source.label || "Work link"}
+                        {lead.source.batch ? ` · ${lead.source.batch}` : ""}
+                      </p>
+                    )}
+                    {lead.source?.addedBy && <p>Pool add: {lead.source.addedBy}</p>}
+                    {(lead.source?.url || lead.profile_url) && (
+                      <a
+                        href={lead.source?.url || lead.profile_url || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-lux-cyan hover:underline break-all mt-0.5 inline-block"
+                        onClick={(e) => e.stopPropagation()}
+                        title={lead.source?.url || lead.profile_url || ""}
+                      >
+                        {(lead.source?.url || lead.profile_url || "").replace(/^https?:\/\//, "").slice(0, 48)}
+                        {(lead.source?.url || lead.profile_url || "").length > 48 ? "…" : ""}
+                      </a>
+                    )}
+                    {!lead.source && !lead.profile_url && <p>—</p>}
                   </td>
                   <td className="px-4 py-3">
                     {lead.profile_url ? (
