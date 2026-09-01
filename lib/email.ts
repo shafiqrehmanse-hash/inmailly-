@@ -28,6 +28,8 @@ import {
   teamVerifyEmail,
   teamWelcomeVerifiedEmail,
   leaderLiveChatWaitingEmail,
+  adminClientLiveChatEmail,
+  clientLiveChatReplyEmail,
 } from "@/lib/email-templates";
 import { getNotifyEmail } from "@/lib/email-config";
 import { formatResendDomainError, resolveSendingFrom } from "@/lib/resend-health";
@@ -402,6 +404,37 @@ export async function notifyLeaderLiveChatWaiting(data: {
     subject: `${data.memberName} is waiting in live chat`,
     html: leaderLiveChatWaitingEmail(data),
     text: `Hi ${data.leaderName}, ${data.memberName} sent a live chat message and is waiting for you.\n\n"${data.preview}"\n\nOpen ${getSiteUrl()}/team/leader`,
+  });
+}
+
+export async function notifyAdminClientLiveChat(data: {
+  clientName: string;
+  clientEmail: string;
+  company?: string | null;
+  preview: string;
+}) {
+  const site = getSiteUrl();
+  return sendEmailSafe({
+    to: getNotifyEmail(),
+    replyTo: data.clientEmail || getNotifyEmail(),
+    subject: `Client chat: ${data.clientName} — ${data.preview.trim().slice(0, 60)}`,
+    html: adminClientLiveChatEmail(data),
+    text: `${data.clientName} (${data.clientEmail}) sent a live chat message:\n\n"${data.preview}"\n\nOpen ${site}/admin/clients/live-chat`,
+  });
+}
+
+export async function notifyClientLiveChatReply(data: {
+  clientName: string;
+  clientEmail: string;
+  preview: string;
+}) {
+  const site = getSiteUrl();
+  return sendEmailSafe({
+    to: data.clientEmail,
+    replyTo: getNotifyEmail(),
+    subject: "InMailly replied to your live chat",
+    html: clientLiveChatReplyEmail({ clientName: data.clientName, preview: data.preview }),
+    text: `Hi ${data.clientName}, we replied in live chat:\n\n"${data.preview}"\n\nOpen ${site}/client/dashboard`,
   });
 }
 

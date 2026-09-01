@@ -7,6 +7,7 @@ import LuxBackground from "@/components/home/LuxBackground";
 import { InMaillyBrand } from "@/components/brand/InMaillyLogo";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import ClientLiveChatWidget from "@/components/client/ClientLiveChatWidget";
 import {
   HiChartBarSquare,
   HiDocumentText,
@@ -115,6 +116,7 @@ export default function ClientShell({ children }: { children: React.ReactNode })
         </nav>
       </header>
       <main className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-8">{children}</main>
+      <ClientLiveChatWidget />
     </div>
   );
 }

@@ -120,6 +120,7 @@ export default function AdminOverviewPage() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { href: "/admin/clients", label: "Client panel", desc: "CRM, email, onboarding" },
+                { href: "/admin/clients/live-chat", label: "Client live chat", desc: "Inbox + email on every message" },
                 { href: "/admin/projects", label: "Projects panel", desc: "Campaigns & InMail packages" },
                 { href: "/admin/team/sales-nav", label: "Sales Navigator", desc: "License requests & keys" },
                 { href: "/admin/team/hours", label: "Time & daily campaign", desc: "Login minutes and send counts" },

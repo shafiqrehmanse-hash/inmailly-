@@ -897,3 +897,44 @@ export function leaderLiveChatWaitingEmail(data: {
     footerNote: "This email was sent because you are their assigned team leader.",
   });
 }
+
+export function adminClientLiveChatEmail(data: {
+  clientName: string;
+  clientEmail: string;
+  company?: string | null;
+  preview: string;
+}) {
+  const site = getSiteUrl();
+  const preview = data.preview.trim().slice(0, 600) || "They sent a live chat message.";
+  return emailLayout({
+    preheader: `${data.clientName} messaged you in client live chat`,
+    eyebrow: "Client live chat",
+    title: `${data.clientName} sent a message`,
+    bodyHtml: [
+      p("A client just wrote in live chat. Open the inbox to reply in the portal."),
+      detailRow("Client", data.clientName),
+      detailRow("Email", data.clientEmail),
+      data.company ? detailRow("Company", data.company) : "",
+      p(`<em style="color:#d4d4d8;">“${esc(preview)}”</em>`),
+    ].join(""),
+    cta: { href: `${site}/admin/clients/live-chat`, label: "Open client live chat →" },
+    footerNote: "You get this email on every new client chat message.",
+  });
+}
+
+export function clientLiveChatReplyEmail(data: { clientName: string; preview: string }) {
+  const site = getSiteUrl();
+  const preview = data.preview.trim().slice(0, 280) || "We replied to your live chat.";
+  const first = esc(data.clientName.trim().split(" ")[0] || "there");
+  return emailLayout({
+    preheader: "InMailly replied to your live chat",
+    eyebrow: "Live chat",
+    title: `We replied, ${first}`,
+    bodyHtml: [
+      p("There’s a new reply in your InMailly client portal live chat."),
+      p(`<em style="color:#d4d4d8;">“${esc(preview)}”</em>`),
+    ].join(""),
+    cta: { href: `${site}/client/dashboard`, label: "Open portal & chat →" },
+    footerNote: "Use the chat bubble in the bottom-right of your dashboard to continue the conversation.",
+  });
+}

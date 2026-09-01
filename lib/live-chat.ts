@@ -1,4 +1,4 @@
-export type LiveChatSenderType = "member" | "leader" | "admin";
+export type LiveChatSenderType = "member" | "leader" | "admin" | "client";
 
 export type LiveChatMessage = {
   id: string;
