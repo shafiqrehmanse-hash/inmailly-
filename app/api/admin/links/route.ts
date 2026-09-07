@@ -98,26 +98,27 @@ export async function DELETE(request: NextRequest) {
     const memberId = typeof body.memberId === "string" ? body.memberId : "all";
     if (!q && status === "all" && memberId === "all") {
       return NextResponse.json(
-        { error: "Search or filter first — will not delete the entire pool in one click." },
+        { error: "Pick a status (claimed, used, or available) or search first. Will not delete the entire pool." },
         { status: 400 }
       );
     }
 
-    let idQuery = admin.from("outreach_links").select("id").limit(2000);
-    idQuery = withFilters(idQuery, { status, memberId, q });
-    const { data: rows, error: listError } = await idQuery;
-    if (listError) return NextResponse.json({ error: listError.message }, { status: 500 });
-    const ids = (rows || []).map((r) => r.id);
-    if (!ids.length) return NextResponse.json({ deleted: 0 });
-
     let deleted = 0;
-    for (let i = 0; i < ids.length; i += 200) {
-      const chunk = ids.slice(i, i + 200);
-      const { error, count } = await admin.from("outreach_links").delete({ count: "exact" }).in("id", chunk);
+    for (let round = 0; round < 80; round++) {
+      let idQuery = admin.from("outreach_links").select("id").limit(500);
+      idQuery = withFilters(idQuery, { status, memberId, q });
+      const { data: rows, error: listError } = await idQuery;
+      if (listError) return NextResponse.json({ error: listError.message, deleted }, { status: 500 });
+      const ids = (rows || []).map((r) => r.id);
+      if (!ids.length) {
+        return NextResponse.json({ deleted, capped: false });
+      }
+      const { error, count } = await admin.from("outreach_links").delete({ count: "exact" }).in("id", ids);
       if (error) return NextResponse.json({ error: error.message, deleted }, { status: 500 });
-      deleted += count ?? chunk.length;
+      deleted += count ?? ids.length;
     }
-    return NextResponse.json({ deleted, capped: ids.length >= 2000 });
+
+    return NextResponse.json({ deleted, capped: true });
   }
 
   return NextResponse.json({ error: "linkIds or deleteMatching required" }, { status: 400 });

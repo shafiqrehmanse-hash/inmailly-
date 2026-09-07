@@ -275,7 +275,7 @@ export default function AdminLinksSection({
     }
     onToast(
       `Deleted ${data.deleted} matching link${data.deleted === 1 ? "" : "s"}` +
-        (data.capped ? " (stopped at 2,000 — run again if more remain)" : "")
+        (data.capped ? " — run again if more remain" : "")
     );
     setSelected(new Set());
     load();
@@ -755,13 +755,15 @@ export default function AdminLinksSection({
         />
         <PageSizeSelect value={pageSize} onChange={handlePageSizeChange} />
         <Button
-          variant="lux-ghost"
+          variant="lux"
           size="sm"
-          className="text-red-400 hover:text-red-300 hover:border-red-400/40"
-          disabled={!search.trim() && statusFilter === "all" && memberFilter === "all"}
+          className="bg-red-600/80 hover:bg-red-500 border-red-500/50"
+          disabled={total === 0 || (statusFilter === "all" && !search.trim() && memberFilter === "all")}
           onClick={() => setDeleteMatchingOpen(true)}
         >
-          Delete all matching ({total})
+          {statusFilter !== "all"
+            ? `Delete all ${statusFilter} (${total})`
+            : `Delete all matching (${total})`}
         </Button>
         <span className="text-xs text-lux-muted ml-auto tabular-nums">
           {total} links · page {page} of {totalPages}
@@ -904,18 +906,23 @@ export default function AdminLinksSection({
       <ConfirmDialog
         open={deleteMatchingOpen}
         onClose={() => !deleting && setDeleteMatchingOpen(false)}
-        title={`Delete ${total} matching work links?`}
-        confirmLabel={`Delete ${Math.min(total, 2000)} matching`}
+        title={
+          statusFilter !== "all"
+            ? `Delete all ${statusFilter} work links?`
+            : `Delete ${total} matching work links?`
+        }
+        confirmLabel={`Delete all ${total}`}
         destructive
         loading={deleting}
         loadingLabel="Deleting…"
         onConfirm={confirmDeleteMatching}
         description={
           <p>
-            Permanently delete every work link that matches the current search and filters
-            {search ? ` (search: “${search}”)` : ""}
-            {statusFilter !== "all" ? ` · status ${statusFilter}` : ""}
-            {memberFilter !== "all" ? " · selected member" : ""}. Up to 2,000 at a time.
+            Permanently delete <strong className="text-lux-text">{total}</strong> work link
+            {total === 1 ? "" : "s"}
+            {statusFilter !== "all" ? ` with status “${statusFilter}”` : ""}
+            {search ? ` matching “${search}”` : ""}
+            {memberFilter !== "all" ? " for the selected member" : ""}. This cannot be undone.
           </p>
         }
       />
