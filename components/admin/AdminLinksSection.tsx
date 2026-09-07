@@ -117,7 +117,12 @@ export default function AdminLinksSection({
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [memberFilter, setMemberFilter] = useState(initialMemberFilter || "all");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleteIds, setDeleteIds] = useState<string[] | null>(null);
+  const [deleteMatchingOpen, setDeleteMatchingOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [assignMemberId, setAssignMemberId] = useState("");
   const [bulkCount, setBulkCount] = useState("25");
   const [loading, setLoading] = useState(true);
@@ -146,6 +151,7 @@ export default function AdminLinksSection({
         limit: String(pageSize),
       });
       if (activeMember !== "all") params.set("memberId", activeMember);
+      if (search.trim()) params.set("q", search.trim());
       const res = await fetch(`/api/admin/links?${params}`);
       const data = await res.json();
       if (!isLatest(gen)) return;
@@ -169,8 +175,13 @@ export default function AdminLinksSection({
       setTotalPages(apiTotalPages);
       setLoading(false);
     },
-    [adminKey, statusFilter, memberFilter, page, pageSize, nextGeneration, isLatest]
+    [adminKey, statusFilter, memberFilter, page, pageSize, search, nextGeneration, isLatest]
   );
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   useEffect(() => {
     setPageSize(readStoredPageSize("inmailly:page-size:admin-links"));
@@ -191,7 +202,7 @@ export default function AdminLinksSection({
   useEffect(() => {
     setPage(1);
     setSelected(new Set());
-  }, [statusFilter, memberFilter, pageSize]);
+  }, [statusFilter, memberFilter, pageSize, search]);
 
   function handlePageSizeChange(size: number) {
     setPageSize(size);
@@ -210,6 +221,64 @@ export default function AdminLinksSection({
       else next.add(id);
       return next;
     });
+  }
+
+  function toggleSelectAllOnPage() {
+    const ids = links.map((l) => l.id);
+    const allOn = ids.length > 0 && ids.every((id) => selected.has(id));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allOn) ids.forEach((id) => next.delete(id));
+      else ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  async function confirmDelete() {
+    if (!deleteIds?.length) return;
+    setDeleting(true);
+    const res = await fetch(`/api/admin/links?key=${adminKey}`, {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({ linkIds: deleteIds }),
+    });
+    const data = await res.json();
+    setDeleting(false);
+    setDeleteIds(null);
+    if (!res.ok || data.error) {
+      onToast(data.error || "Could not delete links", "error");
+      return;
+    }
+    onToast(`Deleted ${data.deleted} link${data.deleted === 1 ? "" : "s"}`);
+    setSelected(new Set());
+    load();
+  }
+
+  async function confirmDeleteMatching() {
+    setDeleting(true);
+    const res = await fetch(`/api/admin/links?key=${adminKey}`, {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({
+        deleteMatching: true,
+        q: search,
+        status: statusFilter,
+        memberId: memberFilter,
+      }),
+    });
+    const data = await res.json();
+    setDeleting(false);
+    setDeleteMatchingOpen(false);
+    if (!res.ok || data.error) {
+      onToast(data.error || "Could not delete matching links", "error");
+      return;
+    }
+    onToast(
+      `Deleted ${data.deleted} matching link${data.deleted === 1 ? "" : "s"}` +
+        (data.capped ? " (stopped at 2,000 — run again if more remain)" : "")
+    );
+    setSelected(new Set());
+    load();
   }
 
   async function handleIntelligenceFile(file: File | null) {
@@ -645,10 +714,25 @@ export default function AdminLinksSection({
           <Button variant="lux-ghost" size="sm" onClick={releaseSelected} disabled={!selected.size}>
             Release selected to pool
           </Button>
+          <Button
+            variant="lux-ghost"
+            size="sm"
+            className="text-red-400 hover:text-red-300 hover:border-red-400/40"
+            onClick={() => setDeleteIds(Array.from(selected))}
+            disabled={!selected.size}
+          >
+            Delete selected ({selected.size})
+          </Button>
         </div>
       </div>
 
       <div className="flex gap-3 flex-wrap items-center">
+        <input
+          className="lux-input w-full sm:w-80 text-sm"
+          placeholder="Search URL, name, label, batch…"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
         <LuxSelect
           className="w-44"
           size="sm"
@@ -670,6 +754,15 @@ export default function AdminLinksSection({
           ]}
         />
         <PageSizeSelect value={pageSize} onChange={handlePageSizeChange} />
+        <Button
+          variant="lux-ghost"
+          size="sm"
+          className="text-red-400 hover:text-red-300 hover:border-red-400/40"
+          disabled={!search.trim() && statusFilter === "all" && memberFilter === "all"}
+          onClick={() => setDeleteMatchingOpen(true)}
+        >
+          Delete all matching ({total})
+        </Button>
         <span className="text-xs text-lux-muted ml-auto tabular-nums">
           {total} links · page {page} of {totalPages}
           {statusFilter === "available" && total === 0 && (
@@ -689,7 +782,15 @@ export default function AdminLinksSection({
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-lux-muted text-xs uppercase bg-lux-bg2 border-b border-white/[0.06]">
-                  <th className="px-3 py-3 w-10" />
+                  <th className="px-3 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      className="rounded border-white/20"
+                      checked={links.length > 0 && links.every((l) => selected.has(l.id))}
+                      onChange={toggleSelectAllOnPage}
+                      aria-label="Select all on this page"
+                    />
+                  </th>
                   <th className="text-left px-4 py-3">URL</th>
                   <th className="text-left px-4 py-3">Label</th>
                   <th className="text-left px-4 py-3">Status</th>
@@ -748,11 +849,21 @@ export default function AdminLinksSection({
                       <td className="px-4 py-3 text-lux-text">{memberName(link)}</td>
                       <td className="px-4 py-3 text-lux-muted text-xs">{formatDate(link.claimed_at)}</td>
                       <td className="px-4 py-3">
-                        {link.status === "used" && (
-                          <Button variant="lux-ghost" size="sm" onClick={() => resetLink(link.id)}>
-                            Reset
+                        <div className="flex flex-wrap gap-1.5">
+                          {link.status === "used" && (
+                            <Button variant="lux-ghost" size="sm" onClick={() => resetLink(link.id)}>
+                              Reset
+                            </Button>
+                          )}
+                          <Button
+                            variant="lux-ghost"
+                            size="sm"
+                            className="text-red-400 hover:text-red-300"
+                            onClick={() => setDeleteIds([link.id])}
+                          >
+                            Delete
                           </Button>
-                        )}
+                        </div>
                       </td>
                     </tr>
                     );
@@ -772,6 +883,42 @@ export default function AdminLinksSection({
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        open={Boolean(deleteIds?.length)}
+        onClose={() => !deleting && setDeleteIds(null)}
+        title={deleteIds?.length === 1 ? "Delete this work link?" : `Delete ${deleteIds?.length || 0} work links?`}
+        confirmLabel="Delete permanently"
+        destructive
+        loading={deleting}
+        loadingLabel="Deleting…"
+        onConfirm={confirmDelete}
+        description={
+          <p>
+            This removes {deleteIds?.length === 1 ? "the link" : "these links"} from the pool. Assigned workers will lose
+            them. This cannot be undone.
+          </p>
+        }
+      />
+
+      <ConfirmDialog
+        open={deleteMatchingOpen}
+        onClose={() => !deleting && setDeleteMatchingOpen(false)}
+        title={`Delete ${total} matching work links?`}
+        confirmLabel={`Delete ${Math.min(total, 2000)} matching`}
+        destructive
+        loading={deleting}
+        loadingLabel="Deleting…"
+        onConfirm={confirmDeleteMatching}
+        description={
+          <p>
+            Permanently delete every work link that matches the current search and filters
+            {search ? ` (search: “${search}”)` : ""}
+            {statusFilter !== "all" ? ` · status ${statusFilter}` : ""}
+            {memberFilter !== "all" ? " · selected member" : ""}. Up to 2,000 at a time.
+          </p>
+        }
+      />
     </div>
   );
 }
