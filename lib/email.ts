@@ -335,13 +335,24 @@ export async function notifyAdminSalesNavRequest(data: {
   memberName: string;
   memberEmail: string;
   linkedinEmail: string;
+  rerequestKind?: string | null;
+  reason?: string | null;
+  screenshotUrl?: string | null;
 }) {
+  const kind =
+    data.rerequestKind === "credits_completed"
+      ? "credits completed"
+      : data.rerequestKind === "error"
+        ? "error — request again"
+        : "new";
   return sendEmailSafe({
     to: getNotifyEmail(),
     replyTo: data.memberEmail,
-    subject: `Sales Navigator request: ${data.memberName}`,
+    subject: `Sales Navigator request (${kind}): ${data.memberName}`,
     html: adminSalesNavRequestEmail(data),
-    text: `${data.memberName} (${data.memberEmail}) requested Sales Navigator for LinkedIn email ${data.linkedinEmail}`,
+    text: `${data.memberName} (${data.memberEmail}) requested Sales Navigator for LinkedIn email ${data.linkedinEmail}${
+      data.reason ? `\nReason: ${data.reason}` : ""
+    }${data.screenshotUrl ? `\nScreenshot: ${data.screenshotUrl}` : ""}`,
   });
 }
 

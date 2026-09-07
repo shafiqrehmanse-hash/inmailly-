@@ -208,6 +208,8 @@ export type TeamWeeklyGoal = {
 
 export type SalesNavLicenseStatus = "pending" | "activation_sent" | "activated" | "error";
 
+export type SalesNavRerequestKind = "credits_completed" | "error";
+
 export type SalesNavLicenseRequest = {
   id: string;
   member_id: string;
@@ -217,6 +219,9 @@ export type SalesNavLicenseRequest = {
   status: SalesNavLicenseStatus;
   activation_key: string | null;
   member_error_note: string | null;
+  rerequest_kind?: SalesNavRerequestKind | null;
+  rerequest_reason?: string | null;
+  screenshot_url?: string | null;
   requested_at: string;
   activation_sent_at: string | null;
   resolved_at: string | null;

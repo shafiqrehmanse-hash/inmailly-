@@ -225,10 +225,36 @@ export default function AdminSalesNavSection() {
                 <p className="text-sm text-emerald-300">Member confirmed activation.</p>
               )}
 
-              {selected.status === "error" && selected.member_error_note && (
+                {selected.status === "error" && selected.member_error_note && (
                 <p className="text-sm text-red-200/90">
                   Member note: {selected.member_error_note}
                 </p>
+              )}
+
+              {(selected.rerequest_kind || selected.rerequest_reason || selected.screenshot_url) && (
+                <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-3 space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wide text-amber-200">Request again details</p>
+                  {selected.rerequest_kind && (
+                    <p className="text-sm text-lux-text">
+                      {selected.rerequest_kind === "credits_completed"
+                        ? "Credits completed"
+                        : "Error — needs a new license"}
+                    </p>
+                  )}
+                  {selected.rerequest_reason && (
+                    <p className="text-sm text-lux-muted whitespace-pre-wrap">{selected.rerequest_reason}</p>
+                  )}
+                  {selected.screenshot_url && (
+                    <a href={selected.screenshot_url} target="_blank" rel="noopener noreferrer" className="block">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={selected.screenshot_url}
+                        alt="Error screenshot"
+                        className="max-h-56 rounded-lg border border-white/10"
+                      />
+                    </a>
+                  )}
+                </div>
               )}
             </>
           )}

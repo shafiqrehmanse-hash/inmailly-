@@ -789,18 +789,34 @@ export function adminSalesNavRequestEmail(data: {
   memberName: string;
   memberEmail: string;
   linkedinEmail: string;
+  rerequestKind?: string | null;
+  reason?: string | null;
+  screenshotUrl?: string | null;
 }) {
   const site = getSiteUrl();
+  const kindLabel =
+    data.rerequestKind === "credits_completed"
+      ? "Credits completed — needs a new license"
+      : data.rerequestKind === "error"
+        ? "Error — requesting again"
+        : "First request";
   return emailLayout({
     preheader: `${data.memberName} needs Sales Navigator`,
     eyebrow: "Sales Navigator",
-    title: "New license request",
+    title: data.rerequestKind ? "Sales Navigator — request again" : "New license request",
     bodyHtml: [
       p(
         `<strong style="color:#fafafa;">${esc(data.memberName)}</strong> requested a LinkedIn Sales Navigator license.`
       ),
       detailRow("InMailly account", data.memberEmail),
       detailRow("LinkedIn email (registered)", data.linkedinEmail),
+      detailRow("Type", kindLabel),
+      data.reason ? detailRow("Reason", data.reason) : "",
+      data.screenshotUrl
+        ? p(
+            `<a href="${esc(data.screenshotUrl)}" style="color:#22d3ee;font-weight:600;">View screenshot →</a>`
+          )
+        : "",
       p("Open admin → Sales Navigator to paste the activation key and email the member."),
     ].join(""),
     cta: { href: `${site}/admin/team/sales-nav`, label: "Open Sales Navigator admin →" },

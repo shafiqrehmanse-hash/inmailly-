@@ -70,6 +70,9 @@ export default function TeamSalesNavPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [linkedinEmail, setLinkedinEmail] = useState("");
+  const [rerequestKind, setRerequestKind] = useState<"credits_completed" | "error" | "">("");
+  const [reason, setReason] = useState("");
+  const [screenshot, setScreenshot] = useState<File | null>(null);
   const [errorNote, setErrorNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<"idle" | "processing" | "done">("idle");
@@ -95,12 +98,33 @@ export default function TeamSalesNavPage() {
 
   async function submitRequest() {
     setErrorMsg("");
+    const isRerequest = Boolean(request && (request.status === "activated" || request.status === "error"));
+    if (isRerequest) {
+      if (!rerequestKind) {
+        setErrorMsg("Select credits completed, or error.");
+        return;
+      }
+      if (reason.trim().length < 8) {
+        setErrorMsg("Describe the reason (a short sentence is enough).");
+        return;
+      }
+      if (rerequestKind === "error" && !screenshot) {
+        setErrorMsg("Upload a screenshot of the error.");
+        return;
+      }
+    }
     setBusy(true);
     setSubmitPhase("processing");
+    const form = new FormData();
+    form.set("linkedinEmail", linkedinEmail);
+    if (isRerequest) {
+      form.set("rerequestKind", rerequestKind);
+      form.set("reason", reason.trim());
+      if (screenshot) form.set("screenshot", screenshot);
+    }
     const res = await fetch("/api/team/sales-nav", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ linkedinEmail }),
+      body: form,
     });
     const data = await res.json();
     if (data.error) {
@@ -114,6 +138,9 @@ export default function TeamSalesNavPage() {
     setRequest(data.request);
     setModalOpen(false);
     setLinkedinEmail("");
+    setRerequestKind("");
+    setReason("");
+    setScreenshot(null);
     setSubmitPhase("idle");
     setBusy(false);
     showToast("Request submitted — admin will email you when ready");
@@ -139,7 +166,8 @@ export default function TeamSalesNavPage() {
   }
 
   const openRequest = request && (request.status === "pending" || request.status === "activation_sent");
-  const canRequestNew = !openRequest && request?.status !== "activated";
+  const canRequestNew = !openRequest;
+  const isRerequest = Boolean(request && (request.status === "activated" || request.status === "error"));
 
   const statusStyle = request ? STATUS_LABEL[request.status] : null;
 
@@ -172,14 +200,19 @@ export default function TeamSalesNavPage() {
             </p>
           </div>
           {!loading && canRequestNew && (
-            <Button variant="lux" onClick={() => setModalOpen(true)}>
-              Request Sales Navigator
+            <Button
+              variant="lux"
+              onClick={() => {
+                setErrorMsg("");
+                setLinkedinEmail(request?.linkedin_email || "");
+                setRerequestKind("");
+                setReason("");
+                setScreenshot(null);
+                setModalOpen(true);
+              }}
+            >
+              {isRerequest ? "Request again" : "Request Sales Navigator"}
             </Button>
-          )}
-          {!loading && request?.status === "activated" && (
-            <span className="text-xs font-bold uppercase tracking-wide text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1.5 rounded-lg">
-              ✓ Active on file
-            </span>
           )}
         </div>
       </div>
@@ -212,6 +245,25 @@ export default function TeamSalesNavPage() {
               <dd className="text-lux-text mt-0.5">{new Date(request.requested_at).toLocaleString()}</dd>
             </div>
           </dl>
+
+          {request.rerequest_kind && (
+            <div className="rounded-lg border border-white/[0.08] bg-black/20 p-3 text-sm space-y-1">
+              <p className="text-lux-text font-medium">
+                {request.rerequest_kind === "credits_completed" ? "Reason: credits completed" : "Reason: error"}
+              </p>
+              {request.rerequest_reason && <p className="text-lux-muted">{request.rerequest_reason}</p>}
+              {request.screenshot_url && (
+                <a
+                  href={request.screenshot_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lux-cyan text-xs font-semibold hover:underline"
+                >
+                  View screenshot →
+                </a>
+              )}
+            </div>
+          )}
 
           {request.status === "pending" && (
             <div className="space-y-3">
@@ -262,15 +314,18 @@ export default function TeamSalesNavPage() {
             </div>
           )}
 
+          {request.status === "activated" && (
+            <p className="text-sm text-emerald-200/90">
+              This license is marked activated. If credits ran out or something broke, request again and tell us why.
+            </p>
+          )}
+
           {request.status === "error" && (
             <div className="space-y-3">
               <p className="text-sm text-red-200/90">
                 Admin was notified. They will send a new activation when fixed.
                 {request.member_error_note ? ` Your note: “${request.member_error_note}”` : ""}
               </p>
-              <Button variant="lux" onClick={() => setModalOpen(true)}>
-                Request again
-              </Button>
             </div>
           )}
 
@@ -288,7 +343,7 @@ export default function TeamSalesNavPage() {
             setModalOpen(false);
           }
         }}
-        title="Request Sales Navigator"
+        title={isRerequest ? "Request Sales Navigator again" : "Request Sales Navigator"}
       >
         {submitPhase !== "idle" ? (
           <SalesNavProgressBar
@@ -303,7 +358,9 @@ export default function TeamSalesNavPage() {
         ) : (
           <>
             <p className="text-sm text-lux-muted mb-4">
-              Enter the email address registered on your LinkedIn account. Admin uses this to assign your Sales Navigator seat.
+              {isRerequest
+                ? "Tell us why you need another license. If it is an error, upload a screenshot."
+                : "Enter the email address registered on your LinkedIn account. Admin uses this to assign your Sales Navigator seat."}
             </p>
             <label className="block text-[0.65rem] font-semibold uppercase tracking-wide text-lux-muted mb-1.5">
               LinkedIn email
@@ -316,6 +373,62 @@ export default function TeamSalesNavPage() {
               onChange={(e) => setLinkedinEmail(e.target.value)}
               autoFocus
             />
+            {isRerequest && (
+              <div className="space-y-3 mb-4">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-lux-muted">Why again?</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRerequestKind("credits_completed")}
+                    className={cn(
+                      "rounded-xl border px-3 py-3 text-left text-sm transition-colors",
+                      rerequestKind === "credits_completed"
+                        ? "border-lux-cyan/50 bg-lux-cyan/10 text-lux-text"
+                        : "border-white/[0.08] text-lux-muted hover:border-white/20"
+                    )}
+                  >
+                    <span className="font-semibold block text-lux-text">Credits completed</span>
+                    <span className="text-xs">InMails / credits ran out</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRerequestKind("error")}
+                    className={cn(
+                      "rounded-xl border px-3 py-3 text-left text-sm transition-colors",
+                      rerequestKind === "error"
+                        ? "border-amber-500/50 bg-amber-500/10 text-lux-text"
+                        : "border-white/[0.08] text-lux-muted hover:border-white/20"
+                    )}
+                  >
+                    <span className="font-semibold block text-lux-text">There is an error</span>
+                    <span className="text-xs">Screenshot required</span>
+                  </button>
+                </div>
+                <label className="block text-[0.65rem] font-semibold uppercase tracking-wide text-lux-muted">
+                  Describe the reason
+                </label>
+                <textarea
+                  className="lux-input w-full min-h-[88px] text-sm"
+                  placeholder="What happened? Credits used, login error, key not working…"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+                {rerequestKind === "error" && (
+                  <div>
+                    <label className="block text-[0.65rem] font-semibold uppercase tracking-wide text-lux-muted mb-1.5">
+                      Error screenshot
+                    </label>
+                    <input
+                      className="block w-full text-sm text-lux-muted file:mr-3 file:rounded-lg file:border-0 file:bg-lux-cyan/15 file:px-3 file:py-1.5 file:text-lux-cyan file:font-semibold"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      onChange={(e) => setScreenshot(e.target.files?.[0] || null)}
+                    />
+                    {screenshot && <p className="text-xs text-lux-muted mt-1">{screenshot.name}</p>}
+                  </div>
+                )}
+              </div>
+            )}
             {errorMsg && <p className="text-sm text-red-400 mb-3">{errorMsg}</p>}
             <div className="flex gap-2 justify-end">
               <Button variant="lux-ghost" onClick={() => setModalOpen(false)} disabled={busy}>
