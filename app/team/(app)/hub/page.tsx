@@ -8,6 +8,7 @@ import TeamPerformancePodium from "@/components/team/TeamPerformancePodium";
 import TeamProgressChart from "@/components/team/TeamProgressChart";
 import TeamContractHubCard from "@/components/team/TeamContractHubCard";
 import TeamInfoDocHubCard from "@/components/team/TeamInfoDocHubCard";
+import TeamGrowHubCard from "@/components/team/TeamGrowHubCard";
 import TeamWeeklyGoalBar from "@/components/team/TeamWeeklyGoalBar";
 import WorkerTasksCard from "@/components/team/WorkerTasksCard";
 import CampaignShiftCard from "@/components/team/CampaignShiftCard";
@@ -147,6 +148,13 @@ export default async function HubPage() {
       go: "Open links →",
     },
     {
+      href: "/team/grow",
+      label: "Grow accounts",
+      icon: "↗",
+      desc: "Send connection requests to our LinkedIn profiles. Cap 10 used per day.",
+      go: "Open grow →",
+    },
+    {
       href: "/team/leads",
       label: "My Leads",
       icon: "◫",
@@ -205,6 +213,7 @@ export default async function HubPage() {
 
       <TeamContractHubCard />
       <TeamInfoDocHubCard />
+      <TeamGrowHubCard />
 
       <TeamWeeklyGoalBar />
 

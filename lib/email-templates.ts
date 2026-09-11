@@ -954,3 +954,33 @@ export function clientLiveChatReplyEmail(data: { clientName: string; preview: st
     footerNote: "Use the chat bubble in the bottom-right of your dashboard to continue the conversation.",
   });
 }
+
+/** Notify a member that in-house LinkedIn profiles need connection requests. */
+export function growAccountsAssignedEmail(data: {
+  memberName: string;
+  profileCount: number;
+  previewNames: string[];
+}) {
+  const site = getSiteUrl();
+  const first = esc(data.memberName.trim().split(" ")[0] || "there");
+  const n = data.profileCount;
+  const names = data.previewNames.slice(0, 8).map((name) => esc(name)).join(" · ");
+  const extra = data.previewNames.length > 8 ? ` · +${data.previewNames.length - 8} more` : "";
+  return emailLayout({
+    preheader: `${n} InMailly profile${n === 1 ? "" : "s"} waiting for your connection request`,
+    eyebrow: "Grow our accounts",
+    title: `${first}, send connection requests`,
+    bodyHtml: [
+      p(
+        `Open <strong style="color:#fafafa;">Grow accounts</strong> in your team dashboard. These are <strong style="color:#fafafa;">our</strong> LinkedIn profiles — send a connection request from your account, then mark each one used.`
+      ),
+      detailRow("Profiles for you", String(n)),
+      names ? p(`<span style="color:#e4e4e7;">${names}${extra}</span>`) : "",
+      p(
+        `Stop at <strong style="color:#22d3ee;">10 used per day</strong> so we stay under LinkedIn’s connection limit.`
+      ),
+    ].join(""),
+    cta: { href: `${site}/team/grow`, label: "Open Grow accounts →" },
+    footerNote: "Mark used only after you actually send the connection request.",
+  });
+}

@@ -26,6 +26,7 @@ export const TEAM_ADMIN_NAV: ManagedNavGroup[] = [
     title: "Outreach",
     items: [
       { href: "/admin/team/links", label: "Work links", icon: "⛓" },
+      { href: "/admin/team/grow", label: "Grow LinkedIn", icon: "↗" },
       { href: "/admin/team/scripts", label: "Daily scripts", icon: "📝" },
     ],
   },

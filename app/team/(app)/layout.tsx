@@ -5,11 +5,13 @@ import Sidebar from "@/components/team/Sidebar";
 import WorkspaceAmbient from "@/components/ui/WorkspaceAmbient";
 import LiveChatWidget from "@/components/team/LiveChatWidget";
 import ProfilePhotoPrompt from "@/components/team/ProfilePhotoPrompt";
+import GrowAccountsPrompt from "@/components/team/GrowAccountsPrompt";
 import WorkSessionHeartbeat from "@/components/team/WorkSessionHeartbeat";
 import { canOpenLiveChat, isCampaignManager, isContentManager, isTeamLeader } from "@/lib/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/team";
+import { countGrowPending } from "@/lib/grow-profiles";
 
 export default async function TeamAppLayout({
   children,
@@ -24,7 +26,7 @@ export default async function TeamAppLayout({
   const admin = createAdminClient();
   const supabase = createServerSupabase();
 
-  const [{ data: assignedLeader }, { count }, leaderChatRow] = await Promise.all([
+  const [{ data: assignedLeader }, { count }, leaderChatRow, growPending] = await Promise.all([
     !isTeamLeader(member.role) && member.leader_id
       ? admin
           .from("team_members")
@@ -42,6 +44,7 @@ export default async function TeamAppLayout({
     isTeamLeader(member.role)
       ? admin.from("team_members").select("live_chat_agent").eq("id", member.id).maybeSingle()
       : Promise.resolve({ data: null }),
+    countGrowPending(member.id).catch(() => 0),
   ]);
 
   const teamLeaders = assignedLeader ? [assignedLeader] : [];
@@ -63,6 +66,7 @@ export default async function TeamAppLayout({
       <Sidebar
         member={member}
         poolCount={count || 0}
+        growPendingCount={growPending || 0}
         teamLeaders={teamLeaders || []}
         showLiveChat={!!chatMode}
         liveChatLabel={chatMode === "leader" ? "Live chat inbox" : "Live support"}
@@ -77,6 +81,7 @@ export default async function TeamAppLayout({
       </div>
       {chatMode && <LiveChatWidget mode={chatMode} agentEnabled={liveChatAgent} />}
       <ProfilePhotoPrompt member={member} />
+      <GrowAccountsPrompt member={member} />
     </div>
   );
 }

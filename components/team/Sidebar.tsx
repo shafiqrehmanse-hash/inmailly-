@@ -28,6 +28,7 @@ const sections: { label: string; tone: string; items: NavItem[] }[] = [
     items: [
       { id: "hub", href: "/team/hub", label: "Home", icon: "⌂", accent: "cyan" },
       { id: "links", href: "/team/links", label: "Work Links", icon: "⛓", badge: true, accent: "cyan" },
+      { id: "grow", href: "/team/grow", label: "Grow accounts", icon: "↗", badge: true, accent: "cyan" },
       { id: "scripts", href: "/team/scripts", label: "Scripts", icon: "📋", accent: "violet" },
       { id: "leads", href: "/team/leads", label: "My Leads", icon: "◫", accent: "violet" },
       { id: "performance", href: "/team/performance", label: "Team performance", icon: "📊", accent: "amber" },
@@ -61,12 +62,14 @@ const activeStyles: Record<NonNullable<NavItem["accent"]>, string> = {
 export default function Sidebar({
   member,
   poolCount,
+  growPendingCount = 0,
   teamLeaders = [],
   showLiveChat = false,
   liveChatLabel = "Live support",
 }: {
   member: TeamMember;
   poolCount: number;
+  growPendingCount?: number;
   teamLeaders?: { id: string; name: string; email: string }[];
   showLiveChat?: boolean;
   liveChatLabel?: string;
@@ -171,9 +174,11 @@ export default function Sidebar({
                 <>
                   <span className="w-[18px] text-center shrink-0 text-base">{item.icon}</span>
                   <span className="flex-1 font-medium truncate">{item.label}</span>
-                  {"badge" in item && item.badge && poolCount > 0 && (
+                  {"badge" in item &&
+                    item.badge &&
+                    (item.id === "grow" ? growPendingCount > 0 : poolCount > 0) && (
                     <span className="min-w-[1.4rem] h-[1.4rem] px-1 flex items-center justify-center rounded-full bg-red-500/15 text-red-400 text-[0.62rem] font-bold border border-red-500/45 shadow-[0_0_14px_rgba(239,68,68,0.22)] tabular-nums">
-                      {poolCount}
+                      {item.id === "grow" ? growPendingCount : poolCount}
                     </span>
                   )}
                 </>

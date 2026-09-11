@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { getContractDashboardPath, getInfoDocDashboardPath } from "@/lib/roles";
 import { getPendingContractForMember, getPendingInfoDocForMember } from "@/lib/team-pending-actions";
+import { countGrowPending } from "@/lib/grow-profiles";
 import type { TeamMember } from "@/lib/types";
 import type { OfferLetterForm } from "@/lib/offer-letter";
 
 export default async function TeamPendingActionsBanner({ member }: { member: TeamMember }) {
-  const [pendingContract, pendingInfoDoc] = await Promise.all([
+  const [pendingContract, pendingInfoDoc, growPending] = await Promise.all([
     getPendingContractForMember(member),
     getPendingInfoDocForMember(member),
+    countGrowPending(member.id).catch(() => 0),
   ]);
 
-  if (!pendingContract && !pendingInfoDoc) return null;
+  if (!pendingContract && !pendingInfoDoc && !growPending) return null;
 
   const contractHref = getContractDashboardPath(member.role);
   const infoDocHref = getInfoDocDashboardPath(member.role);
@@ -60,6 +62,27 @@ export default async function TeamPendingActionsBanner({ member }: { member: Tea
               </p>
               <p className="font-bricolage font-bold text-[0.95rem] sm:text-base text-amber-200 leading-snug">
                 Complete your employee Info Doc →
+              </p>
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {growPending > 0 && (
+        <Link
+          href="/team/grow"
+          className="block rounded-xl border border-lux-cyan/40 bg-gradient-to-r from-lux-cyan/[0.12] via-lux-violet/[0.06] to-transparent px-4 py-3.5 sm:px-5 hover:border-lux-cyan/60 transition-colors"
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-xl shrink-0" aria-hidden>
+              ↗
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.18em] text-lux-cyan mb-0.5">
+                Grow our accounts
+              </p>
+              <p className="font-bricolage font-bold text-[0.95rem] sm:text-base text-lux-text leading-snug">
+                {growPending} profile{growPending === 1 ? "" : "s"} waiting for a connection request →
               </p>
             </div>
           </div>

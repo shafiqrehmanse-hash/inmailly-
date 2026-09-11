@@ -228,3 +228,26 @@ export type SalesNavLicenseRequest = {
   resolved_at: string | null;
   updated_at: string;
 };
+
+export type GrowAssignmentStatus = "pending" | "used";
+
+export type GrowProfile = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  profile_url: string;
+  url_key: string;
+  batch_name: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type GrowAssignment = {
+  id: string;
+  send_id: string | null;
+  profile_id: string;
+  member_id: string;
+  status: GrowAssignmentStatus;
+  assigned_at: string;
+  used_at: string | null;
+};

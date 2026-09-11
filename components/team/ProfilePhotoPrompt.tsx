@@ -34,8 +34,8 @@ export default function ProfilePhotoPrompt({ member }: { member: TeamMember }) {
 
   function later() {
     setOpen(false);
+    window.dispatchEvent(new Event("inmailly:photo-prompt-closed"));
   }
-
   async function onPhotoSelected(file: File | null) {
     if (!file) return;
     setError(null);
@@ -51,6 +51,7 @@ export default function ProfilePhotoPrompt({ member }: { member: TeamMember }) {
     }
     setDone(true);
     setOpen(false);
+    window.dispatchEvent(new Event("inmailly:photo-prompt-closed"));
     router.refresh();
   }
 

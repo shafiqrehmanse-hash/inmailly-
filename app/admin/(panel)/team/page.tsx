@@ -77,6 +77,7 @@ export default function TeamOverviewPage() {
         {[
           { href: "/admin/team/performance", label: "Team performance", desc: "Leaderboard & activity" },
           { href: "/admin/team/links", label: "Work links", desc: "Import, assign, release" },
+          { href: "/admin/team/grow", label: "Grow LinkedIn", desc: "Our profiles — team sends connects" },
           { href: "/admin/team/leads", label: "Outreach leads", desc: "Your marketing pipeline" },
           { href: "/admin/team/responses", label: "Responses", desc: "Reply on behalf of team" },
           { href: "/admin/team/live-chat", label: "Live chat", desc: "Assign leaders & monitor chats" },
