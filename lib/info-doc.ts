@@ -7,6 +7,7 @@ export type InfoDocForm = {
   fatherName: string;
   homeAddress: string;
   personalPhone: string;
+  linkedinUrl: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
   emergencyContactRelation: string;
@@ -48,6 +49,7 @@ export function defaultInfoDocForm(): InfoDocForm {
     fatherName: "",
     homeAddress: "",
     personalPhone: "",
+    linkedinUrl: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
     emergencyContactRelation: "",

@@ -22,11 +22,17 @@ export default async function HubPage() {
 
   const admin = createAdminClient();
   // Workers only see their assigned team leader — not every leader in the company
-  let visibleLeaders: { id: string; name: string; email: string; phone: string | null }[] = [];
+  let visibleLeaders: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string | null;
+    linkedin_url: string | null;
+  }[] = [];
   if (!isTeamLeader(member.role) && member.leader_id) {
     const { data: myLeader } = await admin
       .from("team_members")
-      .select("id, name, email, phone")
+      .select("id, name, email, phone, photo_url, linkedin_url")
       .eq("id", member.leader_id)
       .eq("role", "team_leader")
       .eq("is_active", true)

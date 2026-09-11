@@ -5,6 +5,8 @@ export type LeaderWorkerRow = {
   name: string;
   email: string;
   phone: string | null;
+  photo_url: string | null;
+  linkedin_url: string | null;
   role: string;
   is_active: boolean;
   joined_at: string;
@@ -26,6 +28,7 @@ export type LeaderDashboard = {
   email: string;
   phone: string | null;
   photo_url: string | null;
+  linkedin_url: string | null;
   is_active: boolean;
   joined_at: string;
   workers: LeaderWorkerRow[];
@@ -78,7 +81,7 @@ export async function computeLeaderDashboards(): Promise<{
     admin
       .from("team_members")
       .select(
-        "id, name, email, phone, photo_url, role, leader_id, is_active, joined_at, last_login, invite_code"
+        "id, name, email, phone, photo_url, linkedin_url, role, leader_id, is_active, joined_at, last_login, invite_code"
       )
       .order("name"),
     admin.from("leads").select("member_id, status, deal_closed").is("project_id", null),
@@ -168,6 +171,8 @@ export async function computeLeaderDashboards(): Promise<{
       name: m.name,
       email: m.email,
       phone: m.phone,
+      photo_url: m.photo_url,
+      linkedin_url: m.linkedin_url || null,
       role: m.role,
       is_active: m.is_active,
       joined_at: m.joined_at,
@@ -199,6 +204,7 @@ export async function computeLeaderDashboards(): Promise<{
       email: leader.email,
       phone: leader.phone,
       photo_url: leader.photo_url,
+      linkedin_url: leader.linkedin_url || null,
       is_active: leader.is_active,
       joined_at: leader.joined_at,
       workers: team,

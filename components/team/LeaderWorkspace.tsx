@@ -163,9 +163,9 @@ export default function LeaderWorkspace({
         ))}
       </div>
 
-      {tab === "team" && <LeaderTeamPulse />}
+      {tab === "team" && <LeaderTeamPulse leaderName={leaderName} />}
 
-      {tab === "contacts" && <LeaderTeamContacts />}
+      {tab === "contacts" && <LeaderTeamContacts leaderName={leaderName} />}
 
       {tab === "assign" && <LeaderAssignTasks />}
 

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
 import TeamAvatar from "@/components/team/TeamAvatar";
+import TeamMemberInfoModal from "@/components/team/TeamMemberInfoModal";
 import type { TeamMember } from "@/lib/types";
 import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 
@@ -41,6 +42,7 @@ export default function AdminTeamMembersSection() {
   const [inviteUses, setInviteUses] = useState(10);
   const [generatedCode, setGeneratedCode] = useState("");
   const [hidePickerId, setHidePickerId] = useState("");
+  const [infoMember, setInfoMember] = useState<MemberRow | null>(null);
 
   const loadMembers = useCallback(async () => {
     const res = await fetch(`/api/admin/members?key=${adminKey}`);
@@ -314,7 +316,7 @@ export default function AdminTeamMembersSection() {
           <div>
             <p className="admin-section-title">All members</p>
             <p className="text-xs text-lux-muted mt-1">
-              Every member shown in full — role, stats, hide, delete, and actions. No sideways scrolling.
+              Click a member to open their full card (photo, phone, LinkedIn) and email them from there.
             </p>
           </div>
           <span className="text-xs text-lux-muted">{members.length} total</span>
@@ -331,52 +333,53 @@ export default function AdminTeamMembersSection() {
               >
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0 flex-1">
-                    <TeamAvatar name={m.name} photoUrl={m.photo_url} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-lux-text">{m.name}</h3>
-                        {m.hidden_from_team && (
-                          <span className="text-[0.58rem] font-bold uppercase tracking-wider text-slate-300 bg-slate-500/15 border border-slate-400/25 px-2 py-0.5 rounded-md">
-                            Hidden
+                    <button
+                      type="button"
+                      onClick={() => setInfoMember(m)}
+                      className="flex items-start gap-3 min-w-0 flex-1 text-left rounded-xl -m-1 p-1 hover:bg-white/[0.04] transition-colors"
+                    >
+                      <TeamAvatar name={m.name} photoUrl={m.photo_url} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold text-lux-text">{m.name}</h3>
+                          {m.hidden_from_team && (
+                            <span className="text-[0.58rem] font-bold uppercase tracking-wider text-slate-300 bg-slate-500/15 border border-slate-400/25 px-2 py-0.5 rounded-md">
+                              Hidden
+                            </span>
+                          )}
+                          {m.role === "team_leader" && (
+                            <Link
+                              href="/admin/team/leaders"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md hover:bg-amber-500/25"
+                            >
+                              Leader · {members.filter((w) => w.leader_id === m.id).length} workers
+                            </Link>
+                          )}
+                          {!m.is_active && (
+                            <span className="text-[0.58rem] font-bold uppercase tracking-wider text-red-300 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded-md">
+                              Inactive
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-lux-muted truncate mt-0.5">{m.email}</p>
+                        {m.phone ? (
+                          <span className="text-xs text-lux-cyan mt-1 inline-block">{m.phone}</span>
+                        ) : (
+                          <p className="text-xs text-lux-muted mt-1">No phone</p>
+                        )}
+                        <p className="text-xs text-lux-muted mt-1.5">
+                          Invite key:{" "}
+                          <span className="font-mono font-semibold text-amber-200/90">
+                            {m.invite_code || "—"}
                           </span>
-                        )}
-                        {m.role === "team_leader" && (
-                          <Link
-                            href="/admin/team/leaders"
-                            className="text-[0.58rem] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md hover:bg-amber-500/25"
-                          >
-                            Leader · {members.filter((w) => w.leader_id === m.id).length} workers
-                          </Link>
-                        )}
-                        {!m.is_active && (
-                          <span className="text-[0.58rem] font-bold uppercase tracking-wider text-red-300 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded-md">
-                            Inactive
-                          </span>
-                        )}
+                          {m.invite_label ? (
+                            <span className="text-lux-muted"> · {m.invite_label}</span>
+                          ) : null}
+                        </p>
+                        <p className="text-[0.65rem] text-lux-cyan/80 mt-1.5 font-semibold">View full card →</p>
                       </div>
-                      <p className="text-sm text-lux-muted truncate mt-0.5">{m.email}</p>
-                      {m.phone ? (
-                        <a
-                          href={`https://wa.me/${m.phone.replace(/[^0-9]/g, "")}`}
-                          className="text-xs text-lux-cyan hover:underline mt-1 inline-block"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {m.phone}
-                        </a>
-                      ) : (
-                        <p className="text-xs text-lux-muted mt-1">No phone</p>
-                      )}
-                      <p className="text-xs text-lux-muted mt-1.5">
-                        Invite key:{" "}
-                        <span className="font-mono font-semibold text-amber-200/90">
-                          {m.invite_code || "—"}
-                        </span>
-                        {m.invite_label ? (
-                          <span className="text-lux-muted"> · {m.invite_label}</span>
-                        ) : null}
-                      </p>
-                    </div>
+                    </button>
                   </div>
 
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 shrink-0 lg:w-auto w-full max-w-md">
@@ -476,6 +479,33 @@ export default function AdminTeamMembersSection() {
           </div>
         )}
       </section>
+
+      <TeamMemberInfoModal
+        member={
+          infoMember
+            ? {
+                id: infoMember.id,
+                name: infoMember.name,
+                email: infoMember.email,
+                phone: infoMember.phone,
+                photo_url: infoMember.photo_url,
+                linkedin_url: infoMember.linkedin_url,
+                role: infoMember.role,
+                is_active: infoMember.is_active,
+                invite_code: infoMember.invite_code,
+                extras: [
+                  { label: "Links", value: infoMember.active_links },
+                  { label: "Leads", value: infoMember.leads_count },
+                  { label: "Deals", value: infoMember.deals_closed || 0 },
+                ],
+              }
+            : null
+        }
+        onClose={() => setInfoMember(null)}
+        mode="admin"
+        adminKey={adminKey}
+        onNotify={showToast}
+      />
     </div>
   );
 }

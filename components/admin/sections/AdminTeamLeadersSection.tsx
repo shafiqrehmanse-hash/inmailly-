@@ -6,6 +6,7 @@ import AdminStatCard from "@/components/admin/AdminStatCard";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
 import TeamAvatar from "@/components/team/TeamAvatar";
+import TeamMemberInfoModal, { type TeamMemberInfo } from "@/components/team/TeamMemberInfoModal";
 import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 import type { LeaderDashboard, LeaderWorkerRow } from "@/lib/team-leader-admin";
 import { formatDate, formatRelative } from "@/lib/utils";
@@ -37,6 +38,7 @@ export default function AdminTeamLeadersSection() {
   const [attachCode, setAttachCode] = useState("TAS50-4FT5");
   const [attachLabel, setAttachLabel] = useState("TAS50");
   const [attachBusy, setAttachBusy] = useState(false);
+  const [infoMember, setInfoMember] = useState<TeamMemberInfo | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -275,11 +277,34 @@ export default function AdminTeamLeadersSection() {
                             {leader.workers.map((w) => (
                               <tr key={w.id} className="border-t border-white/[0.05]">
                                 <td className="py-2.5 pr-3">
-                                  <p className="font-semibold text-lux-text">{w.name}</p>
-                                  <p className="text-xs text-lux-muted">{w.email}</p>
-                                  {!w.is_active && (
-                                    <span className="text-[0.58rem] uppercase text-red-300">Inactive</span>
-                                  )}
+                                  <button
+                                    type="button"
+                                    className="text-left"
+                                    onClick={() =>
+                                      setInfoMember({
+                                        id: w.id,
+                                        name: w.name,
+                                        email: w.email,
+                                        phone: w.phone,
+                                        photo_url: w.photo_url,
+                                        linkedin_url: w.linkedin_url,
+                                        role: w.role,
+                                        is_active: w.is_active,
+                                        invite_code: w.invite_code,
+                                        extras: [
+                                          { label: "Leads", value: w.leads },
+                                          { label: "Deals", value: w.deals },
+                                          { label: "Used links", value: w.used },
+                                        ],
+                                      })
+                                    }
+                                  >
+                                    <p className="font-semibold text-lux-text hover:text-lux-cyan">{w.name}</p>
+                                    <p className="text-xs text-lux-muted">{w.email}</p>
+                                    {!w.is_active && (
+                                      <span className="text-[0.58rem] uppercase text-red-300">Inactive</span>
+                                    )}
+                                  </button>
                                 </td>
                                 <td className="py-2.5 pr-3 tabular-nums">{w.leads}</td>
                                 <td className="py-2.5 pr-3 tabular-nums text-emerald-400">{w.deals}</td>
@@ -313,6 +338,14 @@ export default function AdminTeamLeadersSection() {
           })}
         </div>
       )}
+
+      <TeamMemberInfoModal
+        member={infoMember}
+        onClose={() => setInfoMember(null)}
+        mode="admin"
+        adminKey={adminKey}
+        onNotify={showToast}
+      />
     </div>
   );
 }

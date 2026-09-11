@@ -16,6 +16,7 @@ export async function GET() {
         role: m.role,
         phone: m.phone,
         photo_url: m.photo_url,
+        linkedin_url: m.linkedin_url || null,
       })),
     });
   } catch (e) {

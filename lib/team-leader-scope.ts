@@ -6,7 +6,7 @@ export async function getLeaderAssignedWorkers(leaderId: string) {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("team_members")
-    .select("id, name, email, phone, photo_url, role, is_active, leader_id")
+    .select("id, name, email, phone, photo_url, linkedin_url, role, is_active, leader_id")
     .eq("is_active", true)
     .eq("leader_id", leaderId)
     .in("role", [...LEADER_MANAGED_ROLES])
@@ -47,7 +47,7 @@ export async function getLeadersForWorker(workerId: string) {
 
   const { data: leader } = await admin
     .from("team_members")
-    .select("id, name, email, phone, photo_url")
+    .select("id, name, email, phone, photo_url, linkedin_url")
     .eq("id", worker.leader_id)
     .eq("role", "team_leader")
     .eq("is_active", true)

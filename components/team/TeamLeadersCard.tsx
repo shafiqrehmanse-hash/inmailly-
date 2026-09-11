@@ -1,4 +1,10 @@
-type Leader = { id: string; name: string; email: string; phone?: string | null };
+type Leader = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  linkedin_url?: string | null;
+};
 
 export default function TeamLeadersCard({ leaders }: { leaders: Leader[] }) {
   if (!leaders.length) return null;
@@ -26,6 +32,16 @@ export default function TeamLeadersCard({ leaders }: { leaders: Leader[] }) {
               </p>
               {leader.phone && (
                 <p className="text-xs text-lux-muted mt-1">{leader.phone}</p>
+              )}
+              {leader.linkedin_url && (
+                <a
+                  href={leader.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-lux-cyan hover:underline mt-1 inline-block"
+                >
+                  LinkedIn →
+                </a>
               )}
             </div>
             <div className="flex flex-wrap gap-2">

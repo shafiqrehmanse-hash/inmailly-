@@ -242,6 +242,12 @@ export default function TeamInfoDocPage({ hubHref = "/team/hub" }: { hubHref?: s
           value={form.personalPhone}
           onChange={(e) => patch("personalPhone", e.target.value)}
         />
+        <input
+          className="lux-input w-full"
+          placeholder="LinkedIn profile (https://www.linkedin.com/in/…)"
+          value={form.linkedinUrl || ""}
+          onChange={(e) => patch("linkedinUrl", e.target.value)}
+        />
         <div className="grid sm:grid-cols-3 gap-3">
           <input
             className="lux-input"

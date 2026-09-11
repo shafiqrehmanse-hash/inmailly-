@@ -117,6 +117,19 @@ export default function AdminInfoDocsPanel() {
                     <p>ID #: {form.govtIdNumber}</p>
                     <p>Father: {form.fatherName}</p>
                     <p className="sm:col-span-2">Address: {form.homeAddress}</p>
+                    {form.linkedinUrl ? (
+                      <p className="sm:col-span-2">
+                        LinkedIn:{" "}
+                        <a
+                          href={form.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-lux-cyan hover:underline"
+                        >
+                          {form.linkedinUrl}
+                        </a>
+                      </p>
+                    ) : null}
                     <p>
                       Emergency: {form.emergencyContactName} · {form.emergencyContactPhone}
                     </p>

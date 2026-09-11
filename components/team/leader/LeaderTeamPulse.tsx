@@ -2,20 +2,38 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
+import TeamMemberInfoModal, { type TeamMemberInfo } from "@/components/team/TeamMemberInfoModal";
 import type { MemberPerformance, TeamPerformanceData } from "@/lib/team-performance";
 import { cn, formatRelative } from "@/lib/utils";
 import type { NudgeTemplateKey } from "@/lib/leader-nudges";
 
-export default function LeaderTeamPulse() {
+export default function LeaderTeamPulse({ leaderName }: { leaderName?: string }) {
   const [data, setData] = useState<TeamPerformanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [contacts, setContacts] = useState<Record<string, TeamMemberInfo>>({});
+  const [selected, setSelected] = useState<TeamMemberInfo | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/team/leader/performance");
     setData(await res.json());
+    const membersRes = await fetch("/api/team/leader/members");
+    const membersData = await membersRes.json();
+    const map: Record<string, TeamMemberInfo> = {};
+    for (const m of membersData.members || []) {
+      map[m.id] = {
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        phone: m.phone,
+        photo_url: m.photo_url,
+        linkedin_url: m.linkedin_url,
+        role: m.role,
+      };
+    }
+    setContacts(map);
     setLoading(false);
   }, []);
 
@@ -124,8 +142,24 @@ export default function LeaderTeamPulse() {
             {workers.map((m) => (
               <tr key={m.id} className="border-b border-white/[0.06] last:border-0">
                 <td className="px-4 py-3">
-                  <div className="font-medium text-lux-text">{m.name}</div>
-                  <div className="text-[0.62rem] text-lux-muted">#{m.rank} · {m.claimed} claimed</div>
+                  <button
+                    type="button"
+                    className="text-left"
+                    onClick={() =>
+                      setSelected(
+                        contacts[m.id] || {
+                          id: m.id,
+                          name: m.name,
+                          email: m.email,
+                          photo_url: m.photoUrl,
+                          role: m.role,
+                        }
+                      )
+                    }
+                  >
+                    <div className="font-medium text-lux-text hover:text-lux-cyan">{m.name}</div>
+                    <div className="text-[0.62rem] text-lux-muted">#{m.rank} · {m.claimed} claimed</div>
+                  </button>
                 </td>
                 <td className="px-4 py-3 tabular-nums text-lux-muted">
                   {m.usedToday} used · {m.leadsToday} leads
@@ -194,6 +228,16 @@ export default function LeaderTeamPulse() {
           </tbody>
         </table>
       </div>
+      <TeamMemberInfoModal
+        member={selected}
+        onClose={() => setSelected(null)}
+        mode="leader"
+        leaderName={leaderName}
+        onNotify={(msg, type) => {
+          setToast(type === "error" ? `⚠ ${msg}` : msg);
+          setTimeout(() => setToast(""), 3500);
+        }}
+      />
     </div>
   );
 }

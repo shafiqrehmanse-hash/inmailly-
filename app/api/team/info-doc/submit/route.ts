@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateInfoDocForm, type InfoDocForm } from "@/lib/info-doc";
+import { normalizeLinkedInProfileUrl } from "@/lib/linkedin-profile-url";
 import { getMemberInfoDocStats } from "@/lib/info-doc-stats";
 import { sendEmail, getNotifyEmail } from "@/lib/email";
 import { emailLayout, p } from "@/lib/email-templates";
@@ -55,6 +56,13 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  try {
+    const linkedin = normalizeLinkedInProfileUrl(String(form.linkedinUrl || ""));
+    await admin.from("team_members").update({ linkedin_url: linkedin }).eq("id", member.id);
+  } catch {
+    /* optional field — skip if the URL is invalid */
+  }
 
   const html = emailLayout({
     eyebrow: "Employee Info Doc",

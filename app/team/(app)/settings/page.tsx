@@ -5,13 +5,16 @@ import Link from "next/link";
 import Button from "@/components/ui/Button";
 import ProfilePhotoCard from "@/components/team/ProfilePhotoCard";
 import { createClient } from "@/lib/supabase/client";
+import { normalizeLinkedInProfileUrl } from "@/lib/linkedin-profile-url";
 import type { TeamMember } from "@/lib/types";
 
 export default function SettingsPage() {
   const supabase = useMemo(() => createClient(), []);
   const [member, setMember] = useState<TeamMember | null>(null);
   const [phone, setPhone] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -28,6 +31,7 @@ export default function SettingsPage() {
       if (data) {
         setMember(data as TeamMember);
         setPhone(data.phone || "");
+        setLinkedinUrl(data.linkedin_url || "");
       }
     })();
   }, [supabase]);
@@ -36,9 +40,30 @@ export default function SettingsPage() {
     e.preventDefault();
     if (!member) return;
     setLoading(true);
+    setError("");
+    let linkedin: string | null = null;
+    try {
+      linkedin = normalizeLinkedInProfileUrl(linkedinUrl);
+    } catch (e) {
+      setLoading(false);
+      setError(e instanceof Error ? e.message : "Invalid LinkedIn link");
+      return;
+    }
     const cleaned = phone.replace(/[^+0-9]/g, "") || null;
-    await supabase.from("team_members").update({ phone: cleaned }).eq("id", member.id);
+    const { error: saveError } = await supabase
+      .from("team_members")
+      .update({ phone: cleaned, linkedin_url: linkedin })
+      .eq("id", member.id);
     setLoading(false);
+    if (saveError) {
+      setError(
+        saveError.message.includes("linkedin_url")
+          ? "Run migration 036_team_member_linkedin.sql in Supabase, then try again."
+          : saveError.message
+      );
+      return;
+    }
+    setMember({ ...member, phone: cleaned, linkedin_url: linkedin });
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   }
@@ -50,7 +75,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">Account Settings</h1>
         <p className="text-sm text-lux-muted mt-1">
-          Add a clear profile photo and phone so the team board looks professional and admin can reach you.
+          Add a clear profile photo, phone, and LinkedIn so admin and your team leader can reach you.
         </p>
       </div>
 
@@ -84,8 +109,26 @@ export default function SettingsPage() {
             onChange={(e) => setPhone(e.target.value)}
           />
           <p className="text-[0.72rem] text-lux-muted/70 mt-1">Include country code — e.g. +92, +1</p>
+          <label className="text-xs font-bold uppercase tracking-wide text-lux-muted mt-4 block">
+            LinkedIn profile
+          </label>
+          <input
+            type="text"
+            className="lux-input mt-1"
+            placeholder="https://www.linkedin.com/in/your-name"
+            value={linkedinUrl}
+            onChange={(e) => setLinkedinUrl(e.target.value)}
+          />
+          <p className="text-[0.72rem] text-lux-muted/70 mt-1">
+            Your public LinkedIn profile — admin and your leader will see this on your contact card.
+          </p>
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 text-sm text-red-300 mt-4">
+              {error}
+            </div>
+          )}
           <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3 text-sm text-amber-300 mt-4 mb-4">
-            This number helps admin reach you for urgent updates and lead alerts.
+            Phone and LinkedIn help admin reach you for urgent updates and lead alerts.
           </div>
           <Button type="submit" variant="lux" disabled={loading} className="w-full">
             {loading ? "Saving…" : "Save settings"}

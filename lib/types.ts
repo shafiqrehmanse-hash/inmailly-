@@ -5,6 +5,7 @@ export type TeamMember = {
   email: string;
   phone: string | null;
   photo_url: string | null;
+  linkedin_url?: string | null;
   role: "member" | "senior" | "admin" | "campaign_manager" | "team_leader" | "content_manager";
   /** Outreach worker's assigned team leader (null for leaders / unassigned). */
   leader_id: string | null;
