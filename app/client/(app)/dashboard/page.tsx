@@ -21,7 +21,7 @@ export default function ClientDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  function loadDashboard() {
     fetch("/api/client/dashboard")
       .then(async (res) => {
         if (res.status === 401) {
@@ -52,6 +52,11 @@ export default function ClientDashboardPage() {
         setError("Network error");
         setLoading(false);
       });
+  }
+
+  useEffect(() => {
+    loadDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   if (loading) {
@@ -93,7 +98,7 @@ export default function ClientDashboardPage() {
       <ClientBrandingHubCard />
       <ClientCampaignProfilesHubCard />
       <ClientWhitelabelCard />
-      <ClientDashboard mode="full" live={live} usingDemoFill={usingDemoFill} />
+      <ClientDashboard mode="full" live={live} usingDemoFill={usingDemoFill} onFollowupSaved={loadDashboard} />
       {live.packageProgress && (
         <div className="mt-8">
           <ClientPackageProgress progress={live.packageProgress} />

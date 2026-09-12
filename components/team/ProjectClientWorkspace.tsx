@@ -25,6 +25,9 @@ export default function ProjectClientWorkspace({
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [responses, setResponses] = useState<Lead[]>([]);
+  const [stepsByLead, setStepsByLead] = useState<Record<string, { kind: string; body: string; created_at: string }[]>>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -53,6 +56,18 @@ export default function ProjectClientWorkspace({
       .eq("project_id", project.id)
       .order("created_at", { ascending: false });
     setResponses((data as Lead[]) || []);
+    const { data: steps } = await supabase
+      .from("client_followup_steps")
+      .select("lead_id, kind, body, created_at")
+      .eq("project_id", project.id)
+      .order("created_at", { ascending: true });
+    const grouped: Record<string, { kind: string; body: string; created_at: string }[]> = {};
+    for (const s of steps || []) {
+      const list = grouped[s.lead_id] || [];
+      list.push({ kind: s.kind, body: s.body, created_at: s.created_at });
+      grouped[s.lead_id] = list;
+    }
+    setStepsByLead(grouped);
     setLoading(false);
   }, [supabase, project.id]);
 
@@ -237,8 +252,8 @@ export default function ProjectClientWorkspace({
             )}
           </h3>
           <p className="text-xs text-lux-muted mb-4">
-            Clients can submit follow-up messages from their dashboard — send those on LinkedIn. Uncheck
-            &quot;Client&quot; to hide from dashboard without deleting.
+            Clients can submit follow-up messages from their dashboard. When a lead replies again, they check the name
+            and add the next sequence step — send the latest &quot;Send this&quot; on LinkedIn.
           </p>
           {loading ? (
             <p className="text-lux-muted text-sm">Loading…</p>
@@ -272,25 +287,52 @@ export default function ProjectClientWorkspace({
                     <p className="text-sm text-lux-muted italic leading-relaxed">&ldquo;{r.notes}&rdquo;</p>
                   )}
                   {r.client_followup_message && (
-                    <div className="mt-3 border border-amber-500/25 bg-amber-500/5 rounded-lg p-3">
-                      <p className="text-[0.62rem] uppercase tracking-wider text-amber-300 font-bold mb-1.5">
-                        Client follow-up to send
-                        {r.client_followup_at && (
-                          <span className="text-lux-muted font-normal normal-case ml-2">
-                            · {formatDate(r.client_followup_at)}
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-sm text-lux-text leading-relaxed whitespace-pre-wrap">
-                        {r.client_followup_message}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => copyFollowup(r.client_followup_message!)}
-                        className="mt-2 text-[0.65rem] font-semibold text-lux-cyan hover:underline"
-                      >
-                        Copy message →
-                      </button>
+                    <div className="mt-3 border border-amber-500/25 bg-amber-500/5 rounded-lg p-3 space-y-3">
+                      {(stepsByLead[r.id] || []).length > 0 ? (
+                        <div className="space-y-2">
+                          <p className="text-[0.62rem] uppercase tracking-wider text-amber-300 font-bold">
+                            Follow-up sequence
+                          </p>
+                          {(stepsByLead[r.id] || []).map((s, i) => (
+                            <div key={`${r.id}-${i}`} className="border border-white/[0.06] rounded-md px-2.5 py-2">
+                              <p className="text-[0.55rem] uppercase tracking-wider text-lux-muted mb-1">
+                                {s.kind === "lead_reply" ? "Lead replied" : "Send this"}
+                              </p>
+                              <p className="text-sm text-lux-text whitespace-pre-wrap">{s.body}</p>
+                              {s.kind === "client_send" && (
+                                <button
+                                  type="button"
+                                  onClick={() => copyFollowup(s.body)}
+                                  className="mt-1.5 text-[0.65rem] font-semibold text-lux-cyan hover:underline"
+                                >
+                                  Copy message →
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-[0.62rem] uppercase tracking-wider text-amber-300 font-bold mb-1.5">
+                            Client follow-up to send
+                            {r.client_followup_at && (
+                              <span className="text-lux-muted font-normal normal-case ml-2">
+                                · {formatDate(r.client_followup_at)}
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-sm text-lux-text leading-relaxed whitespace-pre-wrap">
+                            {r.client_followup_message}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => copyFollowup(r.client_followup_message!)}
+                            className="mt-2 text-[0.65rem] font-semibold text-lux-cyan hover:underline"
+                          >
+                            Copy message →
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                   <div className="flex flex-wrap items-center justify-between gap-2 mt-3">

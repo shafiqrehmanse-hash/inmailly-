@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentClient } from "@/lib/client-auth-server";
+import { upsertInitialClientSend } from "@/lib/client-followup-sequence";
 import { notifyTeamClientFollowup } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -60,6 +61,16 @@ export async function POST(request: NextRequest) {
 
   if (error || !updated) {
     return NextResponse.json({ error: error?.message || "Could not save follow-up" }, { status: 400 });
+  }
+
+  try {
+    await upsertInitialClientSend(admin, {
+      leadId: lead.id,
+      projectId: project.id,
+      body: trimmed,
+    });
+  } catch {
+    /* sequence table may not exist until migration 038 */
   }
 
   await notifyTeamClientFollowup({

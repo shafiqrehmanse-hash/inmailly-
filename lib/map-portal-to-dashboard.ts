@@ -1,4 +1,5 @@
 import { formatDate, formatRelative } from "@/lib/utils";
+import type { ClientFollowupStep } from "@/lib/client-followup-sequence";
 
 export type ClientDashboardLiveData = {
   projectName: string;
@@ -26,6 +27,7 @@ export type ClientDashboardLiveData = {
     profileUrl: string | null;
     clientFollowupMessage: string | null;
     clientFollowupAt: string | null;
+    sequence?: ClientFollowupStep[];
   }[];
   pipeline: { label: string; count: number; value: number }[];
   velocity: number[];
@@ -44,6 +46,7 @@ type PortalResponse = {
   notes: string | null;
   client_followup_message: string | null;
   client_followup_at: string | null;
+  followup_sequence?: ClientFollowupStep[];
   created_at: string;
 };
 
@@ -143,6 +146,7 @@ export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveDa
     profileUrl: r.profile_url?.trim() || null,
     clientFollowupMessage: r.client_followup_message?.trim() || null,
     clientFollowupAt: r.client_followup_at || null,
+    sequence: r.followup_sequence || [],
   }));
 
   const latest = responses[0];

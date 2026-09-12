@@ -714,17 +714,22 @@ export function teamClientFollowupEmail(data: {
   projectName: string;
   leadName: string;
   message: string;
+  leadReply?: string;
   isUpdate?: boolean;
+  isSequence?: boolean;
 }) {
   const site = getSiteUrl();
   return emailLayout({
-    eyebrow: "Client follow-up",
-    title: data.isUpdate ? "Follow-up updated" : "New follow-up to send",
+    eyebrow: data.isSequence ? "Follow-up sequence" : "Client follow-up",
+    title: data.isSequence ? "Lead replied — next send ready" : data.isUpdate ? "Follow-up updated" : "New follow-up to send",
     bodyHtml: [
       p(
-        `<strong style="color:#fafafa;">${esc(data.clientName)}</strong> wrote a follow-up for <strong style="color:#fafafa;">${esc(data.leadName)}</strong> on ${esc(data.projectName)}. Send this on LinkedIn:`
+        data.isSequence
+          ? `<strong style="color:#fafafa;">${esc(data.clientName)}</strong> logged ${esc(data.leadName)}’s reply on ${esc(data.projectName)} and wrote the next LinkedIn message.`
+          : `<strong style="color:#fafafa;">${esc(data.clientName)}</strong> wrote a follow-up for <strong style="color:#fafafa;">${esc(data.leadName)}</strong> on ${esc(data.projectName)}. Send this on LinkedIn:`
       ),
-      detailRow("Message", data.message),
+      data.leadReply ? detailRow("They said", data.leadReply) : "",
+      detailRow(data.isSequence ? "Send next" : "Message", data.message),
     ].join(""),
     cta: { href: `${site}/campaign/hub`, label: "Open campaign hub →" },
   });

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatDate } from "@/lib/utils";
+import type { ClientFollowupStep } from "@/lib/client-followup-sequence";
 
 export type ClientResponseDetail = {
   id: string;
@@ -15,6 +16,7 @@ export type ClientResponseDetail = {
   profileUrl?: string | null;
   clientFollowupMessage?: string | null;
   clientFollowupAt?: string | null;
+  sequence?: ClientFollowupStep[];
 };
 
 export default function ClientResponseModal({
@@ -25,11 +27,15 @@ export default function ClientResponseModal({
 }: {
   response: ClientResponseDetail | null;
   onClose: () => void;
-  onSaved?: (updated: Pick<ClientResponseDetail, "id" | "clientFollowupMessage" | "clientFollowupAt">) => void;
+  onSaved?: (
+    updated: Pick<ClientResponseDetail, "id" | "clientFollowupMessage" | "clientFollowupAt" | "sequence">
+  ) => void;
   readOnly?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const [message, setMessage] = useState("");
+  const [leadReply, setLeadReply] = useState("");
+  const [nextFollowup, setNextFollowup] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -44,6 +50,8 @@ export default function ClientResponseModal({
   useEffect(() => {
     if (!response) return;
     setMessage(response.clientFollowupMessage || "");
+    setLeadReply("");
+    setNextFollowup("");
     setError("");
     setSuccess(false);
   }, [response]);
@@ -91,6 +99,47 @@ export default function ClientResponseModal({
         id: response.id,
         clientFollowupMessage: data.client_followup_message,
         clientFollowupAt: data.client_followup_at,
+      });
+    } catch {
+      setError("Network error — please try again");
+    }
+    setSaving(false);
+  }
+
+  async function handleSequence(e: React.FormEvent) {
+    e.preventDefault();
+    if (!response || readOnly) return;
+    setSaving(true);
+    setError("");
+    setSuccess(false);
+    try {
+      const res = await fetch("/api/client/followup-sequence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [
+            {
+              lead_id: response.id,
+              lead_reply: leadReply,
+              next_followup: nextFollowup,
+            },
+          ],
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Could not save sequence");
+        setSaving(false);
+        return;
+      }
+      const saved = data.saved?.[0];
+      setSuccess(true);
+      setLeadReply("");
+      setNextFollowup("");
+      onSaved?.({
+        id: response.id,
+        clientFollowupMessage: saved?.client_followup_message || nextFollowup,
+        clientFollowupAt: saved?.client_followup_at || new Date().toISOString(),
       });
     } catch {
       setError("Network error — please try again");
@@ -167,6 +216,20 @@ export default function ClientResponseModal({
                   <p className="text-sm text-lux-text leading-relaxed whitespace-pre-wrap">{response.preview}</p>
                 </div>
 
+                {(response.sequence || []).length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[0.62rem] uppercase tracking-wider text-lux-cyan">Sequence so far</p>
+                    {response.sequence!.map((s) => (
+                      <div key={s.id} className="border border-white/[0.08] bg-lux-bg2/40 px-3 py-2.5">
+                        <p className="text-[0.55rem] uppercase tracking-wider text-lux-muted mb-1">
+                          {s.kind === "lead_reply" ? "They replied" : "Follow-up to send"}
+                        </p>
+                        <p className="text-sm text-lux-text whitespace-pre-wrap">{s.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {linkedIn ? (
                   <a
                     href={linkedIn}
@@ -235,6 +298,42 @@ export default function ClientResponseModal({
                     </button>
                   )}
                 </form>
+
+                {hasExisting && !readOnly && (
+                  <form onSubmit={handleSequence} className="border border-amber-500/25 bg-amber-500/[0.05] p-4 space-y-3">
+                    <div>
+                      <p className="text-[0.62rem] uppercase tracking-wider text-amber-300 font-semibold mb-1">
+                        They replied to that follow-up
+                      </p>
+                      <p className="text-xs text-lux-muted leading-relaxed">
+                        Paste their new response, then write the next message in the sequence for your team to send.
+                      </p>
+                    </div>
+                    <textarea
+                      className="lux-input min-h-[88px] text-sm w-full"
+                      placeholder="What they said next…"
+                      value={leadReply}
+                      onChange={(e) => setLeadReply(e.target.value)}
+                      disabled={saving}
+                      maxLength={4000}
+                    />
+                    <textarea
+                      className="lux-input min-h-[88px] text-sm w-full"
+                      placeholder="Next follow-up for LinkedIn…"
+                      value={nextFollowup}
+                      onChange={(e) => setNextFollowup(e.target.value)}
+                      disabled={saving}
+                      maxLength={4000}
+                    />
+                    <button
+                      type="submit"
+                      disabled={saving || leadReply.trim().length < 8 || nextFollowup.trim().length < 10}
+                      className="w-full lux-btn-primary py-3 font-bricolage font-extrabold disabled:opacity-50"
+                    >
+                      {saving ? "Saving…" : "Add to sequence →"}
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           </motion.div>

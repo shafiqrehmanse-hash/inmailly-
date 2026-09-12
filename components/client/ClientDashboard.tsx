@@ -12,6 +12,7 @@ import {
 import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 import ProofLightbox, { ProofThumb } from "@/components/proof/ProofLightbox";
 import ClientResponseModal, { type ClientResponseDetail } from "@/components/client/ClientResponseModal";
+import ClientFollowupSequenceModal, { type SequenceLead } from "@/components/client/ClientFollowupSequenceModal";
 import { cn } from "@/lib/utils";
 import {
   HiArrowTrendingUp,
@@ -81,6 +82,8 @@ export default function ClientDashboard({
   const [sent, setSent] = useState(DEMO_CAMPAIGN.sent);
   const [proofLightbox, setProofLightbox] = useState<string | null>(null);
   const [responseModal, setResponseModal] = useState<ClientResponseDetail | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sequenceOpen, setSequenceOpen] = useState(false);
   const [localFollowups, setLocalFollowups] = useState<
     Record<string, { clientFollowupMessage: string; clientFollowupAt: string }>
   >({});
@@ -115,7 +118,9 @@ export default function ClientDashboard({
     setResponseModal(r);
   }
 
-  function handleFollowupSaved(updated: Pick<ClientResponseDetail, "id" | "clientFollowupMessage" | "clientFollowupAt">) {
+  function handleFollowupSaved(
+    updated: Pick<ClientResponseDetail, "id" | "clientFollowupMessage" | "clientFollowupAt">
+  ) {
     if (updated.clientFollowupMessage && updated.clientFollowupAt) {
       setLocalFollowups((prev) => ({
         ...prev,
@@ -268,6 +273,17 @@ export default function ClientDashboard({
               visibleCount={isLive ? live!.stats.total : DEMO_RESPONSES.length}
               teamCount={isLive ? live!.stats.teamResponses : undefined}
               onSelect={openResponse}
+              selectedIds={selectedIds}
+              selectable={isLive && !usingDemoFill}
+              onToggleSelect={(id) => {
+                setSelectedIds((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(id)) next.delete(id);
+                  else next.add(id);
+                  return next;
+                });
+              }}
+              onContinueSequence={() => setSequenceOpen(true)}
             />
           )}
           {!isHero && tab === "sends" && (
@@ -324,6 +340,25 @@ export default function ClientDashboard({
         onSaved={handleFollowupSaved}
         readOnly={!isLive || usingDemoFill}
       />
+      {sequenceOpen && (
+        <ClientFollowupSequenceModal
+          leads={
+            displayResponses.filter((r) => selectedIds.has(r.id) && r.clientFollowupMessage) as SequenceLead[]
+          }
+          onClose={() => setSequenceOpen(false)}
+          onSaved={(saved) => {
+            for (const row of saved) {
+              handleFollowupSaved({
+                id: row.id,
+                clientFollowupMessage: row.clientFollowupMessage,
+                clientFollowupAt: row.clientFollowupAt,
+              });
+            }
+            setSelectedIds(new Set());
+            onFollowupSaved?.();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -560,6 +595,10 @@ function ResponsesPanel({
   visibleCount,
   teamCount,
   onSelect,
+  selectedIds,
+  selectable,
+  onToggleSelect,
+  onContinueSequence,
 }: {
   responses: {
     id: string;
@@ -572,15 +611,27 @@ function ResponsesPanel({
     profileUrl?: string | null;
     clientFollowupMessage?: string | null;
     clientFollowupAt?: string | null;
+    sequence?: { id: string }[];
   }[];
   visibleCount?: number;
   teamCount?: number;
   onSelect?: (r: ClientResponseDetail) => void;
+  selectedIds?: Set<string>;
+  selectable?: boolean;
+  onToggleSelect?: (id: string) => void;
+  onContinueSequence?: () => void;
 }) {
   const unread = responses.filter((r) => r.unread).length;
   const visible = visibleCount ?? responses.length;
   const teamTotal = teamCount ?? visible;
   const differs = teamTotal > visible;
+  const selected = selectedIds || new Set<string>();
+  const selectedWithFollowup = responses.filter(
+    (r) => selected.has(r.id) && r.clientFollowupMessage
+  ).length;
+  const selectedMissingFollowup = responses.filter(
+    (r) => selected.has(r.id) && !r.clientFollowupMessage
+  ).length;
 
   return (
     <div className="space-y-2">
@@ -592,62 +643,110 @@ function ResponsesPanel({
         </span>
         <span>{unread} unread</span>
       </div>
+      {selectable && (
+        <p className="text-xs text-lux-muted mb-2">
+          After a follow-up is sent, check the lead name when they reply again — then add their response and the next
+          message in the sequence.
+        </p>
+      )}
       {responses.length === 0 ? (
         <div className="border border-white/[0.06] bg-lux-bg2/30 p-6 text-center text-sm text-lux-muted">
           No responses yet. Your team will log them here as they come in.
         </div>
       ) : (
         responses.map((r, i) => (
-          <motion.button
+          <motion.div
             key={r.id}
-            type="button"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.08 }}
-            onClick={() =>
-              onSelect?.({
-                id: r.id,
-                name: r.name,
-                title: r.title,
-                preview: r.preview,
-                time: r.time,
-                status: r.status,
-                profileUrl: r.profileUrl ?? null,
-                clientFollowupMessage: r.clientFollowupMessage ?? null,
-                clientFollowupAt: r.clientFollowupAt ?? null,
-              })
-            }
             className={cn(
-              "w-full text-left border p-3 transition-colors",
+              "w-full text-left border p-3 transition-colors flex gap-3",
               r.unread ? "border-lux-cyan/30 bg-lux-cyan/5" : "border-white/[0.06] bg-lux-bg2/30",
-              onSelect && "cursor-pointer hover:border-lux-cyan/40 hover:bg-lux-cyan/[0.07]"
+              selected.has(r.id) && "border-lux-cyan/50 bg-lux-cyan/[0.08]"
             )}
           >
-            <div className="flex justify-between gap-2">
-              <div>
-                <div className="font-semibold text-sm text-lux-text">{r.name}</div>
-                {r.title && <div className="text-[0.65rem] text-lux-muted">{r.title}</div>}
+            {selectable && (
+              <label className="shrink-0 pt-0.5" onClick={(e) => e.stopPropagation()}>
+                <input
+                  type="checkbox"
+                  className="rounded border-white/25 text-lux-cyan focus:ring-lux-cyan"
+                  checked={selected.has(r.id)}
+                  onChange={() => onToggleSelect?.(r.id)}
+                  aria-label={`Select ${r.name}`}
+                />
+              </label>
+            )}
+            <button
+              type="button"
+              className={cn("min-w-0 flex-1 text-left", onSelect && "cursor-pointer")}
+              onClick={() =>
+                onSelect?.({
+                  id: r.id,
+                  name: r.name,
+                  title: r.title,
+                  preview: r.preview,
+                  time: r.time,
+                  status: r.status,
+                  profileUrl: r.profileUrl ?? null,
+                  clientFollowupMessage: r.clientFollowupMessage ?? null,
+                  clientFollowupAt: r.clientFollowupAt ?? null,
+                  sequence: (r as ClientResponseDetail).sequence,
+                })
+              }
+            >
+              <div className="flex justify-between gap-2">
+                <div>
+                  <div className="font-semibold text-sm text-lux-text">{r.name}</div>
+                  {r.title && <div className="text-[0.65rem] text-lux-muted">{r.title}</div>}
+                </div>
+                <span className="text-[0.55rem] uppercase tracking-wider px-2 py-0.5 h-fit bg-lux-blue/15 text-lux-cyan">
+                  {r.status}
+                </span>
               </div>
-              <span className="text-[0.55rem] uppercase tracking-wider px-2 py-0.5 h-fit bg-lux-blue/15 text-lux-cyan">
-                {r.status}
-              </span>
-            </div>
-            <p className="text-[0.75rem] text-lux-muted mt-2 line-clamp-2">{r.preview}</p>
-            <div className="flex items-center justify-between mt-1">
-              <div className="text-[0.6rem] text-lux-muted/70">{r.time}</div>
-              <div className="flex items-center gap-2">
-                {r.clientFollowupMessage && (
-                  <span className="text-[0.55rem] uppercase tracking-wider text-emerald-400">Follow-up sent</span>
-                )}
-                {onSelect && (
-                  <span className="text-[0.6rem] text-lux-cyan">
-                    {r.clientFollowupMessage ? "View / edit →" : "Add follow-up →"}
-                  </span>
-                )}
+              <p className="text-[0.75rem] text-lux-muted mt-2 line-clamp-2">{r.preview}</p>
+              <div className="flex items-center justify-between mt-1">
+                <div className="text-[0.6rem] text-lux-muted/70">{r.time}</div>
+                <div className="flex items-center gap-2">
+                  {(r.sequence?.length || 0) > 1 && (
+                    <span className="text-[0.55rem] uppercase tracking-wider text-amber-300">
+                      {r.sequence!.length} steps
+                    </span>
+                  )}
+                  {r.clientFollowupMessage && (
+                    <span className="text-[0.55rem] uppercase tracking-wider text-emerald-400">Follow-up sent</span>
+                  )}
+                  {onSelect && (
+                    <span className="text-[0.6rem] text-lux-cyan">
+                      {r.clientFollowupMessage ? "View / edit →" : "Add follow-up →"}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          </motion.button>
+            </button>
+          </motion.div>
         ))
+      )}
+      {selectable && selected.size > 0 && (
+        <div className="sticky bottom-0 mt-3 border border-lux-cyan/30 bg-lux-bg2/95 backdrop-blur-md p-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-lux-text">
+            {selected.size} selected
+            {selectedMissingFollowup > 0 && (
+              <span className="text-xs text-lux-muted">
+                {" "}
+                · send a first follow-up on {selectedMissingFollowup} before sequencing
+              </span>
+            )}
+          </p>
+          <button
+            type="button"
+            disabled={selectedWithFollowup === 0}
+            onClick={onContinueSequence}
+            className="lux-btn-primary text-sm px-4 py-2 disabled:opacity-40"
+          >
+            Add lead response & next send →
+          </button>
+        </div>
       )}
     </div>
   );

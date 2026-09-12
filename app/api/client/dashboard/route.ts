@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentClient } from "@/lib/client-auth-server";
+import { attachFollowupSequences } from "@/lib/client-followup-sequence";
 import { ensureClientHasProject } from "@/lib/ensure-client-project";
 import { signedProofUrls } from "@/lib/proof-signed-urls";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -39,6 +40,8 @@ export async function GET() {
       client_followup_at: null,
     }));
   }
+
+  const withSequence = await attachFollowupSequences(admin, responses || []);
 
   const { data: proofRows } = await admin
     .from("send_proofs")
@@ -102,7 +105,7 @@ export async function GET() {
       sends: proofs.filter((p) => p.image_url).length,
       teamSends: teamProofs || 0,
     },
-    responses: responses || [],
+    responses: withSequence,
     proofs: proofs.filter((p) => p.image_url),
     isPreview: project.status === "preview" || project.status === "draft",
   });

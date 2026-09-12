@@ -661,18 +661,24 @@ export async function notifyTeamClientFollowup(data: {
   clientName: string;
   leadName: string;
   message: string;
+  leadReply?: string;
   isUpdate?: boolean;
+  isSequence?: boolean;
 }) {
   const managerEmails = await getProjectManagerEmails(data.projectId);
   const recipients = Array.from(new Set([getNotifyEmail(), ...managerEmails]));
-  const subject = data.isUpdate
-    ? `Follow-up updated: ${data.leadName} · ${data.projectName}`
-    : `Client follow-up to send: ${data.leadName} · ${data.projectName}`;
+  const subject = data.isSequence
+    ? `Sequence step: ${data.leadName} replied · ${data.projectName}`
+    : data.isUpdate
+      ? `Follow-up updated: ${data.leadName} · ${data.projectName}`
+      : `Client follow-up to send: ${data.leadName} · ${data.projectName}`;
 
   return sendEmailSafe({
     to: recipients,
     subject,
     html: teamClientFollowupEmail(data),
-    text: `${data.clientName} wrote a follow-up for ${data.leadName}: ${data.message.slice(0, 200)}`,
+    text: data.leadReply
+      ? `${data.clientName} logged a reply from ${data.leadName}: ${data.leadReply.slice(0, 160)}\n\nNext send: ${data.message.slice(0, 200)}`
+      : `${data.clientName} wrote a follow-up for ${data.leadName}: ${data.message.slice(0, 200)}`,
   });
 }

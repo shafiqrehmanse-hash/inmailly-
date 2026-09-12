@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { signedProofUrls } from "@/lib/proof-signed-urls";
+import { attachFollowupSequences } from "@/lib/client-followup-sequence";
 
 /** Client-safe campaign payload for public embed (no team-only counts). */
 export async function fetchEmbedPortalByToken(admin: SupabaseClient, token: string) {
@@ -71,7 +72,7 @@ export async function fetchEmbedPortalByToken(admin: SupabaseClient, token: stri
       interested: interestedRes.count || 0,
       sends: proofs.filter((p) => p.image_url).length,
     },
-    responses: responsesRes.data || [],
+    responses: await attachFollowupSequences(admin, responsesRes.data || []),
     proofs: proofs.filter((p) => p.image_url),
   };
 }

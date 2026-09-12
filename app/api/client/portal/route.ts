@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { attachFollowupSequences } from "@/lib/client-followup-sequence";
 import { listCampaignProfilesForClient } from "@/lib/client-campaign-profiles";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -100,7 +101,7 @@ export async function GET(request: NextRequest) {
       sends: proofs.filter((p) => p.image_url).length,
       teamSends: teamProofs || 0,
     },
-    responses: responses || [],
+    responses: await attachFollowupSequences(admin, responses || []),
     proofs: proofs.filter((p) => p.image_url),
     profiles,
   });
