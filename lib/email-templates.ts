@@ -1,4 +1,5 @@
 import { getSiteUrl } from "@/lib/site-url";
+import { GROW_DAILY_USED_CAP } from "@/lib/grow-cap";
 
 function esc(s: string) {
   return s
@@ -982,7 +983,7 @@ export function growAccountsAssignedEmail(data: {
       detailRow("Profiles for you", String(n)),
       names ? p(`<span style="color:#e4e4e7;">${names}${extra}</span>`) : "",
       p(
-        `Stop at <strong style="color:#22d3ee;">10 used per day</strong> so we stay under LinkedIn’s connection limit.`
+        `Stop at <strong style="color:#22d3ee;">${GROW_DAILY_USED_CAP} used per day</strong> so we stay under LinkedIn’s connection limit.`
       ),
     ].join(""),
     cta: { href: `${site}/team/grow`, label: "Open Grow accounts →" },

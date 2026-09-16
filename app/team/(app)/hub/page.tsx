@@ -151,7 +151,7 @@ export default async function HubPage() {
       href: "/team/grow",
       label: "Grow accounts",
       icon: "↗",
-      desc: "Send connection requests to our LinkedIn profiles. Cap 10 used per day.",
+      desc: "Send connection requests to our LinkedIn profiles. Cap 30 used per day.",
       go: "Open grow →",
     },
     {
