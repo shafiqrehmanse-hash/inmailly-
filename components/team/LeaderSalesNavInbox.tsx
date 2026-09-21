@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import LuxSelect from "@/components/ui/LuxSelect";
-import type { SalesNavLicenseRequest } from "@/lib/types";
+import SalesNavLeaderReviewTag from "@/components/team/SalesNavLeaderReviewTag";
+import type { SalesNavLeaderReview, SalesNavLicenseRequest } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS = [
@@ -12,6 +13,13 @@ const STATUS_OPTIONS = [
   { value: "activation_sent", label: "Activation sent" },
   { value: "activated", label: "Activated" },
   { value: "error", label: "Error reported" },
+];
+
+const REVIEW_OPTIONS = [
+  { value: "all", label: "All leader reviews" },
+  { value: "pending", label: "Awaiting my review" },
+  { value: "approved", label: "Approved" },
+  { value: "not_eligible", label: "Not eligible" },
 ];
 
 const STATUS_BADGE: Record<string, string> = {
@@ -24,9 +32,11 @@ const STATUS_BADGE: Record<string, string> = {
 export default function LeaderSalesNavInbox({ agentEnabled = false }: { agentEnabled?: boolean }) {
   const [requests, setRequests] = useState<SalesNavLicenseRequest[]>([]);
   const [filter, setFilter] = useState("pending");
+  const [reviewFilter, setReviewFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!agentEnabled) {
@@ -57,8 +67,31 @@ export default function LeaderSalesNavInbox({ agentEnabled = false }: { agentEna
     load();
   }, [load]);
 
-  const selected = requests.find((r) => r.id === selectedId) || requests[0] || null;
-  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const visible =
+    reviewFilter === "all"
+      ? requests
+      : requests.filter((r) => (r.leader_review || "pending") === reviewFilter);
+
+  const selected = visible.find((r) => r.id === selectedId) || visible[0] || null;
+  const canReview = selected && (selected.status === "pending" || selected.status === "error");
+
+  async function setReview(review: SalesNavLeaderReview) {
+    if (!selected) return;
+    setBusy(true);
+    const res = await fetch("/api/team/leader/sales-nav", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: selected.id, review }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) {
+      setError(data.error || "Could not save review");
+      return;
+    }
+    setError("");
+    load();
+  }
 
   if (!agentEnabled) {
     return (
@@ -77,17 +110,17 @@ export default function LeaderSalesNavInbox({ agentEnabled = false }: { agentEna
       <div>
         <h2 className="font-bricolage font-bold text-lux-text">Team Sales Navigator requests</h2>
         <p className="text-xs text-lux-muted mt-1">
-          Only members assigned to you. Admin still emails activation keys. Sorted by lead volume so you can follow up
-          on the highest producers first.
+          Approve people you want licensed (green for admin). Cross out anyone who is not eligible — they show as
+          cancelled on the admin board. Activation keys are still sent by admin.
         </p>
       </div>
 
       <div className="flex flex-wrap gap-3 items-center">
         <LuxSelect className="w-48" size="sm" value={filter} onChange={setFilter} options={STATUS_OPTIONS} />
+        <LuxSelect className="w-52" size="sm" value={reviewFilter} onChange={setReviewFilter} options={REVIEW_OPTIONS} />
         <Button variant="lux-ghost" size="sm" onClick={load}>
           Refresh
         </Button>
-        <span className="text-xs text-lux-muted">{pendingCount} pending</span>
       </div>
 
       {error && <p className="text-sm text-red-300">{error}</p>}
@@ -96,33 +129,44 @@ export default function LeaderSalesNavInbox({ agentEnabled = false }: { agentEna
         <div className="lg:col-span-2 lux-card overflow-hidden max-h-[520px] overflow-y-auto">
           {loading ? (
             <p className="p-4 text-lux-muted text-sm">Loading…</p>
-          ) : requests.length === 0 ? (
+          ) : visible.length === 0 ? (
             <p className="p-8 text-center text-lux-muted text-sm">No requests from your team in this filter.</p>
           ) : (
             <ul>
-              {requests.map((r) => (
+              {visible.map((r) => (
                 <li key={r.id}>
                   <button
                     type="button"
                     onClick={() => setSelectedId(r.id)}
                     className={cn(
                       "w-full text-left px-4 py-3 border-b border-white/[0.06] hover:bg-white/[0.03] transition-colors",
-                      selected?.id === r.id && "bg-lux-cyan/10 border-l-2 border-l-lux-cyan"
+                      selected?.id === r.id && "bg-lux-cyan/10 border-l-2 border-l-lux-cyan",
+                      r.leader_review === "not_eligible" && "opacity-70"
                     )}
                   >
-                    <div className="font-medium text-lux-text">{r.member_name}</div>
+                    <div
+                      className={cn(
+                        "font-medium text-lux-text",
+                        r.leader_review === "not_eligible" && "line-through text-lux-muted"
+                      )}
+                    >
+                      {r.member_name}
+                    </div>
                     <div className="text-xs text-lux-muted truncate">{r.linkedin_email}</div>
                     <div className="text-[0.62rem] text-amber-200/90 mt-1">
                       {typeof r.leads_count === "number" ? `${r.leads_count} leads` : ""}
                     </div>
-                    <span
-                      className={cn(
-                        "inline-block mt-1.5 text-[0.58rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded border",
-                        STATUS_BADGE[r.status]
-                      )}
-                    >
-                      {r.status.replace("_", " ")}
-                    </span>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      <span
+                        className={cn(
+                          "inline-block text-[0.58rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded border",
+                          STATUS_BADGE[r.status]
+                        )}
+                      >
+                        {r.status.replace("_", " ")}
+                      </span>
+                      <SalesNavLeaderReviewTag review={r.leader_review} />
+                    </div>
                   </button>
                 </li>
               ))}
@@ -136,7 +180,14 @@ export default function LeaderSalesNavInbox({ agentEnabled = false }: { agentEna
           ) : (
             <>
               <div>
-                <h3 className="font-bricolage font-bold text-lg text-lux-text">{selected.member_name}</h3>
+                <h3
+                  className={cn(
+                    "font-bricolage font-bold text-lg text-lux-text",
+                    selected.leader_review === "not_eligible" && "line-through text-lux-muted"
+                  )}
+                >
+                  {selected.member_name}
+                </h3>
                 <p className="text-sm text-lux-muted mt-1">
                   InMailly: {selected.member_email} · LinkedIn: {selected.linkedin_email}
                 </p>
@@ -146,6 +197,9 @@ export default function LeaderSalesNavInbox({ agentEnabled = false }: { agentEna
                 <p className="text-xs text-lux-muted mt-1">
                   Requested {new Date(selected.requested_at).toLocaleString()}
                 </p>
+                <div className="mt-2">
+                  <SalesNavLeaderReviewTag review={selected.leader_review} />
+                </div>
               </div>
               {selected.status === "error" && selected.member_error_note && (
                 <p className="text-sm text-red-200/90">Member note: {selected.member_error_note}</p>
@@ -164,8 +218,31 @@ export default function LeaderSalesNavInbox({ agentEnabled = false }: { agentEna
                   )}
                 </div>
               )}
+              {canReview && (
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-white/[0.06]">
+                  <Button
+                    variant="lux"
+                    disabled={busy || selected.leader_review === "approved"}
+                    onClick={() => setReview("approved")}
+                  >
+                    Approve for license
+                  </Button>
+                  <Button
+                    variant="lux-ghost"
+                    disabled={busy || selected.leader_review === "not_eligible"}
+                    onClick={() => setReview("not_eligible")}
+                  >
+                    Cross out — not eligible
+                  </Button>
+                  {selected.leader_review && selected.leader_review !== "pending" && (
+                    <Button variant="lux-ghost" disabled={busy} onClick={() => setReview("pending")}>
+                      Undo review
+                    </Button>
+                  )}
+                </div>
+              )}
               <p className="text-xs text-lux-muted">
-                Activation keys are sent by admin. Contact admin if this request is waiting too long.
+                Approved requests get a green tag on the admin board. Crossed names show as not eligible / cancelled.
               </p>
             </>
           )}

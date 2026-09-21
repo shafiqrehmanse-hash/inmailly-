@@ -48,7 +48,11 @@ export async function enrichSalesNavRequests(
         leads_count: leadsCountByMember.get(r.member_id) || 0,
       };
     })
-    .sort((a, b) => b.leads_count - a.leads_count || a.member_name.localeCompare(b.member_name));
+    .sort((a, b) => {
+      const rank = (r: SalesNavLicenseRequest) =>
+        r.leader_review === "approved" ? 0 : r.leader_review === "not_eligible" ? 2 : 1;
+      return rank(a) - rank(b) || b.leads_count - a.leads_count || a.member_name.localeCompare(b.member_name);
+    });
 }
 
 export function stripActivationKey<T extends { activation_key?: string | null }>(row: T): T {

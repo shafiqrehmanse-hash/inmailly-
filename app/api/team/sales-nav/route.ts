@@ -158,6 +158,10 @@ export async function POST(request: NextRequest) {
       rerequest_kind: kind,
       rerequest_reason: isRerequest ? reason : null,
       screenshot_url: screenshotUrl,
+      leader_review: "pending",
+      leader_reviewed_at: null,
+      leader_reviewed_by: null,
+      leader_review_note: null,
     })
     .select("*")
     .single();
@@ -166,7 +170,9 @@ export async function POST(request: NextRequest) {
     const hint =
       error.message.includes("rerequest") || error.message.includes("screenshot")
         ? " Run migration 035_sales_nav_rerequest.sql in Supabase first."
-        : "";
+        : error.message.includes("leader_review")
+          ? " Run migration 040_sales_nav_leader_review.sql in Supabase first."
+          : "";
     return NextResponse.json({ error: error.message + hint }, { status: 500 });
   }
 

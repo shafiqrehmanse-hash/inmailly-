@@ -83,6 +83,12 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
+  if (row.leader_review === "not_eligible") {
+    return NextResponse.json(
+      { error: "Team leader marked this member not eligible. Un-cross it with the leader first." },
+      { status: 400 }
+    );
+  }
 
   const memberEmail = (row.member_email || "").trim().toLowerCase();
   if (!memberEmail || !memberEmail.includes("@")) {

@@ -169,7 +169,14 @@ export default function TeamSalesNavPage() {
   const canRequestNew = !openRequest;
   const isRerequest = Boolean(request && (request.status === "activated" || request.status === "error"));
 
-  const statusStyle = request ? STATUS_LABEL[request.status] : null;
+  const statusStyle =
+    request?.leader_review === "not_eligible"
+      ? { label: "Not eligible", className: "text-slate-300 bg-white/5 border-white/15" }
+      : request?.leader_review === "approved" && request.status === "pending"
+        ? { label: "Leader approved", className: "text-emerald-300 bg-emerald-500/15 border-emerald-500/40" }
+        : request
+          ? STATUS_LABEL[request.status]
+          : null;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -265,7 +272,13 @@ export default function TeamSalesNavPage() {
             </div>
           )}
 
-          {request.status === "pending" && (
+          {request.status === "pending" && request.leader_review === "not_eligible" && (
+            <p className="text-sm text-lux-muted">
+              Your team leader marked this request as not eligible. Ask them if you think this is a mistake.
+            </p>
+          )}
+
+          {request.status === "pending" && request.leader_review !== "not_eligible" && (
             <div className="space-y-3">
               <SalesNavProgressBar
                 phase="pending"

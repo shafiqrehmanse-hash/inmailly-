@@ -211,6 +211,8 @@ export type TeamWeeklyGoal = {
 
 export type SalesNavLicenseStatus = "pending" | "activation_sent" | "activated" | "error";
 
+export type SalesNavLeaderReview = "pending" | "approved" | "not_eligible";
+
 export type SalesNavRerequestKind = "credits_completed" | "error";
 
 export type SalesNavLicenseRequest = {
@@ -232,6 +234,10 @@ export type SalesNavLicenseRequest = {
   leader_id?: string | null;
   leader_name?: string | null;
   leads_count?: number;
+  leader_review?: SalesNavLeaderReview;
+  leader_reviewed_at?: string | null;
+  leader_reviewed_by?: string | null;
+  leader_review_note?: string | null;
 };
 
 export type GrowAssignmentStatus = "pending" | "used";

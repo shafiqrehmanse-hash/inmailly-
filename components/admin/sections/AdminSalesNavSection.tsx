@@ -6,6 +6,7 @@ import LuxSelect from "@/components/ui/LuxSelect";
 import { useAdminKey, useAdminToast } from "@/lib/admin-context";
 import type { SalesNavLicenseRequest } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import SalesNavLeaderReviewTag from "@/components/team/SalesNavLeaderReviewTag";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -13,6 +14,13 @@ const STATUS_OPTIONS = [
   { value: "activation_sent", label: "Activation sent" },
   { value: "activated", label: "Activated" },
   { value: "error", label: "Error reported" },
+];
+
+const REVIEW_OPTIONS = [
+  { value: "all", label: "All leader reviews" },
+  { value: "pending", label: "Awaiting leader" },
+  { value: "approved", label: "Leader approved" },
+  { value: "not_eligible", label: "Not eligible / cancelled" },
 ];
 
 const STATUS_BADGE: Record<string, string> = {
@@ -39,6 +47,7 @@ export default function AdminSalesNavSection() {
   const [leaders, setLeaders] = useState<NavLeader[]>([]);
   const [filter, setFilter] = useState("pending");
   const [leaderFilter, setLeaderFilter] = useState("all");
+  const [reviewFilter, setReviewFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState("");
   const [activationKey, setActivationKey] = useState("");
@@ -73,26 +82,26 @@ export default function AdminSalesNavSection() {
     loadLeaders();
   }, [loadLeaders]);
 
-  const visibleRequests =
-    leaderFilter === "all"
-      ? requests
-      : leaderFilter === "unassigned"
-        ? requests.filter((r) => !r.leader_id)
-        : requests.filter((r) => r.leader_id === leaderFilter);
+  const visibleRequests = requests.filter((r) => {
+    if (leaderFilter === "unassigned" && r.leader_id) return false;
+    if (leaderFilter !== "all" && leaderFilter !== "unassigned" && r.leader_id !== leaderFilter) return false;
+    if (reviewFilter !== "all" && (r.leader_review || "pending") !== reviewFilter) return false;
+    return true;
+  });
 
   const selected = visibleRequests.find((r) => r.id === selectedId) || visibleRequests[0] || null;
 
   useEffect(() => {
-    const list =
-      leaderFilter === "all"
-        ? requests
-        : leaderFilter === "unassigned"
-          ? requests.filter((r) => !r.leader_id)
-          : requests.filter((r) => r.leader_id === leaderFilter);
+    const list = requests.filter((r) => {
+      if (leaderFilter === "unassigned" && r.leader_id) return false;
+      if (leaderFilter !== "all" && leaderFilter !== "unassigned" && r.leader_id !== leaderFilter) return false;
+      if (reviewFilter !== "all" && (r.leader_review || "pending") !== reviewFilter) return false;
+      return true;
+    });
     if (list.length && !list.some((r) => r.id === selectedId)) {
       setSelectedId(list[0].id);
     }
-  }, [requests, leaderFilter, selectedId]);
+  }, [requests, leaderFilter, reviewFilter, selectedId]);
 
   async function sendActivation() {
     if (!selected) return;
@@ -133,6 +142,8 @@ export default function AdminSalesNavSection() {
 
   const pendingCount = visibleRequests.filter((r) => r.status === "pending").length;
   const errorCount = visibleRequests.filter((r) => r.status === "error").length;
+  const approvedCount = visibleRequests.filter((r) => r.leader_review === "approved").length;
+  const notEligibleCount = visibleRequests.filter((r) => r.leader_review === "not_eligible").length;
 
   async function toggleSalesNavAgent(leaderId: string, enabled: boolean) {
     const res = await fetch(`/api/admin/sales-nav/agents?key=${adminKey}`, {
@@ -198,6 +209,14 @@ export default function AdminSalesNavSection() {
           <div className="text-xs text-lux-muted mt-1 uppercase tracking-wide">Pending</div>
         </div>
         <div className="lux-card p-4 text-center">
+          <div className="text-2xl font-bold text-emerald-300 tabular-nums">{approvedCount}</div>
+          <div className="text-xs text-lux-muted mt-1 uppercase tracking-wide">Leader approved</div>
+        </div>
+        <div className="lux-card p-4 text-center">
+          <div className="text-2xl font-bold text-slate-300 tabular-nums">{notEligibleCount}</div>
+          <div className="text-xs text-lux-muted mt-1 uppercase tracking-wide">Not eligible</div>
+        </div>
+        <div className="lux-card p-4 text-center">
           <div className="text-2xl font-bold text-red-300 tabular-nums">{errorCount}</div>
           <div className="text-xs text-lux-muted mt-1 uppercase tracking-wide">Errors</div>
         </div>
@@ -215,6 +234,13 @@ export default function AdminSalesNavSection() {
             { value: "unassigned", label: "No team leader" },
             ...leaders.map((l) => ({ value: l.id, label: l.name })),
           ]}
+        />
+        <LuxSelect
+          className="w-56"
+          size="sm"
+          value={reviewFilter}
+          onChange={setReviewFilter}
+          options={REVIEW_OPTIONS}
         />
         <Button variant="lux-ghost" size="sm" onClick={load}>
           Refresh
@@ -236,23 +262,35 @@ export default function AdminSalesNavSection() {
                     onClick={() => setSelectedId(r.id)}
                     className={cn(
                       "w-full text-left px-4 py-3 border-b border-white/[0.06] hover:bg-white/[0.03] transition-colors",
-                      selected?.id === r.id && "bg-lux-cyan/10 border-l-2 border-l-lux-cyan"
+                      selected?.id === r.id && "bg-lux-cyan/10 border-l-2 border-l-lux-cyan",
+                      r.leader_review === "approved" && "bg-emerald-500/[0.06]",
+                      r.leader_review === "not_eligible" && "opacity-70"
                     )}
                   >
-                    <div className="font-medium text-lux-text">{r.member_name}</div>
+                    <div
+                      className={cn(
+                        "font-medium text-lux-text",
+                        r.leader_review === "not_eligible" && "line-through text-lux-muted"
+                      )}
+                    >
+                      {r.member_name}
+                    </div>
                     <div className="text-xs text-lux-muted truncate">{r.linkedin_email}</div>
                     <div className="text-[0.62rem] text-amber-200/90 mt-1">
                       {r.leader_name ? `Leader: ${r.leader_name}` : "No team leader"}
                       {typeof r.leads_count === "number" ? ` · ${r.leads_count} leads` : ""}
                     </div>
-                    <span
-                      className={cn(
-                        "inline-block mt-1.5 text-[0.58rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded border",
-                        STATUS_BADGE[r.status]
-                      )}
-                    >
-                      {r.status.replace("_", " ")}
-                    </span>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      <span
+                        className={cn(
+                          "inline-block text-[0.58rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded border",
+                          STATUS_BADGE[r.status]
+                        )}
+                      >
+                        {r.status.replace("_", " ")}
+                      </span>
+                      <SalesNavLeaderReviewTag review={r.leader_review} hasLeader={Boolean(r.leader_id)} />
+                    </div>
                   </button>
                 </li>
               ))}
@@ -266,7 +304,14 @@ export default function AdminSalesNavSection() {
           ) : (
             <>
               <div>
-                <h2 className="font-bricolage font-bold text-lg text-lux-text">{selected.member_name}</h2>
+                <h2
+                  className={cn(
+                    "font-bricolage font-bold text-lg text-lux-text",
+                    selected.leader_review === "not_eligible" && "line-through text-lux-muted"
+                  )}
+                >
+                  {selected.member_name}
+                </h2>
                 <p className="text-sm text-lux-muted mt-1">
                   InMailly: {selected.member_email} · LinkedIn: {selected.linkedin_email}
                 </p>
@@ -274,6 +319,15 @@ export default function AdminSalesNavSection() {
                   Team leader: {selected.leader_name || "Unassigned"}
                   {typeof selected.leads_count === "number" ? ` · ${selected.leads_count} outreach leads` : ""}
                 </p>
+                <div className="mt-2">
+                  <SalesNavLeaderReviewTag
+                    review={selected.leader_review}
+                    hasLeader={Boolean(selected.leader_id)}
+                  />
+                </div>
+                {selected.leader_review === "not_eligible" && selected.leader_review_note && (
+                  <p className="text-sm text-lux-muted mt-2">Leader note: {selected.leader_review_note}</p>
+                )}
                 <p className="text-xs text-lux-muted mt-1">
                   Requested {new Date(selected.requested_at).toLocaleString()}
                 </p>
@@ -291,7 +345,15 @@ export default function AdminSalesNavSection() {
                 )}
               </div>
 
-              {(selected.status === "pending" || selected.status === "error") && (
+              {(selected.status === "pending" || selected.status === "error") &&
+                selected.leader_review === "not_eligible" && (
+                  <p className="text-sm text-slate-300 border border-white/10 rounded-lg p-3 bg-white/[0.03]">
+                    Cancelled — team leader marked this member not eligible. Activation cannot be sent.
+                  </p>
+                )}
+
+              {(selected.status === "pending" || selected.status === "error") &&
+                selected.leader_review !== "not_eligible" && (
                 <div className="space-y-3 pt-2 border-t border-white/[0.06]">
                   <p className="text-sm font-semibold text-lux-text">Send activation to member</p>
                   <p className="text-xs text-lux-muted">
