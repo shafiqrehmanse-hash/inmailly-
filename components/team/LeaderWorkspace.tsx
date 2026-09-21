@@ -9,6 +9,7 @@ import LeaderFocusPanel from "@/components/team/leader/LeaderFocusPanel";
 import LeaderInviteFunnel from "@/components/team/leader/LeaderInviteFunnel";
 import LeaderResponsesFeed from "@/components/team/leader/LeaderResponsesFeed";
 import LeaderLiveChatInbox from "@/components/team/LeaderLiveChatInbox";
+import LeaderSalesNavInbox from "@/components/team/LeaderSalesNavInbox";
 import LeaderTeamPulse from "@/components/team/leader/LeaderTeamPulse";
 import LeaderTeamContacts from "@/components/team/leader/LeaderTeamContacts";
 import LeaderWeeklyGoal from "@/components/team/leader/LeaderWeeklyGoal";
@@ -23,7 +24,17 @@ type InviteCode = {
   created_at: string;
 };
 
-type TabId = "tasks" | "team" | "contacts" | "assign" | "invites" | "email" | "focus" | "responses" | "livechat";
+type TabId =
+  | "tasks"
+  | "team"
+  | "contacts"
+  | "assign"
+  | "invites"
+  | "email"
+  | "focus"
+  | "responses"
+  | "livechat"
+  | "salesnav";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "tasks", label: "My tasks" },
@@ -31,6 +42,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "contacts", label: "Contacts" },
   { id: "assign", label: "Assign tasks" },
   { id: "livechat", label: "Live chat" },
+  { id: "salesnav", label: "Sales Nav" },
   { id: "invites", label: "Invites" },
   { id: "email", label: "Email team" },
   { id: "focus", label: "Focus banner" },
@@ -40,9 +52,11 @@ const TABS: { id: TabId; label: string }[] = [
 export default function LeaderWorkspace({
   leaderName,
   liveChatAgent = false,
+  salesNavAgent = false,
 }: {
   leaderName: string;
   liveChatAgent?: boolean;
+  salesNavAgent?: boolean;
 }) {
   const [tasks, setTasks] = useState<TeamTask[]>([]);
   const [codes, setCodes] = useState<InviteCode[]>([]);
@@ -176,6 +190,8 @@ export default function LeaderWorkspace({
       {tab === "responses" && <LeaderResponsesFeed />}
 
       {tab === "livechat" && <LeaderLiveChatInbox agentEnabled={liveChatAgent} />}
+
+      {tab === "salesnav" && <LeaderSalesNavInbox agentEnabled={salesNavAgent} />}
 
       {tab === "tasks" && (
         <section className="space-y-4">

@@ -22,13 +22,23 @@ const STATUS_BADGE: Record<string, string> = {
   error: "text-red-300 bg-red-500/15 border-red-500/30",
 };
 
+type NavLeader = {
+  id: string;
+  name: string;
+  email: string;
+  sales_nav_agent: boolean;
+  is_active: boolean;
+};
+
 export default function AdminSalesNavSection() {
   const adminKey = useAdminKey();
   const showToast = useAdminToast();
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
 
   const [requests, setRequests] = useState<SalesNavLicenseRequest[]>([]);
+  const [leaders, setLeaders] = useState<NavLeader[]>([]);
   const [filter, setFilter] = useState("pending");
+  const [leaderFilter, setLeaderFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState("");
   const [activationKey, setActivationKey] = useState("");
@@ -48,15 +58,41 @@ export default function AdminSalesNavSection() {
     setLoading(false);
   }, [adminKey, filter]);
 
+  const loadLeaders = useCallback(async () => {
+    const res = await fetch(`/api/admin/sales-nav/agents?key=${adminKey}`);
+    const data = await res.json();
+    if (data.error) showToast(data.error, "error");
+    setLeaders(data.leaders || []);
+  }, [adminKey, showToast]);
+
   useEffect(() => {
     load();
   }, [load]);
 
-  const selected = requests.find((r) => r.id === selectedId) || requests[0] || null;
+  useEffect(() => {
+    loadLeaders();
+  }, [loadLeaders]);
+
+  const visibleRequests =
+    leaderFilter === "all"
+      ? requests
+      : leaderFilter === "unassigned"
+        ? requests.filter((r) => !r.leader_id)
+        : requests.filter((r) => r.leader_id === leaderFilter);
+
+  const selected = visibleRequests.find((r) => r.id === selectedId) || visibleRequests[0] || null;
 
   useEffect(() => {
-    if (requests.length && !selectedId) setSelectedId(requests[0].id);
-  }, [requests, selectedId]);
+    const list =
+      leaderFilter === "all"
+        ? requests
+        : leaderFilter === "unassigned"
+          ? requests.filter((r) => !r.leader_id)
+          : requests.filter((r) => r.leader_id === leaderFilter);
+    if (list.length && !list.some((r) => r.id === selectedId)) {
+      setSelectedId(list[0].id);
+    }
+  }, [requests, leaderFilter, selectedId]);
 
   async function sendActivation() {
     if (!selected) return;
@@ -95,8 +131,23 @@ export default function AdminSalesNavSection() {
     else showToast(`Admin alert sent to ${data.sentTo || notifyEmail}`);
   }
 
-  const pendingCount = requests.filter((r) => r.status === "pending").length;
-  const errorCount = requests.filter((r) => r.status === "error").length;
+  const pendingCount = visibleRequests.filter((r) => r.status === "pending").length;
+  const errorCount = visibleRequests.filter((r) => r.status === "error").length;
+
+  async function toggleSalesNavAgent(leaderId: string, enabled: boolean) {
+    const res = await fetch(`/api/admin/sales-nav/agents?key=${adminKey}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ leaderId, salesNavAgent: enabled }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Could not update access", "error");
+      return;
+    }
+    showToast(enabled ? "Sales Nav access granted" : "Sales Nav access revoked");
+    loadLeaders();
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -104,8 +155,42 @@ export default function AdminSalesNavSection() {
         <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">Sales Navigator licenses</h1>
         <p className="text-sm text-lux-muted mt-1">
           Team members request licenses from their workspace. Paste the activation key or link and email it to them.
+          Grant a team leader access so they only see requests from <strong className="text-lux-text">their</strong>{" "}
+          assigned members.
         </p>
       </div>
+
+      <section className="lux-card-elite p-4 border-amber-500/20 space-y-3">
+        <h2 className="text-sm font-semibold text-lux-text">Team leader access</h2>
+        <p className="text-xs text-lux-muted">
+          Checked leaders get a Sales Nav tab in Leader workspace. They cannot see other leaders&apos; people.
+        </p>
+        <div className="space-y-2">
+          {leaders.length === 0 && <p className="text-sm text-lux-muted">No team leaders found.</p>}
+          {leaders.map((l) => (
+            <label
+              key={l.id}
+              className={cn(
+                "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors",
+                l.sales_nav_agent ? "border-amber-500/30 bg-amber-500/5" : "border-white/[0.06] hover:bg-white/[0.02]"
+              )}
+            >
+              <input
+                type="checkbox"
+                checked={Boolean(l.sales_nav_agent)}
+                disabled={!l.is_active}
+                onChange={(e) => toggleSalesNavAgent(l.id, e.target.checked)}
+                className="accent-amber-400"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold text-lux-text">{l.name}</div>
+                <div className="text-xs text-lux-muted truncate">{l.email}</div>
+              </div>
+              {!l.is_active && <span className="text-[0.58rem] uppercase text-red-300">Inactive</span>}
+            </label>
+          ))}
+        </div>
+      </section>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="lux-card p-4 text-center">
@@ -120,6 +205,17 @@ export default function AdminSalesNavSection() {
 
       <div className="flex flex-wrap gap-3 items-center">
         <LuxSelect className="w-48" size="sm" value={filter} onChange={setFilter} options={STATUS_OPTIONS} />
+        <LuxSelect
+          className="w-56"
+          size="sm"
+          value={leaderFilter}
+          onChange={setLeaderFilter}
+          options={[
+            { value: "all", label: "All team leaders" },
+            { value: "unassigned", label: "No team leader" },
+            ...leaders.map((l) => ({ value: l.id, label: l.name })),
+          ]}
+        />
         <Button variant="lux-ghost" size="sm" onClick={load}>
           Refresh
         </Button>
@@ -129,11 +225,11 @@ export default function AdminSalesNavSection() {
         <div className="lg:col-span-2 lux-card overflow-hidden max-h-[520px] overflow-y-auto">
           {loading ? (
             <p className="p-4 text-lux-muted text-sm">Loading…</p>
-          ) : requests.length === 0 ? (
+          ) : visibleRequests.length === 0 ? (
             <p className="p-8 text-center text-lux-muted text-sm">No requests in this filter.</p>
           ) : (
             <ul>
-              {requests.map((r) => (
+              {visibleRequests.map((r) => (
                 <li key={r.id}>
                   <button
                     type="button"
@@ -145,6 +241,10 @@ export default function AdminSalesNavSection() {
                   >
                     <div className="font-medium text-lux-text">{r.member_name}</div>
                     <div className="text-xs text-lux-muted truncate">{r.linkedin_email}</div>
+                    <div className="text-[0.62rem] text-amber-200/90 mt-1">
+                      {r.leader_name ? `Leader: ${r.leader_name}` : "No team leader"}
+                      {typeof r.leads_count === "number" ? ` · ${r.leads_count} leads` : ""}
+                    </div>
                     <span
                       className={cn(
                         "inline-block mt-1.5 text-[0.58rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded border",
@@ -169,6 +269,10 @@ export default function AdminSalesNavSection() {
                 <h2 className="font-bricolage font-bold text-lg text-lux-text">{selected.member_name}</h2>
                 <p className="text-sm text-lux-muted mt-1">
                   InMailly: {selected.member_email} · LinkedIn: {selected.linkedin_email}
+                </p>
+                <p className="text-sm text-amber-200 mt-1">
+                  Team leader: {selected.leader_name || "Unassigned"}
+                  {typeof selected.leads_count === "number" ? ` · ${selected.leads_count} outreach leads` : ""}
                 </p>
                 <p className="text-xs text-lux-muted mt-1">
                   Requested {new Date(selected.requested_at).toLocaleString()}

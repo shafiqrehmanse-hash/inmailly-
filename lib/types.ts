@@ -16,6 +16,8 @@ export type TeamMember = {
   joined_at: string;
   last_login: string | null;
   live_chat_agent?: boolean;
+  /** Team leader may view Sales Nav requests for assigned members only. */
+  sales_nav_agent?: boolean;
   author_bio?: string | null;
   author_title?: string | null;
 };
@@ -227,6 +229,9 @@ export type SalesNavLicenseRequest = {
   activation_sent_at: string | null;
   resolved_at: string | null;
   updated_at: string;
+  leader_id?: string | null;
+  leader_name?: string | null;
+  leads_count?: number;
 };
 
 export type GrowAssignmentStatus = "pending" | "used";

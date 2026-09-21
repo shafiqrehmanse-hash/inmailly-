@@ -6,6 +6,7 @@ import {
   notifyAdminSalesNavRequest,
   sendMemberSalesNavActivationEmail,
 } from "@/lib/email";
+import { enrichSalesNavRequests } from "@/lib/sales-nav-requests";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
 import type { SalesNavLicenseRequest } from "@/lib/types";
 
@@ -41,8 +42,10 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  const requests = await enrichSalesNavRequests((data || []) as SalesNavLicenseRequest[]);
+
   return NextResponse.json({
-    requests: (data || []) as SalesNavLicenseRequest[],
+    requests,
     configured: isEmailConfigured(),
     notifyEmail: getNotifyEmail(),
     from: getEmailFrom(),
