@@ -70,6 +70,11 @@ export async function generateProjectCaseStudyPdf(data: ProjectCaseStudy): Promi
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
 
   const logo = data.logo ? await embedImage(doc, data.logo) : null;
+  const pageShotImages: { label: string; caption: string; img: PDFImage }[] = [];
+  for (const shot of data.pageShots || []) {
+    const embedded = await embedImage(doc, shot.image);
+    if (embedded) pageShotImages.push({ label: shot.label, caption: shot.caption, img: embedded });
+  }
   const proofImages: PDFImage[] = [];
   for (const p of data.proofs) {
     const embedded = await embedImage(doc, p);
@@ -222,6 +227,35 @@ export async function generateProjectCaseStudyPdf(data: ProjectCaseStudy): Promi
     page.drawRectangle({ x: MARGIN, y, width: 36, height: 2, color: cyan });
     y -= 16;
   };
+
+  if (pageShotImages.length) {
+    section("Live dashboard screenshots");
+    page.drawText("Captured from the campaign page (totals sent) and analytics page.", {
+      x: MARGIN,
+      y,
+      size: 8,
+      font,
+      color: muted,
+    });
+    y -= 16;
+    for (const shot of pageShotImages) {
+      const maxW = CONTENT_W;
+      const maxH = 310;
+      const scale = Math.min(maxW / shot.img.width, maxH / shot.img.height);
+      const w = shot.img.width * scale;
+      const h = shot.img.height * scale;
+      const needed = 28 + h;
+      const next = ensureSpace(needed, y, data.companyName);
+      page = next.page;
+      y = next.y;
+      page.drawText(shot.label, { x: MARGIN, y, size: 10, font: bold, color: ink });
+      y -= 12;
+      page.drawText(shot.caption, { x: MARGIN, y, size: 8, font, color: muted });
+      y -= 10;
+      page.drawImage(shot.img, { x: MARGIN, y: y - h, width: w, height: h });
+      y -= h + 16;
+    }
+  }
 
   if (data.audienceBrief || data.targetTitles || data.targetIndustries || data.targetRegions) {
     section("Audience & brief");

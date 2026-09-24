@@ -5,6 +5,7 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ["react-icons/hi2", "framer-motion"],
+    serverComponentsExternalPackages: ["puppeteer"],
   },
   async headers() {
     return [

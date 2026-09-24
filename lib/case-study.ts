@@ -1,6 +1,7 @@
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { countProjectCampaignStats, type ProjectCampaignCounts } from "@/lib/project-campaign-stats";
 import { listCampaignProfilesForProject } from "@/lib/client-campaign-profiles";
+import { captureCaseStudyPageShots } from "@/lib/case-study-page-shots";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -30,6 +31,7 @@ export type ProjectCaseStudy = {
   proofTotal: number;
   profiles: { name: string; title: string | null; headline: string | null }[];
   sampleLeads: { name: string; company: string | null; position: string | null; status: string }[];
+  pageShots: { label: string; caption: string; image: CaseStudyImage }[];
 };
 
 function imageKind(bytes: Uint8Array, mime?: string | null): "jpg" | "png" | null {
@@ -131,7 +133,7 @@ export async function assembleProjectCaseStudy(
   const packagePercent =
     packageSize && packageSize > 0 ? Math.min(100, (sends / packageSize) * 100) : 0;
 
-  return {
+  const study: ProjectCaseStudy = {
     projectId,
     companyName,
     contactName,
@@ -161,5 +163,9 @@ export async function assembleProjectCaseStudy(
       position: l.position,
       status: l.status,
     })),
+    pageShots: [],
   };
+
+  study.pageShots = await captureCaseStudyPageShots(study);
+  return study;
 }

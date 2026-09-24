@@ -3,6 +3,8 @@ import { assembleProjectCaseStudy } from "@/lib/case-study";
 import { caseStudyFilename, generateProjectCaseStudyPdf } from "@/lib/case-study-pdf";
 import { createAdminClient, verifyAdminKey } from "@/lib/supabase/admin";
 
+export const maxDuration = 60;
+
 function checkKey(request: NextRequest) {
   const key = request.headers.get("x-admin-key") || request.nextUrl.searchParams.get("key");
   return verifyAdminKey(key);

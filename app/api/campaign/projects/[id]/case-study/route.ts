@@ -4,6 +4,8 @@ import { caseStudyFilename, generateProjectCaseStudyPdf } from "@/lib/case-study
 import { assertProjectAccess, getCampaignMember } from "@/lib/campaign-auth-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const maxDuration = 60;
+
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const member = await getCampaignMember();
   if (!member) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
