@@ -7,7 +7,7 @@ import {
 import type { ClientDashboardLiveData } from "@/lib/map-portal-to-dashboard";
 
 export function hasRealCampaignData(live: ClientDashboardLiveData) {
-  return live.responses.length > 0;
+  return live.responses.length > 0 || live.stats.sends > 0 || live.proofs.length > 0;
 }
 
 /** Client login dashboard: show rich demo-style UI until team logs real responses. */

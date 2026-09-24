@@ -65,7 +65,7 @@ type PortalPayload = {
     inmail_package_size?: number | null;
     clients: { name: string; company_name: string | null } | { name: string; company_name: string | null }[] | null;
   };
-  stats: { total: number; interested: number; sends?: number; teamResponses?: number; teamSends?: number };
+  stats: { total: number; interested: number; sends?: number; teamResponses?: number; teamSends?: number; replied?: number };
   responses: PortalResponse[];
   proofs?: PortalProof[];
 };
@@ -81,11 +81,10 @@ function buildPackageProgress(
   completed: number
 ): ClientDashboardLiveData["packageProgress"] {
   if (!packageSize || packageSize <= 0) return null;
-  const safeCompleted = Math.min(completed, packageSize);
   return {
     target: packageSize,
-    completed: safeCompleted,
-    percent: Math.min(100, (safeCompleted / packageSize) * 100),
+    completed,
+    percent: Math.min(100, (completed / packageSize) * 100),
   };
 }
 
@@ -106,9 +105,10 @@ function bucketVelocity(responses: PortalResponse[]): number[] {
 
 export function mapPortalToDashboard(data: PortalPayload): ClientDashboardLiveData {
   const responses = data.responses || [];
-  const interested = responses.filter((r) => r.status === "interested").length;
-  const replied = responses.filter((r) => r.status === "replied").length;
-  const hot = interested + replied;
+  const interestedFromList = responses.filter((r) => r.status === "interested").length;
+  const repliedFromList = responses.filter((r) => r.status === "replied").length;
+  const hot = data.stats.interested ?? interestedFromList + repliedFromList;
+  const replied = data.stats.replied ?? repliedFromList;
   const responseTotal = data.stats.total || responses.length;
   const proofList = (data.proofs || []).filter((p) => p.image_url);
   const inmailsSent = data.stats.sends ?? proofList.length;

@@ -21,6 +21,8 @@ type QueueItem = {
 
 export default function ProjectProofUploader({ projectId }: { projectId: string }) {
   const [proofs, setProofs] = useState<ProofRow[]>([]);
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -34,6 +36,8 @@ export default function ProjectProofUploader({ projectId }: { projectId: string 
     const res = await fetch(`/api/campaign/proofs?projectId=${projectId}`);
     const data = await res.json();
     setProofs(data.proofs || []);
+    setVisibleCount(typeof data.visibleCount === "number" ? data.visibleCount : (data.proofs || []).filter((p: ProofRow) => p.visible_to_client).length);
+    setTotalCount(typeof data.totalCount === "number" ? data.totalCount : (data.proofs || []).length);
     setLoading(false);
   }, [projectId]);
 
@@ -232,8 +236,7 @@ export default function ProjectProofUploader({ projectId }: { projectId: string 
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bricolage font-bold text-lux-text">
-            Uploaded proofs ({proofs.filter((p) => p.visible_to_client).length} on client · {proofs.length}{" "}
-            total)
+            Uploaded proofs ({visibleCount} on client · {totalCount} total)
           </h3>
           <span className="text-xs text-lux-muted">Uncheck Client to hide · Delete removes file</span>
         </div>

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { signedProofUrls } from "@/lib/proof-signed-urls";
 import { attachFollowupSequences } from "@/lib/client-followup-sequence";
+import { countProjectCampaignStats } from "@/lib/project-campaign-stats";
 
 /** Client-safe campaign payload for public embed (no team-only counts). */
 export async function fetchEmbedPortalByToken(admin: SupabaseClient, token: string) {
@@ -33,7 +34,7 @@ export async function fetchEmbedPortalByToken(admin: SupabaseClient, token: stri
   }
 
   // Parallel reads — biggest speed win for white-label boards
-  const [responsesRes, totalRes, interestedRes, proofRowsRes] = await Promise.all([
+  const [responsesRes, stats, proofRowsRes] = await Promise.all([
     admin
       .from("leads")
       .select(
@@ -43,17 +44,7 @@ export async function fetchEmbedPortalByToken(admin: SupabaseClient, token: stri
       .eq("visible_to_client", true)
       .order("created_at", { ascending: false })
       .limit(40),
-    admin
-      .from("leads")
-      .select("*", { count: "exact", head: true })
-      .eq("project_id", project.id)
-      .eq("visible_to_client", true),
-    admin
-      .from("leads")
-      .select("*", { count: "exact", head: true })
-      .eq("project_id", project.id)
-      .eq("visible_to_client", true)
-      .in("status", ["interested", "replied"]),
+    countProjectCampaignStats(admin, project.id),
     admin
       .from("send_proofs")
       .select("id, display_path, created_at")
@@ -68,9 +59,12 @@ export async function fetchEmbedPortalByToken(admin: SupabaseClient, token: stri
   return {
     project,
     stats: {
-      total: totalRes.count || 0,
-      interested: interestedRes.count || 0,
-      sends: proofs.filter((p) => p.image_url).length,
+      total: stats.total,
+      interested: stats.interested,
+      sends: stats.sends,
+      teamResponses: stats.teamResponses,
+      teamSends: stats.teamSends,
+      replied: stats.replied,
     },
     responses: await attachFollowupSequences(admin, responsesRes.data || []),
     proofs: proofs.filter((p) => p.image_url),

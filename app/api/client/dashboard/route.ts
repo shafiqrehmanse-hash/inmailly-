@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentClient } from "@/lib/client-auth-server";
 import { attachFollowupSequences } from "@/lib/client-followup-sequence";
 import { ensureClientHasProject } from "@/lib/ensure-client-project";
+import { countProjectCampaignStats } from "@/lib/project-campaign-stats";
 import { signedProofUrls } from "@/lib/proof-signed-urls";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -43,38 +44,18 @@ export async function GET() {
 
   const withSequence = await attachFollowupSequences(admin, responses || []);
 
-  const { data: proofRows } = await admin
-    .from("send_proofs")
-    .select("id, display_path, created_at")
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const [{ data: proofRows }, stats] = await Promise.all([
+    admin
+      .from("send_proofs")
+      .select("id, display_path, created_at")
+      .eq("project_id", project.id)
+      .eq("visible_to_client", true)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    countProjectCampaignStats(admin, project.id),
+  ]);
 
   const proofs = await signedProofUrls(admin, proofRows || []);
-
-  const [{ count: total }, { count: interested }, { count: teamResponses }, { count: teamProofs }] =
-    await Promise.all([
-      admin
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("project_id", project.id)
-        .eq("visible_to_client", true),
-      admin
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("project_id", project.id)
-        .eq("visible_to_client", true)
-        .in("status", ["interested", "replied"]),
-      admin
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .eq("project_id", project.id),
-      admin
-        .from("send_proofs")
-        .select("*", { count: "exact", head: true })
-        .eq("project_id", project.id),
-    ]);
 
   const clients = project.clients as { name: string; company_name: string | null } | { name: string; company_name: string | null }[] | null;
   const clientRow = Array.isArray(clients) ? clients[0] : clients;
@@ -98,13 +79,7 @@ export async function GET() {
       inmail_package_size: project.inmail_package_size,
       clients: clientRow,
     },
-    stats: {
-      total: total || 0,
-      teamResponses: teamResponses || 0,
-      interested: interested || 0,
-      sends: proofs.filter((p) => p.image_url).length,
-      teamSends: teamProofs || 0,
-    },
+    stats,
     responses: withSequence,
     proofs: proofs.filter((p) => p.image_url),
     isPreview: project.status === "preview" || project.status === "draft",

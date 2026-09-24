@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { attachFollowupSequences } from "@/lib/client-followup-sequence";
 import { listCampaignProfilesForClient } from "@/lib/client-campaign-profiles";
+import { countProjectCampaignStats } from "@/lib/project-campaign-stats";
+import { signedProofUrls } from "@/lib/proof-signed-urls";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: NextRequest) {
@@ -33,57 +35,27 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
   }
 
-  const { data: responses } = await admin
-    .from("leads")
-    .select("id, name, company, position, profile_url, status, notes, client_followup_message, client_followup_at, created_at, updated_at")
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const [{ data: responses }, stats, { data: proofRows }] = await Promise.all([
+    admin
+      .from("leads")
+      .select(
+        "id, name, company, position, profile_url, status, notes, client_followup_message, client_followup_at, created_at, updated_at"
+      )
+      .eq("project_id", project.id)
+      .eq("visible_to_client", true)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    countProjectCampaignStats(admin, project.id),
+    admin
+      .from("send_proofs")
+      .select("id, display_path, created_at")
+      .eq("project_id", project.id)
+      .eq("visible_to_client", true)
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
 
-  const { count: total } = await admin
-    .from("leads")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true);
-
-  const { count: interested } = await admin
-    .from("leads")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true)
-    .in("status", ["interested", "replied"]);
-
-  const { data: proofRows } = await admin
-    .from("send_proofs")
-    .select("id, display_path, created_at")
-    .eq("project_id", project.id)
-    .eq("visible_to_client", true)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  const proofs = await Promise.all(
-    (proofRows || []).map(async (p) => {
-      const { data } = await admin.storage
-        .from("proof-screenshots")
-        .createSignedUrl(p.display_path, 3600);
-      return {
-        id: p.id,
-        image_url: data?.signedUrl || null,
-        created_at: p.created_at,
-      };
-    })
-  );
-
-  const { count: teamResponses } = await admin
-    .from("leads")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project.id);
-
-  const { count: teamProofs } = await admin
-    .from("send_proofs")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project.id);
+  const proofs = await signedProofUrls(admin, proofRows || []);
 
   let profiles: Awaited<ReturnType<typeof listCampaignProfilesForClient>> = [];
   try {
@@ -94,13 +66,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     project,
-    stats: {
-      total: total || 0,
-      teamResponses: teamResponses || 0,
-      interested: interested || 0,
-      sends: proofs.filter((p) => p.image_url).length,
-      teamSends: teamProofs || 0,
-    },
+    stats,
     responses: await attachFollowupSequences(admin, responses || []),
     proofs: proofs.filter((p) => p.image_url),
     profiles,

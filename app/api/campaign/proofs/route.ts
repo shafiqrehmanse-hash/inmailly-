@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertProjectAccess, getCampaignMember } from "@/lib/campaign-auth-server";
 import { processProofScreenshot } from "@/lib/proof-crop";
+import { countProjectCampaignStats } from "@/lib/project-campaign-stats";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const BUCKET = "proof-screenshots";
@@ -38,16 +39,23 @@ export async function GET(request: NextRequest) {
   }
 
   const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("send_proofs")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
+  const [{ data, error }, stats] = await Promise.all([
+    admin
+      .from("send_proofs")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false }),
+    countProjectCampaignStats(admin, projectId),
+  ]);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const proofs = await attachUrls(data || []);
-  return NextResponse.json({ proofs });
+  return NextResponse.json({
+    proofs,
+    totalCount: stats.teamSends,
+    visibleCount: stats.sends,
+  });
 }
 
 export async function POST(request: NextRequest) {

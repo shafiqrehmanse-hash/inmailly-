@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { listCampaignProfilesForClient } from "@/lib/client-campaign-profiles";
 import { getCurrentClient } from "@/lib/client-auth-server";
 import { ensureClientHasProject } from "@/lib/ensure-client-project";
+import { countProjectCampaignStats } from "@/lib/project-campaign-stats";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
@@ -38,24 +39,7 @@ export async function GET() {
     .eq("id", project.id)
     .maybeSingle();
 
-  const [{ count: total }, { count: interested }, { count: sends }] = await Promise.all([
-    admin
-      .from("leads")
-      .select("*", { count: "exact", head: true })
-      .eq("project_id", project.id)
-      .eq("visible_to_client", true),
-    admin
-      .from("leads")
-      .select("*", { count: "exact", head: true })
-      .eq("project_id", project.id)
-      .eq("visible_to_client", true)
-      .in("status", ["interested", "replied"]),
-    admin
-      .from("send_proofs")
-      .select("*", { count: "exact", head: true })
-      .eq("project_id", project.id)
-      .eq("visible_to_client", true),
-  ]);
+  const stats = await countProjectCampaignStats(admin, project.id);
 
   const { data: pendingBranding } = await admin
     .from("client_branding_requests")
@@ -87,13 +71,13 @@ export async function GET() {
   }
 
   const packageSize = fullProject?.inmail_package_size ?? null;
-  const completed = sends || 0;
+  const completed = stats.sends;
   const packageProgress =
     packageSize && packageSize > 0
       ? {
           target: packageSize,
           completed,
-          percent: Math.min(100, Math.round((completed / packageSize) * 100)),
+          percent: Math.min(100, (completed / packageSize) * 100),
         }
       : null;
 
@@ -106,8 +90,8 @@ export async function GET() {
     },
     project: fullProject || project,
     stats: {
-      total: total || 0,
-      interested: interested || 0,
+      total: stats.total,
+      interested: stats.interested,
       sends: completed,
     },
     branding: {
