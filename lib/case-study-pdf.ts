@@ -14,9 +14,278 @@ const muted = rgb(0.42, 0.43, 0.48);
 const white = rgb(1, 1, 1);
 const cyan = rgb(0.13, 0.83, 0.93);
 const violet = rgb(0.55, 0.36, 0.96);
+const luxBg = rgb(0.02, 0.027, 0.043);
+const luxCard = rgb(0.075, 0.102, 0.141);
+const luxMuted = rgb(0.616, 0.659, 0.722);
+const luxBorder = rgb(0.18, 0.2, 0.26);
+const emerald = rgb(0.2, 0.83, 0.6);
 const headerBg = rgb(0.05, 0.06, 0.12);
 const cardBg = rgb(0.96, 0.97, 0.99);
 const line = rgb(0.88, 0.89, 0.92);
+
+function drawDashFooter(p: PDFPage, font: PDFFont, n: number) {
+  p.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: 26, color: rgb(0.027, 0.035, 0.1) });
+  p.drawText("InMailly client dashboard  ·  case study capture", {
+    x: 28,
+    y: 10,
+    size: 7,
+    font,
+    color: luxMuted,
+  });
+  const label = `Page ${n}`;
+  p.drawText(label, {
+    x: PAGE_W - 28 - font.widthOfTextAtSize(label, 7),
+    y: 10,
+    size: 7,
+    font,
+    color: luxMuted,
+  });
+}
+
+function drawAppChrome(
+  p: PDFPage,
+  font: PDFFont,
+  bold: PDFFont,
+  data: ProjectCaseStudy,
+  active: "Campaign" | "Analytics"
+) {
+  p.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: luxBg });
+  p.drawRectangle({ x: 0, y: 0, width: 118, height: PAGE_H, color: rgb(0.027, 0.035, 0.102) });
+  p.drawText("InMailly", { x: 16, y: PAGE_H - 36, size: 11, font: bold, color: white });
+  const nav = ["Dashboard", "Campaign", "Analytics", "Responses"];
+  nav.forEach((item, i) => {
+    const ny = PAGE_H - 70 - i * 22;
+    if (item === active) {
+      p.drawRectangle({ x: 10, y: ny - 5, width: 98, height: 18, color: rgb(0.07, 0.18, 0.22) });
+      p.drawText(item, { x: 16, y: ny, size: 8, font: bold, color: cyan });
+    } else {
+      p.drawText(item, { x: 16, y: ny, size: 8, font, color: luxMuted });
+    }
+  });
+
+  p.drawRectangle({
+    x: 130,
+    y: PAGE_H - 52,
+    width: PAGE_W - 158,
+    height: 28,
+    color: rgb(0.04, 0.12, 0.1),
+    borderColor: rgb(0.12, 0.4, 0.3),
+    borderWidth: 0.6,
+  });
+  p.drawText(`LIVE CAMPAIGN  ·  ${data.projectName}`.slice(0, 52), {
+    x: 138,
+    y: PAGE_H - 38,
+    size: 7,
+    font: bold,
+    color: emerald,
+  });
+  const sentLine = `${data.stats.sends.toLocaleString()} InMails sent  ·  ${data.stats.total.toLocaleString()} responses`;
+  p.drawText(sentLine, {
+    x: PAGE_W - 28 - font.widthOfTextAtSize(sentLine, 7),
+    y: PAGE_H - 38,
+    size: 7,
+    font,
+    color: luxMuted,
+  });
+}
+
+function metricCard(
+  p: PDFPage,
+  font: PDFFont,
+  bold: PDFFont,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  value: string,
+  label: string
+) {
+  p.drawRectangle({
+    x,
+    y,
+    width: w,
+    height: h,
+    color: luxCard,
+    borderColor: luxBorder,
+    borderWidth: 0.7,
+  });
+  p.drawText(value, { x: x + 10, y: y + h - 28, size: 16, font: bold, color: white });
+  p.drawText(label.toUpperCase(), { x: x + 10, y: y + 10, size: 7, font, color: luxMuted });
+}
+
+function addCampaignDashboardPage(
+  doc: PDFDocument,
+  data: ProjectCaseStudy,
+  font: PDFFont,
+  bold: PDFFont,
+  pageNo: number
+) {
+  const p = doc.addPage([PAGE_W, PAGE_H]);
+  drawAppChrome(p, font, bold, data, "Campaign");
+  const left = 140;
+  const width = PAGE_W - left - 28;
+  let y = PAGE_H - 78;
+  p.drawText("YOUR CAMPAIGN", { x: left, y, size: 8, font: bold, color: cyan });
+  y -= 22;
+  p.drawText(data.projectName.slice(0, 42), { x: left, y, size: 18, font: bold, color: white });
+  y -= 16;
+  p.drawText(`Status: ${data.status}  ·  ${data.companyName}`, { x: left, y, size: 9, font, color: luxMuted });
+  y -= 28;
+  const gap = 10;
+  const cardW = (width - gap * 2) / 3;
+  const cards = [
+    { v: data.stats.total.toLocaleString(), l: "Responses" },
+    { v: data.stats.interested.toLocaleString(), l: "Interested" },
+    { v: data.stats.sends.toLocaleString(), l: "Send proofs" },
+  ];
+  cards.forEach((c, i) => metricCard(p, font, bold, left + i * (cardW + gap), y - 56, cardW, 56, c.v, c.l));
+  y -= 80;
+
+  p.drawRectangle({
+    x: left,
+    y: y - 118,
+    width,
+    height: 118,
+    color: luxCard,
+    borderColor: luxBorder,
+    borderWidth: 0.7,
+  });
+  p.drawText("CAMPAIGN PACKAGE", { x: left + 14, y: y - 18, size: 7, font: bold, color: cyan });
+  p.drawText("InMail delivery progress", { x: left + 14, y: y - 36, size: 12, font: bold, color: white });
+  const pct = Math.round(data.packagePercent);
+  const pctLabel = data.packageSize ? `${pct}%` : "—";
+  p.drawText(pctLabel, {
+    x: left + width - 14 - bold.widthOfTextAtSize(pctLabel, 18),
+    y: y - 36,
+    size: 18,
+    font: bold,
+    color: white,
+  });
+  p.drawRectangle({
+    x: left + 14,
+    y: y - 58,
+    width: width - 28,
+    height: 10,
+    color: rgb(0.05, 0.06, 0.08),
+  });
+  const fill = Math.max(2, ((width - 28) * Math.min(100, data.packagePercent)) / 100);
+  p.drawRectangle({
+    x: left + 14,
+    y: y - 58,
+    width: fill,
+    height: 10,
+    color: cyan,
+  });
+  const delivered = data.packageSize
+    ? `${data.stats.sends.toLocaleString()} / ${data.packageSize.toLocaleString()} InMails delivered`
+    : `${data.stats.sends.toLocaleString()} InMails delivered`;
+  p.drawText(delivered, { x: left + 14, y: y - 80, size: 10, font, color: white });
+  if (data.packageSize) {
+    const leftCount = Math.max(0, data.packageSize - data.stats.sends);
+    p.drawText(`${leftCount.toLocaleString()} left until package complete`, {
+      x: left + 14,
+      y: y - 96,
+      size: 8,
+      font,
+      color: cyan,
+    });
+  }
+  y -= 140;
+
+  p.drawRectangle({
+    x: left,
+    y: y - 100,
+    width,
+    height: 100,
+    color: luxCard,
+    borderColor: luxBorder,
+    borderWidth: 0.7,
+  });
+  p.drawText(data.projectName.slice(0, 40), { x: left + 14, y: y - 22, size: 11, font: bold, color: white });
+  p.drawText("Verified Sales Nav  ·  Human-operated", {
+    x: left + 14,
+    y: y - 36,
+    size: 8,
+    font,
+    color: luxMuted,
+  });
+  const mini = [
+    { v: data.stats.sends.toLocaleString(), l: "InMails" },
+    { v: data.stats.total.toLocaleString(), l: "Responses" },
+    { v: data.stats.interested.toLocaleString(), l: "Hot" },
+    { v: `${data.replyRate}%`, l: "Reply rate" },
+  ];
+  const mw = (width - 28 - 18) / 4;
+  mini.forEach((m, i) => {
+    const mx = left + 14 + i * (mw + 6);
+    p.drawText(m.v, { x: mx, y: y - 64, size: 14, font: bold, color: white });
+    p.drawText(m.l.toUpperCase(), { x: mx, y: y - 80, size: 6, font, color: luxMuted });
+  });
+
+  drawDashFooter(p, font, pageNo);
+  return p;
+}
+
+function addAnalyticsDashboardPage(
+  doc: PDFDocument,
+  data: ProjectCaseStudy,
+  font: PDFFont,
+  bold: PDFFont,
+  pageNo: number
+) {
+  const p = doc.addPage([PAGE_W, PAGE_H]);
+  drawAppChrome(p, font, bold, data, "Analytics");
+  const left = 140;
+  const width = PAGE_W - left - 28;
+  let y = PAGE_H - 78;
+  p.drawText("ANALYTICS", { x: left, y, size: 8, font: bold, color: cyan });
+  y -= 22;
+  p.drawText("Campaign performance", { x: left, y, size: 18, font: bold, color: white });
+  y -= 16;
+  p.drawText(`${data.companyName}  ·  live dashboard metrics`, { x: left, y, size: 9, font, color: luxMuted });
+  y -= 28;
+
+  const target = data.targetTitles?.split(",")[0]?.trim() || "—";
+  const items = [
+    {
+      l: "InMails sent",
+      v: data.stats.sends.toLocaleString(),
+      s: data.stats.teamSends > data.stats.sends ? `${data.stats.teamSends.toLocaleString()} logged by team` : "1 screenshot = 1 InMail",
+    },
+    { l: "Total responses", v: data.stats.total.toLocaleString(), s: "Logged by your team" },
+    { l: "Hot leads", v: data.stats.interested.toLocaleString(), s: "Interested or replied" },
+    { l: "Reply rate", v: `${data.replyRate}%`, s: "Responses ÷ InMails sent" },
+    { l: "Target", v: target.slice(0, 28), s: (data.targetTitles || "Audience from brief").slice(0, 42) },
+    {
+      l: "Package complete",
+      v: data.packageSize ? `${Math.round(data.packagePercent)}%` : "—",
+      s: data.packageSize ? `${data.stats.sends.toLocaleString()} of ${data.packageSize.toLocaleString()}` : "No package size set",
+    },
+  ];
+  const cw = (width - 12) / 2;
+  const ch = 78;
+  items.forEach((item, i) => {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const x = left + col * (cw + 12);
+    const cy = y - row * (ch + 12) - ch;
+    p.drawRectangle({
+      x,
+      y: cy,
+      width: cw,
+      height: ch,
+      color: luxCard,
+      borderColor: luxBorder,
+      borderWidth: 0.7,
+    });
+    p.drawText(item.l.toUpperCase(), { x: x + 12, y: cy + ch - 18, size: 7, font, color: luxMuted });
+    p.drawText(item.v, { x: x + 12, y: cy + 32, size: 18, font: bold, color: white });
+    p.drawText(item.s.slice(0, 40), { x: x + 12, y: cy + 14, size: 8, font, color: cyan });
+  });
+
+  drawDashFooter(p, font, pageNo);
+  return p;
+}
 
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const words = text.split(/\s+/);
@@ -217,6 +486,17 @@ export async function generateProjectCaseStudyPdf(data: ProjectCaseStudy): Promi
   }
   const metricRows = Math.ceil(metrics.length / 2);
   y -= metricRows * (boxH + 10) + 18;
+
+  drawFooter(page, pageIndex);
+  pageIndex += 1;
+  addCampaignDashboardPage(doc, data, font, bold, pageIndex);
+  pageIndex += 1;
+  addAnalyticsDashboardPage(doc, data, font, bold, pageIndex);
+  pageIndex += 1;
+  page = doc.addPage([PAGE_W, PAGE_H]);
+  drawHeader(page, data.companyName);
+  drawFooter(page, pageIndex);
+  y = PAGE_H - 100;
 
   const section = (title: string) => {
     const next = ensureSpace(40, y, data.companyName);

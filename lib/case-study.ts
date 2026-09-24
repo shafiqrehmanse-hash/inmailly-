@@ -1,7 +1,6 @@
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { countProjectCampaignStats, type ProjectCampaignCounts } from "@/lib/project-campaign-stats";
 import { listCampaignProfilesForProject } from "@/lib/client-campaign-profiles";
-import { captureCaseStudyPageShots } from "@/lib/case-study-page-shots";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
@@ -166,6 +165,5 @@ export async function assembleProjectCaseStudy(
     pageShots: [],
   };
 
-  study.pageShots = await captureCaseStudyPageShots(study);
   return study;
 }
