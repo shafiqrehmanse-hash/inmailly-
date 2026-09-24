@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import CampaignProjectProfilesPanel from "@/components/campaign/CampaignProjectProfilesPanel";
+import CaseStudyDownloadButton from "@/components/CaseStudyDownloadButton";
 import ProjectProofUploader from "@/components/campaign/ProjectProofUploader";
 import { getSiteUrl } from "@/lib/site-url";
 import ProjectClientWorkspace from "@/components/team/ProjectClientWorkspace";
@@ -35,13 +36,20 @@ export default async function CampaignProjectPage({ params }: { params: { id: st
         <Link href="/campaign/hub" className="text-sm text-lux-muted hover:text-lux-violet">
           ← Back to campaigns
         </Link>
-        <p className="text-[0.65rem] uppercase tracking-widest text-lux-violet mt-4 mb-1">
-          {clientName}
-        </p>
-        <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">{project.name}</h1>
-        <span className="inline-block mt-2 text-[0.65rem] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full border border-lux-violet/30 bg-lux-violet/10 text-lux-violet capitalize">
-          {project.status}
-        </span>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[0.65rem] uppercase tracking-widest text-lux-violet mt-4 mb-1">
+              {clientName}
+            </p>
+            <h1 className="font-bricolage font-extrabold text-2xl text-lux-text">{project.name}</h1>
+            <span className="inline-block mt-2 text-[0.65rem] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full border border-lux-violet/30 bg-lux-violet/10 text-lux-violet capitalize">
+              {project.status}
+            </span>
+          </div>
+          <div className="mt-4">
+            <CaseStudyDownloadButton url={`/api/campaign/projects/${project.id}/case-study`} />
+          </div>
+        </div>
       </div>
 
       {portalUrl && (

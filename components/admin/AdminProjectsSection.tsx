@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
+import CaseStudyDownloadButton from "@/components/CaseStudyDownloadButton";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import LuxSelect from "@/components/ui/LuxSelect";
 import type { Client, ProjectStatus, TeamMember } from "@/lib/types";
@@ -463,6 +464,10 @@ export default function AdminProjectsSection({
                         </Button>
                       </>
                     )}
+                    <CaseStudyDownloadButton
+                      url={`/api/admin/projects/${p.id}/case-study?key=${adminKey}`}
+                      headers={{ "x-admin-key": adminKey }}
+                    />
                     <Button variant="lux-ghost" size="sm" onClick={() => startEdit(p)}>
                       Edit
                     </Button>
